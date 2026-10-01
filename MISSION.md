@@ -5,7 +5,8 @@
 > one light, one sound, one physics, one economy.
 
 You are building SubCraft. Read this whole file before writing code. When a decision here turns
-out wrong, stop and tell Sean rather than silently deviating.
+out wrong, record it in DEVLOG, take the most reasonable path, and flag it at the top of TESTING.md
+(stop and wait only for a decision that is expensive to undo).
 
 ---
 
@@ -46,6 +47,8 @@ three directions:
 | Shared memory | **File-backed memory map** both sides; default `$TMPDIR/subcraft/link.bin` (macOS), `%LOCALAPPDATA%\SubCraft\link.bin` (Windows). |
 | Clock | **Monotonic nanoseconds** across processes. |
 | Input codes | **GLFW key codes**. |
+| Dev machine | **Sean's Mac has 8 GB RAM.** First goal: a complete, working build that Sean tests later — not a polished one. Dev profile: Minecraft heap **`-Xmx2G`**, NeoForge + SubCraft only (no other mods), Subnautica on lowest settings at a low window resolution. Prefer one-game tests (§8); run both games together only when nothing else can verify the change. A config flag `lowMemory` (default on) reduces capture radius, texture sizes and light counts. |
+| Working mode | **Autonomous.** Sean is mostly away. Build through the phases without waiting for him (§4 rule 9). |
 
 ## 3. Architecture
 
@@ -68,6 +71,11 @@ contraptions, Sable/Aeronautics physics, fluids, explosions, raycasts — sees t
 - **Filling:** chunk generator makes water-only chunks; host collision **patches** them as
   Subnautica streams terrain (per-chunk data-version stamp, idempotent). Later, **bake mode**
   patches the whole map ahead of time.
+- **Ghost terrain blocks light** (opaque to sky light), so deep caves are dark in Minecraft's
+  logic too and mob spawning follows Subnautica's geography.
+- **Unpatched chunks are inert:** until a chunk has been patched with Subnautica collision, no mob
+  spawning, no entity ticking, no fluid ticking in it (otherwise mobs spawn in "open water" that
+  later turns out to be rock). Keep Minecraft's simulation distance inside the patched radius.
 - v1 trade-off: player blocks may not overlap a `partial` terrain cell.
 
 ### 3.2 Unity draws Minecraft (geometry capture)
@@ -136,7 +144,10 @@ Log each fallback-rendered draw source so it can be promoted to captured later.
   compass stay.
 - **Creatures and mobs:** Subnautica creatures are hittable proxies in Minecraft; Minecraft mobs
   (vanilla and modded) are lit, fogged and heard like Subnautica creatures. Minecraft mobs hitting
-  proxies damage Subnautica creatures through the same path as the player.
+  proxies damage Subnautica creatures through the same path as the player. The reverse: every
+  Minecraft mob gets an invisible Unity stand-in that Subnautica's creature AI can see and target
+  (verify how creatures choose targets, e.g. `EcoTarget`), so a reaper hunts a zombie and its bite
+  arrives in Minecraft as damage.
 - **Item bridge (later phase):** every Subnautica `TechType` (including Nautilus-added ones) gets a
   generated Minecraft item with its Subnautica icon. Picking up Subnautica resources gives those
   items; Minecraft recipes can use them; breaking Subnautica outcrops with Minecraft tools drops
@@ -176,11 +187,35 @@ modded vehicle, one modded base piece).
 6. Keep SkyCraft's MIT notice for derived code; credit SkyCraft in the README.
 7. **Fail safe:** heartbeat lost > 2 s → Subnautica gives control back, Minecraft pauses.
 8. **Log generously** behind a diagnostics flag.
-9. **One phase at a time,** each ending at a **human checkpoint** (exact steps, expected results,
-   log lines to send back). Then stop.
+9. **One phase at a time, without blocking on Sean.** Finish a phase when its automated tests pass
+   and your own in-game verification (rule 12) looks right. Then append that phase's human test
+   to **`docs/TESTING.md`** (exact steps, expected results, screenshots to compare, log lines to
+   send back) and **continue to the next phase.** Stop and wait only when (a) you need a decision
+   only Sean can make and no default in §9 covers it, or (b) you are stuck after several genuinely
+   different attempts. Never mark a phase done on untested code: anything you could not verify is
+   listed as unverified in DEVLOG and TESTING.md.
 10. **Visual checkpoints include screenshots:** before/after comparisons Sean can judge ("does it
     look like it belongs?") are part of done-when for every rendering phase.
 11. Small commits; a `docs/DEVLOG.md` entry per session.
+12. **Verify your own work in-game before asking Sean.** Build a dev harness early (Phase 0b):
+    - the host plugin watches a command file (`$TMPDIR/subcraft/cmd.jsonl`) and executes debug
+      commands: teleport, set time of day, toggle flashlight, spawn creature, look at, wait,
+      **screenshot** (`ScreenCapture`) and **state dump** (JSON), writing results to
+      `$TMPDIR/subcraft/out/`;
+    - the guest accepts the same through the link (run a Minecraft command, give item, place
+      block);
+    - launch the game yourself (`open steam://run/264710`; Steam launch options already route
+      through BepInEx) and drive scripted scenarios (`tools/scenarios/*.jsonl`).
+    Look at your own screenshots and fix what's obviously wrong. Sean's tests (TESTING.md) are for feel,
+    taste and things you can't judge, not for catching crashes.
+13. **Never touch Sean's real saves.** Use a dedicated dev save slot and a dedicated Minecraft
+    world; back up Subnautica's save folder before the first run of any save-related code.
+14. **Pin versions** in `versions.md` (NeoForge, Flywheel, Create, Sable, Aeronautics, Connector,
+    BepInEx, Nautilus, Subnautica build) and change them deliberately, with a DEVLOG note.
+15. **Memory budget (8 GB Mac):** Minecraft heap 2 GB in the dev profile; measure both processes
+    whenever both run and record it in DEVLOG. If a two-game run swaps heavily, say so in DEVLOG
+    and fall back to one-game verification rather than fighting it. Don't run the full compat
+    packs on this machine; list them in TESTING.md for a bigger machine or a later session.
 
 ## 5. Repo layout
 
@@ -231,8 +266,26 @@ especially the render ring (`RenSection`, `RenVertex`, `RenScene`, `RenBatch`, `
   shaders/keywords on terrain, base pieces, creatures and the player's tools; write findings to
   `docs/DESIGN.md`. This decides §3.2's material strategy.
 - `tools/fake_minecraft.py`.
+- Dev harness (ground rule 12): command file, screenshots, state dumps, scripted scenarios.
 - **Done when:** W moves the Subnautica player through Minecraft's physics; closing Minecraft
   returns control within 2 s; render-path findings written up.
+
+### Phase 0c — Look spike (gate for the whole project)
+
+The project's promise is that Minecraft blocks look native in Subnautica. Prove it before
+building the rest.
+- Guest: in `fake_host.py`'s world, build a small test scene (cobblestone, glass, oak leaves,
+  torch, glowstone, a chest) and dump its captured section meshes + atlas to disk
+  (`capture_dump.py` format).
+- Host: load the dump from disk (no live link needed) and place it on the seafloor near the
+  lifepod, using the material strategy from the render-path reconnaissance. Torch/glowstone →
+  point lights.
+- Use the dev harness to screenshot it at noon, at dusk, at night with the flashlight, from inside
+  the water and from above the surface, near and far (fog).
+- **Gate (self-judged for now):** compare your screenshots with native Subnautica objects in the
+  same shots. Iterate until lighting, fog and caustics on the blocks match their surroundings to
+  your eye, then save the set to `docs/look/` and put "review the look" at the top of TESTING.md.
+  Sean reviews it later; continue to Phase 1.
 
 ### Phase 1 — The world as blocks; walk and swim
 - Host collision harvest → masks → collision ring. Guest ghost terrain, attachments, chunk
@@ -290,16 +343,25 @@ especially the render ring (`RenSection`, `RenVertex`, `RenScene`, `RenBatch`, `
   transform round trips.
 - **One game:** `fake_host.py` ↔ Minecraft (dump captured geometry to OBJ/PNG with
   `capture_dump.py`); Subnautica ↔ `fake_minecraft.py` (feed recorded captures into Unity).
-- **Both games:** Sean, at checkpoints, with screenshots. Compat packs from Phase 2.
+- **Both games:** your own scripted runs when memory allows; Sean later, from TESTING.md. Compat packs on a bigger machine.
 
-## 9. Open questions — ask Sean when you reach them
-1. Unified HUD details (which Subnautica elements stay; hotbar style).
-2. Subnautica PDA/fabricators/inventory alongside Minecraft's inventory?
-3. Item bridge direction: can Minecraft items go into Subnautica's fabricator?
-4. Which aquatic Minecraft mob mods and Subnautica content mods go in the compat packs?
-5. Multiplayer: keep SkyCraft's e4mc flow or drop it?
+## 9. Open questions — use these defaults; Sean may override later
+1. **HUD:** unified (Minecraft hotbar + Subnautica dials showing Minecraft stats); keep Subnautica's
+   depth meter, compass and beacon pings. Config switch for Minecraft's HUD.
+2. **PDA/fabricators/inventory:** `Tab` opens Subnautica's PDA (databank, map, scanner log);
+   fabricators open through Subnautica's own UI via `G` and use the item bridge once it exists.
+   Subnautica's own inventory screen stays hidden.
+3. **Item bridge direction:** Subnautica → Minecraft first; Minecraft → fabricator later.
+4. **Compat packs:** Create, Create: Aeronautics + Sable, JEI, Jade, one Fabric mod via Connector;
+   Subnautica: Nautilus + the most-downloaded creature, vehicle and base-piece mods compatible with
+   current BepInEx. Listed in `compat/`, run on a bigger machine later.
+5. **Multiplayer:** dropped for now. Don't port SkyCraft's e4mc/Discord code; don't break the
+   architecture for it either.
 
 ## 10. Start here (first session)
 1. Read §6. 2. Create the skeleton (§5), `CLAUDE.md`, `.gitignore`, notices.
 3. Get an empty `guest-neoforge` mod building and running in a Prism 1.21.1 NeoForge instance.
-4. Do Phase 0a. 5. Write the checkpoint in DEVLOG and stop.
+4. Do Phase 0a, then keep going per rule 9.
+
+Phase order: 0a → 0b → **0c (look spike)** → 1 → 2 → 3 → 4 → 5 → 6. At the end of every
+session: DEVLOG entry, TESTING.md up to date, everything committed and pushed.
