@@ -77,6 +77,7 @@ int main()
 	C(kColRingTailOff);
 	C(kColRingDataOff);
 	C(kColRingDataBytes);
+	C(kTriMaterialShift);
 	C(kRenRingHeadOff);
 	C(kRenRingTailOff);
 	C(kRenRingDataOff);
@@ -145,6 +146,10 @@ int main()
 	S(ColRegion);
 	F(ColRegion, minX); F(ColRegion, minY); F(ColRegion, minZ); F(ColRegion, maxX); F(ColRegion, maxY);
 	F(ColRegion, maxZ); F(ColRegion, epoch); F(ColRegion, count);
+	endStruct();
+
+	S(ColTri);
+	F(ColTri, v); F(ColTri, flags);
 	endStruct();
 
 	S(ColBlock);

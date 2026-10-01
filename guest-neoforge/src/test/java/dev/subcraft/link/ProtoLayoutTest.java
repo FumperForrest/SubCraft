@@ -151,6 +151,9 @@ class ProtoLayoutTest {
 		fields("CreatureTable", Map.of("seq", Proto.CT_SEQ, "count", Proto.CT_COUNT, "creatures", Proto.CT_RECORDS));
 		assertEquals(Proto.COL_REGION_BYTES, size("ColRegion"));
 		assertEquals(Proto.COL_BLOCK_BYTES, size("ColBlock"));
+		assertEquals(Proto.COL_TRI_BYTES, size("ColTri"));
+		assertEquals(36L, field("ColTri", "flags"));
+		assertEquals(Proto.TRI_MATERIAL_SHIFT, constant("kTriMaterialShift"));
 		fields("ColBlock", Map.of("x", 0L, "y", 4L, "z", 8L, "material", 12L, "flags", 13L, "bits", (long) Proto.COL_BLOCK_BITS));
 		assertEquals(Proto.REN_VERTEX_BYTES, size("RenVertex"));
 		assertEquals(Proto.REN_BATCH_BYTES, size("RenBatch"));

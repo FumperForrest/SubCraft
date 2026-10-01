@@ -11,6 +11,12 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
+import dev.subcraft.world.tri.TriStore;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.EntityCollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 
 /**
  * "Ghost terrain": Subnautica's collision as real Minecraft blocks, so every mod that reasons
@@ -30,6 +36,19 @@ public class TerrainBlock extends Block implements SimpleWaterloggedBlock {
 	@Override
 	protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
 		builder.add(WATERLOGGED);
+	}
+
+	/**
+	 * Players move against the host's exact triangles where those are known (TriCollider), so the
+	 * voxel approximation must not also stop them: they'd be stair-stepped, and the server's
+	 * movement check would disagree with the client.
+	 */
+	@Override
+	protected VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+		if (context instanceof EntityCollisionContext ecc && ecc.getEntity() instanceof Player && TriStore.isKnown(pos.getX(), pos.getY(), pos.getZ())) {
+			return Shapes.empty();
+		}
+		return super.getCollisionShape(state, level, pos, context);
 	}
 
 	@Override

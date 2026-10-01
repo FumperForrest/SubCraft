@@ -5,6 +5,7 @@ import static dev.subcraft.link.Proto.*;
 import dev.subcraft.SubCraft;
 import dev.subcraft.link.LinkView;
 import dev.subcraft.link.SubLink;
+import dev.subcraft.world.tri.TriStore;
 import java.util.ArrayDeque;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -48,18 +49,24 @@ public final class CollisionConsumer {
 			lastEpoch = -1;
 			pending.clear();
 			current = null;
+			TriStore.clear();
 		}
 		view.drainCollision((type, off, bytes) -> read(view, type, off, bytes), 256);
 		apply(level);
 	}
 
 	private static void read(LinkView v, int type, long off, int bytes) {
+		if (type == COL_TRIS) {
+			readTris(v, off, bytes);
+			return;
+		}
 		if (type == COL_CLEAR) {
 			int epoch = v.getInt(off);
 			if (epoch != lastEpoch) {
 				lastEpoch = epoch;
 				pending.clear();
 				current = null;
+				TriStore.clear();
 				SubCraft.LOG.info("SubCraft: collision epoch {}", epoch);
 			}
 			return;
@@ -89,6 +96,35 @@ public final class CollisionConsumer {
 		java.util.Arrays.sort(solid, 0, n);
 		pending.add(new Region(minX, minY, minZ, maxX, maxY, maxZ, java.util.Arrays.copyOf(solid, n)));
 	}
+
+	/** kColTris: a section's exact triangles for the player collider (and, next, the block layer). */
+	private static void readTris(LinkView v, long off, int bytes) {
+		int minX = v.getInt(off), minY = v.getInt(off + 4), minZ = v.getInt(off + 8);
+		int count = v.getInt(off + 28);
+		if (count < 0 || COL_REGION_BYTES + (long) count * COL_TRI_BYTES > bytes) {
+			SubCraft.LOG.warn("SubCraft: malformed triangle region");
+			return;
+		}
+		float[] verts = new float[count * 9];
+		int[] flags = new int[count];
+		for (int i = 0; i < count; i++) {
+			long t = off + COL_REGION_BYTES + (long) i * COL_TRI_BYTES;
+			for (int k = 0; k < 9; k++) {
+				verts[i * 9 + k] = v.getFloat(t + k * 4L);
+			}
+			flags[i] = v.getInt(t + 36);
+		}
+		TriStore.put(minX >> 4, minY >> 4, minZ >> 4, verts, flags);
+		triRegions++;
+		triTotal += count;
+		if (triRegions <= 5 || triRegions % 200 == 0) {
+			SubCraft.LOG.info("SubCraft: triangles for section ({}, {}, {}): {} (regions so far {}, triangles {})", minX >> 4, minY >> 4, minZ >> 4, count,
+				triRegions, triTotal);
+		}
+	}
+
+	private static int triRegions;
+	private static long triTotal;
 
 	private static void apply(ServerLevel level) {
 		int budget = BLOCK_BUDGET_PER_TICK;

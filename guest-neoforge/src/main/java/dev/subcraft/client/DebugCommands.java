@@ -23,16 +23,19 @@ import net.minecraft.server.level.ServerPlayer;
  */
 public final class DebugCommands {
 	private static int running = -1;
+	private static int runningGeneration = -1;
 
 	private DebugCommands() {
 	}
 
 	public static void poll(Minecraft minecraft, LinkView view) {
 		LinkView.Command cmd = view.pendingCommand();
-		if (cmd == null || cmd.seq() == running) {
+		// A new host resets the box (seq starts over), so "already running" is per host instance.
+		if (cmd == null || (cmd.seq() == running && dev.subcraft.link.SubLink.generation() == runningGeneration)) {
 			return;
 		}
 		running = cmd.seq();
+		runningGeneration = dev.subcraft.link.SubLink.generation();
 		String text = cmd.text().trim();
 		SubCraft.LOG.info("SubCraft: host command #{}: {}", cmd.seq(), text);
 		try {
@@ -59,6 +62,9 @@ public final class DebugCommands {
 					? new BlockPos(Integer.parseInt(args[3]), Integer.parseInt(args[4]), Integer.parseInt(args[5]))
 					: minecraft.player.blockPosition();
 				return SceneDump.run(minecraft, file, center, radius);
+			}
+			case "tris" -> {
+				return dev.subcraft.world.tri.TriDebug.report(minecraft.player.getX(), minecraft.player.getY(), minecraft.player.getZ());
 			}
 			case "pos" -> {
 				return minecraft.player == null ? "no player" : minecraft.player.position().toString();

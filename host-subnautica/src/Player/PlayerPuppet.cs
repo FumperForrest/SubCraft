@@ -91,11 +91,47 @@ namespace SubCraft.Player
 			player.transform.position = target;
 			lastSetPos = target;
 			haveLastSet = true;
+			RescueFromTerrain(player, mcFeetU);
 
 			if (Plugin.Diagnostics.Value && Time.unscaledTime - lastLog > 5f)
 			{
 				lastLog = Time.unscaledTime;
 				Plugin.Log.LogInfo($"SubCraft puppet: mc feet {mcFeetU} eye {eye:F2} camera {camU} motor {player.motorMode} underwater {player.IsUnderwater()}");
+			}
+		}
+
+		private static float lastRescueCheck;
+
+		/// <summary>
+		/// If Minecraft's feet ended up inside Subnautica's terrain (a ray going up hits the terrain's
+		/// surface from underneath), lift the player onto that surface. The "host moved the player"
+		/// path then teleports Minecraft there too.
+		/// </summary>
+		private static void RescueFromTerrain(global::Player player, Vector3 feet)
+		{
+			if (Time.unscaledTime - lastRescueCheck < 1f)
+			{
+				return;
+			}
+			lastRescueCheck = Time.unscaledTime;
+			bool backfaces = Physics.queriesHitBackfaces;
+			Physics.queriesHitBackfaces = true;
+			try
+			{
+				var origin = feet + Vector3.up * 0.1f;
+				if (Physics.Raycast(origin, Vector3.up, out var hit, 40f, 1 << LayerID.TerrainCollider, QueryTriggerInteraction.Ignore)
+					&& Vector3.Dot(hit.normal, Vector3.up) > 0.2f)
+				{
+					// The face we hit points up, toward its outside: we are underneath it, in the rock.
+					var safe = hit.point + Vector3.up * (StandingEye + 0.2f);
+					Plugin.Log.LogWarning($"SubCraft: Minecraft's player is inside terrain at {feet}; lifting to {hit.point}");
+					player.SetPosition(safe);
+					haveLastSet = true; // the next frame sees the jump and teleports Minecraft
+				}
+			}
+			finally
+			{
+				Physics.queriesHitBackfaces = backfaces;
 			}
 		}
 

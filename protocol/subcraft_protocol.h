@@ -26,7 +26,7 @@
 namespace subcraft::proto
 {
 	inline constexpr std::uint32_t kMagic = 0x43425553;  // "SUBC"
-	inline constexpr std::uint32_t kVersion = 12;
+	inline constexpr std::uint32_t kVersion = 13;
 
 	// Default file locations: macOS $TMPDIR/subcraft/link.bin, Windows %LOCALAPPDATA%\SubCraft\link.bin.
 	// Both sides accept an override (Java -Dsubcraft.link=<path>, host config, env SUBCRAFT_LINK).
@@ -308,6 +308,10 @@ namespace subcraft::proto
 		kColPad = 0,
 		kColClear = 1,   // payload: u32 epoch
 		kColRegion = 2,  // payload: ColRegion + ColBlock[count]
+		kColTris = 3,    // payload: ColRegion (count = triangles) + ColTri[count] (v13): the host's exact
+		                 // collision surface in the box. Replaces every triangle sent for the same box
+		                 // before (boxes are 16-block sections). count 0 = known to be empty. Minecraft
+		                 // moves players against these triangles and voxelizes them into ghost terrain.
 	};
 
 	struct ColMsgHeader
@@ -341,6 +345,22 @@ namespace subcraft::proto
 		kMatIce = 7,
 		kMatPrecursor = 8,
 	};
+
+	enum ColTriFlags : std::uint32_t
+	{
+		kTriStructure = 1u << 0,  // host-built (habitats, wrecks, vehicles), not terrain
+		kTriTerrain = 1u << 1,    // the host's terrain (voxel mesh)
+	};
+	inline constexpr std::uint32_t kTriMaterialShift = 8;  // bits 8-15: ColMaterial
+
+	// One collision triangle in MC coordinates. Winding: counter-clockwise seen from outside
+	// (the solid is behind the face), after the Unity -> MC mirror.
+	struct ColTri
+	{
+		float         v[9];
+		std::uint32_t flags;  // ColTriFlags | material << kTriMaterialShift
+	};
+	static_assert(sizeof(ColTri) == 40);
 
 	// One block's worth of host collision as an 8x8x8 occupancy mask.
 	// bits[y] bit (z * 8 + x) is sub-voxel (x, y, z), each 1/8 block, in MC axes.

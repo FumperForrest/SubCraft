@@ -27,6 +27,17 @@ namespace SubCraft.Dev
 					["mcLinked"] = driver.McLinked,
 					["teleportSeq"] = driver.TeleportSeq,
 					["puppet"] = PlayerPuppet.Active,
+					["collision"] = new JObject
+					{
+						["sectionsSent"] = driver.Harvester.SectionsSent,
+						["trianglesSent"] = driver.Harvester.TrianglesSent,
+						["bytesSent"] = driver.Harvester.BytesSent,
+						["lastColliders"] = driver.Harvester.Collisions,
+						["notReadySkips"] = driver.Harvester.NotReady,
+						["terrainMeshesCaptured"] = World.TerrainMeshCapture.Captured,
+						["terrainMeshesHeld"] = World.TerrainMeshCapture.Count,
+					},
+					["mcFeetToSurface"] = driver.HaveMc ? (JToken)SurfaceGap(driver.Mc.X, driver.Mc.Y, driver.Mc.Z) : null,
 					["mc"] = driver.HaveMc ? new JObject
 					{
 						["pos"] = new JArray(driver.Mc.X, driver.Mc.Y, driver.Mc.Z),
@@ -73,6 +84,27 @@ namespace SubCraft.Dev
 				o["dayScalar"] = DayNightCycle.main.GetDayScalar();
 			}
 			return o;
+		}
+
+		/// <summary>Distance from Minecraft's feet down to Subnautica's collision surface (negative: inside it).</summary>
+		private static float SurfaceGap(double x, double y, double z)
+		{
+			var from = new Vector3((float)x, (float)y + 1f, (float)-z);
+			var hits = Physics.RaycastAll(from, Vector3.down, 30f, ~0, QueryTriggerInteraction.Ignore);
+			float best = float.NaN;
+			foreach (var h in hits)
+			{
+				if (h.collider.GetComponentInParent<global::Player>() != null || h.collider.GetComponentInParent<Creature>() != null)
+				{
+					continue;
+				}
+				float gap = h.distance - 1f;
+				if (float.IsNaN(best) || gap < best)
+				{
+					best = gap;
+				}
+			}
+			return best;
 		}
 
 		internal static JArray Vec(Vector3 v) => new JArray(v.x, v.y, v.z);

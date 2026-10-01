@@ -9,7 +9,7 @@ public final class Proto {
 	}
 
 	public static final int MAGIC = 0x43425553; // "SUBC"
-	public static final int VERSION = 12;
+	public static final int VERSION = 13;
 	public static final String LINK_FILE_NAME = "link.bin";
 	public static final long HEARTBEAT_TIMEOUT_NS = 2_000_000_000L;
 
@@ -184,6 +184,9 @@ public final class Proto {
 	public static final int COL_PAD = 0;
 	public static final int COL_CLEAR = 1;
 	public static final int COL_REGION = 2;
+	public static final int COL_TRIS = 3;
+	public static final int COL_TRI_BYTES = 40;
+	public static final int TRI_STRUCTURE = 1, TRI_TERRAIN = 2, TRI_MATERIAL_SHIFT = 8;
 	public static final int COL_REGION_BYTES = 32;
 	public static final int COL_BLOCK_BYTES = 80;
 	public static final int COL_BLOCK_BITS = 16; // offset of bits[] in ColBlock

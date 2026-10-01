@@ -7,7 +7,7 @@ namespace SubCraft.Link
 	public static class Proto
 	{
 		public const uint Magic = 0x43425553; // "SUBC"
-		public const uint Version = 12;
+		public const uint Version = 13;
 		public const string LinkFileName = "link.bin";
 		public const ulong HeartbeatTimeoutNs = 2_000_000_000UL;
 
@@ -89,7 +89,10 @@ namespace SubCraft.Link
 		// ---- Collision ring (relative to OffCollisionRing) ----
 		public const long CrHead = 0x00, CrTail = 0x40, CrData = 0x80;
 		public const long CrDataBytes = CollisionRingBytes - CrData;
-		public const uint ColPad = 0, ColClear = 1, ColRegion = 2;
+		public const uint ColPad = 0, ColClear = 1, ColRegion = 2, ColTris = 3;
+		public const int ColTriBytes = 40;
+		public const uint TriStructure = 1, TriTerrain = 2;
+		public const int TriMaterialShift = 8;
 		public const int ColRegionBytes = 32, ColBlockBytes = 80, ColBlockBits = 16;
 		public const byte MatUnknown = 0, MatRock = 1, MatSand = 2, MatCoral = 3, MatMetal = 4, MatGlass = 5, MatOrganic = 6, MatIce = 7, MatPrecursor = 8;
 

@@ -191,6 +191,15 @@ namespace SubCraft.Dev
 						if (cmd["lightmapStrength"] != null) Render.MaterialFactory.LightmapStrength = (float)cmd["lightmapStrength"];
 						msg = "applies to the next loaddump";
 						break;
+					case "harvestprobe":
+						msg = Write("harvestprobe.txt", LinkDriver.Instance.Harvester.Probe((int)cmd["sx"], (int)cmd["sy"], (int)cmd["sz"]));
+						break;
+					case "tricheck":
+						msg = Write("tricheck.txt", LinkDriver.Instance.Harvester.TriCheck((float)cmd["x"], (float)cmd["z"], (float?)cmd["fromY"] ?? 0f));
+						break;
+					case "colprobe":
+						msg = Write("colprobe.json", ColProbe(new Vector3((float)cmd["x"], (float)cmd["y"], (float)cmd["z"]), (float?)cmd["radius"] ?? 3f).ToString());
+						break;
 					case "rendinfo":
 						msg = Write("rendinfo.json", RendInfo((string)cmd["match"] ?? "", (int?)cmd["max"] ?? 3).ToString());
 						break;
@@ -234,6 +243,51 @@ namespace SubCraft.Dev
 		}
 
 		private GameObject loaded;
+
+		/// <summary>colprobe {x, y, z, radius}: every collider near a Unity point and how the harvester sees it.</summary>
+		private static JObject ColProbe(Vector3 at, float radius)
+		{
+			int mask = World.CollisionHarvester.PlayerCollisionMask(global::Player.main);
+			var col = global::Player.main.playerController.activeController?.GetCollider();
+			var o = new JObject
+			{
+				["playerColliderLayer"] = col != null ? LayerMask.LayerToName(col.gameObject.layer) + " " + col.gameObject.layer : "none",
+				["mask"] = System.Convert.ToString(mask, 2),
+				["terrainLayer"] = LayerID.TerrainCollider,
+			};
+			var list = new JArray();
+			foreach (var c in Physics.OverlapSphere(at, radius, ~0, QueryTriggerInteraction.Collide))
+			{
+				list.Add($"{c.name} [{c.GetType().Name}] layer {LayerMask.LayerToName(c.gameObject.layer)}({c.gameObject.layer}) trigger {c.isTrigger} " +
+					$"rb {(c.attachedRigidbody != null ? (c.attachedRigidbody.isKinematic ? "kinematic" : "dynamic") : "none")} inMask {((mask >> c.gameObject.layer) & 1) == 1} " +
+					$"wanted {World.CollisionHarvester.Wanted(c)} parent {(c.transform.parent != null ? c.transform.parent.name : "-")}");
+			}
+			o["colliders"] = list;
+			var streamer = LargeWorldStreamer.main;
+			o["landBlock"] = streamer != null ? streamer.GetBlock(at).ToString() : "no streamer";
+			o["collisionLevel"] = streamer?.streamerV2?.clipmapStreamer != null ? streamer.streamerV2.clipmapStreamer.collisionLevel : -1;
+			var ready = new JObject();
+			foreach (float h in new[] { 0.5f, 2f, 4f, 8f, 16f, 32f })
+			{
+				ready[h.ToString()] = World.CollisionHarvester.TerrainBuilt(at, h);
+			}
+			o["terrainBuiltByHalfSize"] = ready;
+			var cs = streamer?.streamerV2?.clipmapStreamer;
+			if (cs != null)
+			{
+				var level = cs.levels[cs.collisionLevel];
+				o["level0"] = $"cellSize {level.cellSize} array {level.arraySize} center {level.centerCell}";
+				var cells = new JArray();
+				var range = level.GetCellRange(Int3.MinMax(streamer.GetBlock(at - Vector3.one * 8), streamer.GetBlock(at + Vector3.one * 8)));
+				foreach (Int3 id in range)
+				{
+					var cell = level.GetCell(id);
+					cells.Add($"{id}: {(cell == null ? "outside window" : cell.state.ToString())}");
+				}
+				o["cellsFor8"] = cells;
+			}
+			return o;
+		}
 
 		private static readonly string[] SkyVectors = { "_ExposureIBL", "_ExposureLM", "_SkyMin", "_SkyMax", "_SH0", "_SH1", "_SH2", "_SH3", "_SH4", "_BlendWeightIBL", "_Outdoors", "_AffectedByDayNightCycle" };
 		private static readonly string[] MatProps = { "_Lightmap", "_LightmapStrength", "_EnableLightmap", "_Illum", "_EnableGlow", "_GlowStrength", "_SpecInt", "_Shininess", "_EnableCutOff", "_Cutoff", "_Color" };

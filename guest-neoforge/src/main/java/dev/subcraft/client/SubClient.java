@@ -264,6 +264,14 @@ public final class SubClient {
 		if (minecraft.level == null) {
 			return false;
 		}
+		// The host's exact surface: any triangle in the column below counts as ground.
+		if (dev.subcraft.world.tri.TriStore.isKnown((int) Math.floor(pos.x), (int) Math.floor(pos.y), (int) Math.floor(pos.z))) {
+			boolean[] hit = {false};
+			dev.subcraft.world.tri.TriStore.query(pos.x - 0.3, pos.y - depth, pos.z - 0.3, pos.x + 0.3, pos.y + 0.5, pos.z + 0.3, (s, i) -> hit[0] = true);
+			if (hit[0]) {
+				return true;
+			}
+		}
 		BlockPos.MutableBlockPos p = BlockPos.containing(pos).mutable();
 		for (int i = 0; i <= depth; i++, p.move(0, -1, 0)) {
 			if (minecraft.level.getBlockState(p).is(SubBlocks.TERRAIN.get())) {

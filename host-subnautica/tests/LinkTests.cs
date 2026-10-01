@@ -111,6 +111,9 @@ namespace SubCraft.Tests
 			Assert.Equal(Proto.CtRecords, F("CreatureTable", "creatures"));
 			Assert.Equal(Proto.ColRegionBytes, Size("ColRegion"));
 			Assert.Equal(Proto.ColBlockBytes, Size("ColBlock"));
+			Assert.Equal(Proto.ColTriBytes, Size("ColTri"));
+			Assert.Equal(36, F("ColTri", "flags"));
+			Assert.Equal(Proto.TriMaterialShift, C("kTriMaterialShift"));
 			Assert.Equal(Proto.ColBlockBits, F("ColBlock", "bits"));
 			Assert.Equal(Proto.RenVertexBytes, Size("RenVertex"));
 			Assert.Equal(Proto.RenBatchBytes, Size("RenBatch"));
