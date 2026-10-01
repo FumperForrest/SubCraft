@@ -235,12 +235,19 @@ public final class SubClient {
 			holdSinceMs = 0;
 			return;
 		}
-		if (holdSinceMs == 0) {
+		// Nothing counts until the destination chunk has reached the client: an unloaded chunk reads
+		// as air, and releasing there drops the player through it.
+		boolean chunkLoaded = minecraft.level != null && minecraft.level.hasChunkAt(BlockPos.containing(holdPos));
+		if (!chunkLoaded) {
+			holdSinceMs = 0;
+		} else if (holdSinceMs == 0) {
 			holdSinceMs = System.currentTimeMillis();
 		}
-		boolean ground = hasTerrainBelow(minecraft, holdPos, 12);
-		if ((ground || System.currentTimeMillis() - holdSinceMs > 6000) && host.inGame() && !host.loading()) {
-			SubCraft.LOG.info("SubCraft: released player at {} ({})", holdPos, ground ? "ground below" : "timed out waiting for ground");
+		boolean ground = chunkLoaded && hasTerrainBelow(minecraft, holdPos, 12);
+		boolean water = chunkLoaded && !minecraft.level.getFluidState(BlockPos.containing(holdPos)).isEmpty();
+		boolean timedOut = chunkLoaded && System.currentTimeMillis() - holdSinceMs > 6000;
+		if ((ground || water || timedOut) && host.inGame() && !host.loading()) {
+			SubCraft.LOG.info("SubCraft: released player at {} ({})", holdPos, ground ? "ground below" : water ? "in water" : "timed out waiting for ground");
 			holdPos = null;
 			return;
 		}
@@ -270,6 +277,7 @@ public final class SubClient {
 		player.setPos(x, y, z);
 		player.setDeltaMovement(Vec3.ZERO);
 		player.resetFallDistance();
+		holdSinceMs = 0; // a new hold: wait for this destination's chunk and ground
 		var server = minecraft.getSingleplayerServer();
 		if (server != null) {
 			var uuid = player.getUUID();
