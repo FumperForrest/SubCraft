@@ -197,6 +197,9 @@ namespace SubCraft.Dev
 					case "matinfo":
 						msg = Write("matinfo.json", Render.MaterialFactory.Describe().ToString());
 						break;
+					case "holster":
+						Inventory.main.quickSlots.DeselectImmediate();
+						break;
 					case "equip":
 						msg = Equip((string)cmd["tech"], (bool?)cmd["lights"]);
 						break;

@@ -2,6 +2,47 @@
 
 Newest first. One entry per session (MISSION.md rule 11).
 
+## 2026-10-01 — Session 3: Phase 0c (look spike)
+
+**Sean's direction (recorded):** the Minecraft character must replace Subnautica's diver
+completely in the finished game (no diver hands, tools, mask frame or body); today's overlap is a
+development stage. Sean verified real keyboard and mouse input from Phase 0b.
+
+**Done**
+- Protocol **v12**: `CommandBox` at 0x400: host -> Minecraft debug commands ("/..." as an operator
+  at the player, "subcraft dump ..."), reply + status. Mirrored and layout-tested on all sides.
+- Guest capture: `RenderClassifier`, `CaptureBuffer`, `TextureGrabber`, `SceneDump`,
+  `DebugCommands`, `getShade` = 1 mixin, accessors for RenderType state. `fake_host.py --scene`
+  builds the test hut with Minecraft commands and dumps it; `tools/capture_dump.py` decodes, writes
+  OBJ/PNG and renders a software preview (checked before touching Unity).
+- Host: `DumpReader`, `SceneBuilder`, `MaterialFactory`, `AlbedoBake`, `BlockLights`, harness
+  `loaddump`/`matinfo`/`matset`/`rendinfo`/`equip`/`holster`, `tools/sn_restart.sh`,
+  `tools/look_shots.py`, scenario `look_place.jsonl`.
+- Tests: host 37 (dump reader, albedo bake added), guest unchanged and green.
+
+**Phase 0c result: done (self-judged), Sean to review `docs/look/`.** Iterations, each from
+screenshots: (1) MarmosetUBER worked first try for sun, caustics and glow, but colours untinted and
+blocks only 4x4 texels; (2) `MARMO_VERTEX_COLOR` toggle changed nothing (variant not compiled);
+(3) `SkyApplier` added; tried tint via `UWE_LIGHTMAP` (wrong: it's baked light); (4) Sean pointed
+out the 4x4 texels -> no mip chain (Low preset's texture limit); albedo bake for tint x AO ->
+green leaves/grass, AO, full-resolution sprites. Final set: noon/dusk/night+flashlight,
+near/mid/far, above the surface — blocks take the same absorption, fog, caustics and flashlight as
+the rocks around them; torch and glowstone glow and light the wall and sand.
+
+**Unverified / open**
+- The standing floor torch disappeared between two scene builds (59 -> 58 blocks); the wall torch
+  and glowstone are there. Not chased yet.
+- Translucent materials (WBOIT) untested: the scene has no translucent blocks (glass is cutout).
+- Shadows: off in the Low preset on this Mac; MarmosetUBER renderers are set to cast/receive.
+- Far shot: the hut's shaded side reads a bit darker than rock at the same distance — for Sean.
+
+**Memory:** one game at a time this session (Minecraft only for the dump, then Subnautica only).
+
+**Next:** Phase 1 — the world as blocks: host collision harvest -> masks -> collision ring, ghost
+terrain with partial masks, chunk patching, dry volumes, biomes, terrain sound types; oxygen
+bridge; camera and input routing; overlay on a uGUI canvas; and the first step of replacing the
+diver (hide its first-person arms and tools while Minecraft drives).
+
 ## 2026-10-01 — Session 2: Phase 0b (Subnautica link)
 
 **Done**

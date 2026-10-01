@@ -3,6 +3,20 @@
 Things only you can judge (feel, taste) or decide. Everything here was already run by Claude
 unless marked **unverified**.
 
+## Review the look (Phase 0c gate) — please look first
+
+Open `docs/look/`. A small Minecraft hut (cobblestone, glass, oak leaves, grass, torch, glowstone,
+chest) captured from Minecraft and drawn by Subnautica with its own shader, on the seabed near the
+lifepod: `0c-near-noon`, `0c-mid-noon`, `0c-near-dusk`, `0c-mid-dusk`,
+`0c-near-night-flashlight`, `0c-mid-night-flashlight`, `0c-far-noon-fog`,
+`0c-above-surface-noon` (`0c-before-fixes` is the first attempt, for contrast).
+
+**Does it look like it belongs?** Things to judge: brightness of the blocks next to the sand and
+rocks; whether the far shot fades into the water like the rocks do; torch/glowstone glow strength
+and the warm light they throw; leaves and grass green. Known: the diver's hands/tools are still
+Subnautica's (they get replaced by Minecraft's hand later); no shadows because your quality preset
+has them off.
+
 ## Decisions waiting for you
 
 None right now. (Licence: MIT, decided 2026-10-01.)
@@ -85,4 +99,4 @@ PDA (intended). Frame rate may stutter while both games run.
 Minecraft HUD looked crisp at your window size, and if anything failed:
 `tools/sn_dev.sh log 80`, `guest-neoforge/run/logs/latest.log`.
 
-**Unverified by Claude:** your real keyboard (Claude injected W through the same input ring).
+**Verified by Sean (2026-10-01):** real keyboard and mouse work.

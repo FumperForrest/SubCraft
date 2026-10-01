@@ -113,7 +113,46 @@ it like native props. Unknowns for 0c: how MarmosetUBER takes vertex colour (Min
 AO live in vertex colours) — likely needs `_Color` per batch or a baked tint texture; normals
 (blocks have flat faces, `_BumpMap` can be a flat normal map).
 
+## Phase 0c: how Minecraft geometry is drawn (verified in game, `docs/look/`)
+
+- **Capture (guest):** `SceneDump` runs Minecraft's own renderers into `CaptureBuffer`
+  (a `VertexConsumer`): block models through `BlockRenderDispatcher.renderBatched` per chunk
+  RenderType (tint, AO, connected/modded models), non-water fluids through `renderLiquid`, block
+  entities through `BlockEntityRenderDispatcher.render` (needs `prepare()`: the skipped world pass
+  normally does it). Material class from render-state shards (`RenderClassifier`). Face shade off
+  (`getShade` = 1 in the SubCraft world). Textures read back from the GPU by resource location.
+  Light-emitting blocks: a `RenLight` (emission level, colour = brightest third of their own
+  sprite, flame/lava kind) and the emitter vertex flag (bit 3).
+- **Draw (host):** one mesh per texture, submesh per (material class, emitter), z mirrored and
+  winding flipped. Materials cloned from loaded `MarmosetUBER` materials chosen by keyword set
+  (`MaterialFactory`): plain `_ZWRITE_ON MARMO_SPECMAP`, cutout `+MARMO_ALPHA_CLIP`, glow
+  `+MARMO_EMISSION` with `_Illum` = the texture and `_EnableGlow`. `_MainTex` alpha is *gloss* to
+  MarmosetUBER, so `_SpecInt` 0 and `_SpecTex` black.
+- **Three things that had to be found:**
+  1. **Ambient comes from `SkyApplier`**, not Unity: Subnautica pushes per-renderer SH ambient,
+     exposures and the biome's reflection cube through a MaterialPropertyBlock. Every scene root
+     gets a `SkyApplier` (anchor Auto) listing its renderers.
+  2. **No mipmaps on Minecraft textures:** the "Low" preset's texture limit drops the top mip
+     levels of every mipmapped texture, so 16x16 sprites showed 4x4 texels (Sean spotted it).
+  3. **Vertex colours have no compiled shader path:** `MARMO_VERTEX_COLOR` / `_EnableVertexColor`
+     exist but the variant isn't in the build (toggling changed nothing), and `UWE_LIGHTMAP` is
+     baked *light* scaled by `_ExposureLM` (0.05 outdoors), not an albedo multiplier. So
+     `AlbedoBake` multiplies tint x AO into the texture: each distinct (sprite area, four corner
+     colours, 6-bit) gets a pre-coloured copy on a per-mesh page, sampled bilinearly in quad space
+     (any UV rotation). Plain faces share one copy. The test scene: a handful of cells.
+- **Lights:** `BlockLights`: Unity point lights (range 0.9 x level, intensity 1.6 x level/15,
+  per-pixel, flames flicker). Torch light reads correctly on the wall and sand at dusk/night.
+- **SkyCraft comparison (Sean asked):** SkyCraft compiles its own HLSL at runtime in its SKSE
+  plugin and draws blocks in its own D3D11 pass (`texture * vertexColour * Lighting()`, lighting
+  re-derived from Skyrim's depth and shadow maps). Unity can't compile shaders at runtime; a custom
+  shader would need an AssetBundle from the Unity 2019.4 editor (several GB). Driving
+  MarmosetUBER gets caustics, waterscape fog, flashlight and IBL exactly like native props, so the
+  bake stays unless it fails at world scale (Phase 2): then a custom shader is the fallback (ask
+  Sean before installing the editor).
+
 ## Open
 
-- MarmosetUBER vertex-colour support (Phase 0c).
+- AlbedoBake memory at world scale (Phase 2): measure cells per section; animated sprites (water,
+  lava, fire) need the bake redone per frame or a separate path.
+- Translucent geometry (stained glass, water from mods): the WBOIT variants, untested so far.
 - Whether the WaterscapeVolume pass needs anything from our renderers beyond depth.
