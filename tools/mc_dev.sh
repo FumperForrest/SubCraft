@@ -17,13 +17,14 @@ start)
 	if [ -n "$(running)" ]; then
 		echo "dev client already running (pid $(running | tr '\n' ' '))"; exit 1
 	fi
-	log=${2:-${TMPDIR:-/tmp}/subcraft-client.log}
+	# A fresh file per start: a dying previous Gradle run may still append to its old log.
+	log=${2:-${TMPDIR:-/tmp}/subcraft-client-$(date +%Y%m%d-%H%M%S).log}
 	(cd "$root/guest-neoforge" && nohup ./gradlew runClient --console=plain > "$log" 2>&1 &)
 	echo "starting dev client, log $log"
 	i=0
 	while [ $i -lt 120 ]; do
-		if grep -q "SubCraft client ready" "$log" 2>/dev/null; then echo "client up (pid $(running | tr '\n' ' '))"; exit 0; fi
-		if grep -q -E "BUILD FAILED|error:" "$log" 2>/dev/null; then grep -E "error:|FAILED" "$log"; exit 1; fi
+		if grep -a -q "SubCraft client ready" "$log" 2>/dev/null; then echo "client up (pid $(running | tr '\n' ' '))"; exit 0; fi
+		if grep -a -q -E "BUILD FAILED|: error:" "$log" 2>/dev/null; then grep -a -E ": error:|FAILED" "$log"; exit 1; fi
 		sleep 2; i=$((i + 1))
 	done
 	echo "timed out waiting for the client"; exit 1 ;;

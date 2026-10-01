@@ -31,6 +31,7 @@ public final class CollisionConsumer {
 	private static Region current;
 	private static long cursor;
 	private static int lastEpoch = -1;
+	private static int seenGeneration;
 	private static int regionsApplied;
 
 	private CollisionConsumer() {
@@ -40,6 +41,13 @@ public final class CollisionConsumer {
 		LinkView view = SubLink.view();
 		if (view == null || !SubWorld.is(level)) {
 			return;
+		}
+		if (SubLink.generation() != seenGeneration) {
+			// A new host instance: its epochs start over and its old regions are stale.
+			seenGeneration = SubLink.generation();
+			lastEpoch = -1;
+			pending.clear();
+			current = null;
 		}
 		view.drainCollision((type, off, bytes) -> read(view, type, off, bytes), 256);
 		apply(level);

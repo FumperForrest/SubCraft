@@ -41,9 +41,11 @@ public final class SubClient {
 	private static Screen pauseWeOpened;
 
 	private static int lastTeleportSeq = -1;
+	private static int seenGeneration;
 	private static int teleportAck;
 	private static boolean teleportPending;
 	private static LocalPlayer lastPlayer;
+	private static LocalPlayer deadPlayer;
 	private static Vec3 holdPos;
 	private static long holdSinceMs;
 	private static LocalPlayer eyePlayer;
@@ -102,6 +104,12 @@ public final class SubClient {
 		}
 		InputBridge.drain(minecraft, view);
 
+		// A new host instance is a new session: it decides where the player is, whatever its
+		// teleport counter says (it starts over at its own first value).
+		if (SubLink.generation() != seenGeneration) {
+			seenGeneration = SubLink.generation();
+			lastTeleportSeq = -1;
+		}
 		LocalPlayer player = minecraft.player;
 		if (player == null) {
 			lastPlayer = null;
@@ -152,8 +160,29 @@ public final class SubClient {
 
 	/** End of every client tick. */
 	public static void clientTick(Minecraft minecraft) {
+		handleDeath(minecraft);
 		holdUntilReady(minecraft);
 		publishTick(minecraft);
+	}
+
+	/**
+	 * The host owns death (MISSION.md 3.4: one death, through the host's flow). Until that flow
+	 * exists (Phase 5) Minecraft reports the death and respawns at once, so its death screen never
+	 * blocks a hidden window; the host then puts the player where it wants with a teleport.
+	 */
+	private static void handleDeath(Minecraft minecraft) {
+		LocalPlayer player = minecraft.player;
+		LinkView view = SubLink.view();
+		if (!linked || player == null || view == null || !(minecraft.screen instanceof net.minecraft.client.gui.screens.DeathScreen)) {
+			return;
+		}
+		if (player != deadPlayer) {
+			deadPlayer = player;
+			view.pushEvent(Proto.EV_PLAYER_DIED, 0, 0, 0, 0, 0, 0, 0);
+			SubCraft.LOG.info("SubCraft: player died; told the host and respawning");
+		}
+		player.respawn();
+		minecraft.setScreen(null);
 	}
 
 	/** Hands the host the raw physics tick so it can interpolate on its own frame clock. */
