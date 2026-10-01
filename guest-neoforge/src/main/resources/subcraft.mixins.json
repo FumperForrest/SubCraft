@@ -6,10 +6,12 @@
   "mixins": [],
   "client": [
     "client.GameRendererInvoker",
+    "client.GuiMixin",
     "client.InputConstantsMixin",
     "client.LevelRendererMixin",
     "client.MinecraftMixin",
-    "client.MouseHandlerInvoker"
+    "client.MouseHandlerInvoker",
+    "client.WorldOpenFlowsMixin"
   ],
   "injectors": { "defaultRequire": 1 }
 }

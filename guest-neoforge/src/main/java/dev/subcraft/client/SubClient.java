@@ -318,14 +318,16 @@ public final class SubClient {
 
 	private static void diagnostics(Minecraft minecraft) {
 		long now = System.currentTimeMillis();
-		if (!DIAGNOSTICS || now - lastDiagMs < 5000) {
+		if (!DIAGNOSTICS || now - lastDiagMs < 1000) {
 			return;
 		}
 		lastDiagMs = now;
 		Runtime rt = Runtime.getRuntime();
-		SubCraft.LOG.info("SubCraft diag: frame {} fps {} pos ({}, {}, {}) flags {} heap {}/{} MB", frameCounter, minecraft.getFps(),
-			String.format("%.2f", mc.x), String.format("%.2f", mc.y), String.format("%.2f", mc.z), Integer.toBinaryString(mc.flags),
-			(rt.totalMemory() - rt.freeMemory()) >> 20, rt.maxMemory() >> 20);
+		LocalPlayer player = minecraft.player;
+		SubCraft.LOG.info("SubCraft diag: frame {} fps {} pos ({}, {}, {}) flags {} heap {}/{} MB keyUp {} forward {} paused {} screen {}", frameCounter,
+			minecraft.getFps(), String.format("%.2f", mc.x), String.format("%.2f", mc.y), String.format("%.2f", mc.z), Integer.toBinaryString(mc.flags),
+			(rt.totalMemory() - rt.freeMemory()) >> 20, rt.maxMemory() >> 20, minecraft.options.keyUp.isDown(),
+			player != null ? player.input.forwardImpulse : 0, minecraft.isPaused(), minecraft.screen);
 	}
 
 	/** End of the frame: render at most once per host frame instead of spinning freely. */
@@ -362,6 +364,8 @@ public final class SubClient {
 		options.simulationDistance().set(6);
 		options.autoJump().set(false);
 		options.onboardAccessibility = false;
+		// Tutorial toasts ("Look around", "Move") would sit in the overlay forever.
+		minecraft.getTutorial().setStep(net.minecraft.client.tutorial.TutorialSteps.NONE);
 		options.getSoundSourceOptionInstance(SoundSource.MUSIC).set(0.0);
 		options.save();
 	}

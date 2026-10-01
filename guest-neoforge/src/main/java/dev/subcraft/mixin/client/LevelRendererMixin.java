@@ -1,5 +1,6 @@
 package dev.subcraft.mixin.client;
 
+import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.mojang.blaze3d.systems.RenderSystem;
 import dev.subcraft.client.SubClient;
 import net.minecraft.client.Camera;
@@ -8,6 +9,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.core.BlockPos;
 import org.joml.Matrix4f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -31,5 +33,14 @@ public abstract class LevelRendererMixin {
 			RenderSystem.clear(16640, Minecraft.ON_OSX); // GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT
 			ci.cancel();
 		}
+	}
+
+	/**
+	 * "Loading terrain" waits until the player's section is compiled, which never happens while
+	 * the world pass is skipped.
+	 */
+	@ModifyReturnValue(method = "isSectionCompiled", at = @At("RETURN"))
+	private boolean subcraft$sectionReady(boolean original, BlockPos pos) {
+		return original || SubClient.hostDrawsWorld();
 	}
 }

@@ -8,11 +8,10 @@ import dev.subcraft.link.Proto;
 import java.nio.ByteBuffer;
 import net.minecraft.client.Minecraft;
 import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL30;
 
 /**
  * Copies Minecraft's main render target (hand + HUD + screens on a transparent background) into
- * the overlay triple buffer. CPU path: glReadPixels straight into the shared mapping (rows
+ * the overlay triple buffer. CPU path: glGetTexImage straight into the shared mapping (rows
  * bottom-up). A PBO or shared-texture path can replace it if it shows up in frame times.
  */
 public final class OverlayExporter {
@@ -35,10 +34,11 @@ public final class OverlayExporter {
 				minecraft.getWindow().getScreenWidth(), minecraft.getWindow().getScreenHeight());
 		}
 		ByteBuffer dst = view.buffer().slice((int) view.overlayBackSlotOffset(), width * height * 4);
-		GlStateManager._glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, target.frameBufferId);
+		// Read the colour texture itself: unambiguous about which framebuffer is bound.
+		GlStateManager._bindTexture(target.getColorTextureId());
 		GL11.glPixelStorei(GL11.GL_PACK_ALIGNMENT, 4);
-		GL11.glReadPixels(0, 0, width, height, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, dst);
-		GlStateManager._glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, 0);
+		GL11.glGetTexImage(GL11.GL_TEXTURE_2D, 0, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, dst);
+		GlStateManager._bindTexture(0);
 		view.publishOverlay(width, height, true, nextFrameId++);
 	}
 }

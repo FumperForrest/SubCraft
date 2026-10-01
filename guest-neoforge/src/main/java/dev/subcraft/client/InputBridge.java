@@ -16,6 +16,7 @@ public final class InputBridge {
 	private static final boolean[] KEYS = new boolean[GLFW.GLFW_KEY_LAST + 1];
 	private static final boolean[] BUTTONS = new boolean[GLFW.GLFW_MOUSE_BUTTON_LAST + 1];
 	private static int clickLogs;
+	private static int keyLogs;
 
 	private InputBridge() {
 	}
@@ -37,6 +38,9 @@ public final class InputBridge {
 					return;
 				}
 				KEYS[code] = a != 0;
+				if (SubClient.DIAGNOSTICS && keyLogs++ < 40) {
+					SubCraft.LOG.info("SubCraft: key {} action {} mods {} (screen {})", code, a, b, minecraft.screen);
+				}
 				minecraft.keyboardHandler.keyPress(handle, code, c, a, b);
 			}
 			case Proto.IN_MOUSE_BUTTON -> {

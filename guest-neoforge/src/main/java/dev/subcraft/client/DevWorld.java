@@ -3,6 +3,7 @@ package dev.subcraft.client;
 import dev.subcraft.SubCraft;
 import dev.subcraft.world.SubWorld;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.AccessibilityOnboardingScreen;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.Difficulty;
@@ -33,7 +34,11 @@ public final class DevWorld {
 				lastLogMs = now;
 				SubCraft.LOG.info("SubCraft: waiting on screen {} before opening the SubCraft world", minecraft.screen.getClass().getName());
 			}
-			if (minecraft.screen == null) {
+			// First-launch prompts (accessibility onboarding) stand in front of the title screen;
+			// nobody can click them in a hidden window.
+			if (minecraft.screen == null || minecraft.screen instanceof AccessibilityOnboardingScreen) {
+				minecraft.options.onboardAccessibility = false;
+				minecraft.options.save();
 				minecraft.setScreen(new TitleScreen());
 			}
 			return;
