@@ -7,7 +7,7 @@ namespace SubCraft.Link
 	public static class Proto
 	{
 		public const uint Magic = 0x43425553; // "SUBC"
-		public const uint Version = 11;
+		public const uint Version = 12;
 		public const string LinkFileName = "link.bin";
 		public const ulong HeartbeatTimeoutNs = 2_000_000_000UL;
 
@@ -17,6 +17,7 @@ namespace SubCraft.Link
 		public const long OffMcState = 0x200;
 		public const long OffOverlayCtl = 0x300;
 		public const long OffOverlaySlotHdr = 0x340;
+		public const long OffCommandBox = 0x400;
 		public const long OffInputRing = 0x1000;
 		public const long OffCreatureTable = 0x12000;
 		public const long OffEventRing = 0x17000;
@@ -56,6 +57,11 @@ namespace SubCraft.Link
 		public const long OcState = 0x00, OcFramesPublished = 0x08;
 		public const int OverlayDirty = 1 << 2;
 		public const long SlotHdrBytes = 0x40, ShWidth = 0x00, ShHeight = 0x04, ShFlags = 0x08, ShFrameId = 0x10;
+
+		// ---- Command box (relative to OffCommandBox, v12) ----
+		public const long CbSeq = 0x00, CbAck = 0x04, CbStatus = 0x08, CbTextLen = 0x0C, CbText = 0x10, CbReply = 0x400;
+		public const int CommandTextBytes = 1008, CommandReplyBytes = 1024;
+		public const int CmdOk = 0, CmdFailed = 1, CmdUnknown = 2;
 
 		// ---- Input ring (relative to OffInputRing) ----
 		public const int InputRingEntries = 4096;

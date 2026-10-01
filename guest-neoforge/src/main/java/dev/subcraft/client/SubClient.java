@@ -103,6 +103,7 @@ public final class SubClient {
 			InputBridge.releaseAll(minecraft);
 		}
 		InputBridge.drain(minecraft, view);
+		DebugCommands.poll(minecraft, view);
 
 		// A new host instance is a new session: it decides where the player is, whatever its
 		// teleport counter says (it starts over at its own first value).

@@ -5,12 +5,16 @@
   "compatibilityLevel": "JAVA_21",
   "mixins": [],
   "client": [
+    "client.ClientLevelMixin",
+    "client.CompositeRenderTypeAccessor",
+    "client.CompositeStateAccessor",
     "client.GameRendererInvoker",
     "client.GuiMixin",
     "client.InputConstantsMixin",
     "client.LevelRendererMixin",
     "client.MinecraftMixin",
     "client.MouseHandlerInvoker",
+    "client.TextureStateShardInvoker",
     "client.WorldOpenFlowsMixin"
   ],
   "injectors": { "defaultRequire": 1 }

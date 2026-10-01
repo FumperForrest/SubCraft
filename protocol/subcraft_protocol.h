@@ -26,7 +26,7 @@
 namespace subcraft::proto
 {
 	inline constexpr std::uint32_t kMagic = 0x43425553;  // "SUBC"
-	inline constexpr std::uint32_t kVersion = 11;
+	inline constexpr std::uint32_t kVersion = 12;
 
 	// Default file locations: macOS $TMPDIR/subcraft/link.bin, Windows %LOCALAPPDATA%\SubCraft\link.bin.
 	// Both sides accept an override (Java -Dsubcraft.link=<path>, host config, env SUBCRAFT_LINK).
@@ -41,6 +41,7 @@ namespace subcraft::proto
 	inline constexpr std::uint64_t kOffMcState = 0x200;
 	inline constexpr std::uint64_t kOffOverlayCtl = 0x300;
 	inline constexpr std::uint64_t kOffOverlaySlotHdr = 0x340;  // 3 x 0x40
+	inline constexpr std::uint64_t kOffCommandBox = 0x400;      // host -> MC debug commands (v12), see CommandBox
 	inline constexpr std::uint64_t kOffInputRing = 0x1000;
 	inline constexpr std::uint64_t kOffCreatureTable = 0x12000;  // host -> MC, see CreatureTable
 	inline constexpr std::uint64_t kOffEventRing = 0x17000;      // MC -> host, see McEvent
@@ -171,6 +172,26 @@ namespace subcraft::proto
 		std::uint8_t  reserved[0x40 - 0x18];
 	};
 	static_assert(sizeof(OverlaySlotHdr) == 0x40);
+
+	// ---- command box @0x400 (host -> MC, v12) ---------------------------------------------------
+	// One debug command at a time (dev harness, MISSION.md rule 12). The host writes text and
+	// textLen, then releases seq = ack + 1. Minecraft runs it ("/..." = a Minecraft command as an
+	// operator at the player; "subcraft ..." = SubCraft's own, e.g. "subcraft dump <file> <radius>"),
+	// writes status and reply, then releases ack = seq.
+	inline constexpr std::uint32_t kCommandTextBytes = 1008;
+	inline constexpr std::uint32_t kCommandReplyBytes = 1024;
+
+	struct CommandBox
+	{
+		std::uint32_t seq;
+		std::uint32_t ack;
+		std::int32_t  status;   // 0 ok, 1 failed, 2 unknown command
+		std::uint32_t textLen;  // bytes of UTF-8 in text
+		char          text[kCommandTextBytes];
+		char          reply[kCommandReplyBytes];  // UTF-8, NUL-terminated (truncated)
+	};
+	static_assert(sizeof(CommandBox) == 0x800);
+	static_assert(kOffCommandBox + sizeof(CommandBox) <= 0x1000);
 
 	// ---- input ring @0x1000 (host produces, MC consumes) ------------------------------------
 	inline constexpr std::uint32_t kInputRingEntries = 4096;  // power of two

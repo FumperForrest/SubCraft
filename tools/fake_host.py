@@ -4,7 +4,10 @@ Ported from SkyCraft's tools/fake_skyrim.py (MIT). Creates the shared link file,
 floor plus a step of collision, holds W and then Space, prints what Minecraft reports, checks the
 player actually moved, and saves the newest overlay frame to a PNG.
 
-    python3 tools/fake_host.py [seconds] [out.png]
+    python3 tools/fake_host.py [seconds] [out.png] [--scene out.scdump]
+
+With --scene, after the checks it builds the Phase 0c test scene with Minecraft commands (through
+the command box) and asks Minecraft to dump it in the capture-dump format.
 
 Python 3.9+, standard library only. Exit code 0 when every check passed.
 """
@@ -18,11 +21,12 @@ import zlib
 
 # ---- protocol (protocol/subcraft_protocol.h; tools/check_layout.sh keeps that header honest) ----
 MAGIC = 0x43425553
-VERSION = 11
+VERSION = 12
 OFF_HOST = 0x100
 OFF_MC = 0x200
 OFF_OVL = 0x300
 OFF_OVL_HDR = 0x340
+OFF_CMD = 0x400
 OFF_IN = 0x1000
 OFF_CREATURES = 0x12000
 OFF_EVENTS = 0x17000
@@ -121,6 +125,27 @@ class Link:
         blocks = [struct.pack("<iiiBBH8Q", x, y, z, 1, 0, 0, *([0xFFFFFFFFFFFFFFFF] * 8)) for (x, y, z) in solid]
         self.send_collision(COL_REGION, struct.pack("<6iII", *box, epoch, len(blocks)) + b"".join(blocks))
 
+    def command(self, text, timeout=30.0):
+        """Runs one command in Minecraft through the command box; returns (status, reply)."""
+        seq, ack = struct.unpack_from("<II", self.m, OFF_CMD)
+        data = text.encode("utf-8")[:1008]
+        self.m[OFF_CMD + 0x10:OFF_CMD + 0x10 + len(data)] = data
+        struct.pack_into("<I", self.m, OFF_CMD + 0x0C, len(data))
+        struct.pack_into("<I", self.m, OFF_CMD, ack + 1)
+        deadline = time.time() + timeout
+        while time.time() < deadline:
+            self.heartbeat()
+            self.host_state()
+            if struct.unpack_from("<I", self.m, OFF_CMD + 4)[0] == ack + 1:
+                status = struct.unpack_from("<i", self.m, OFF_CMD + 8)[0]
+                reply = bytes(self.m[OFF_CMD + 0x400:OFF_CMD + 0x800]).split(b"\0", 1)[0].decode("utf-8", "replace")
+                return status, reply
+            time.sleep(1 / 60)
+        return -1, "timed out"
+
+    def host_state(self):
+        self.write_host_state(HOST_IN_GAME, SPAWN, 0.0, 10.0, 1)
+
     # -- MC -> host --
     def mc_heartbeat(self):
         return struct.unpack_from("<Q", self.m, 0x18)[0]
@@ -204,9 +229,33 @@ def rss_mb(pid):
         return None
 
 
+# Phase 0c test scene, on the fake floor (ghost terrain at y 63): a small cobblestone hut with
+# glass, leaves, a grass block, torches, glowstone and a chest.
+SCENE = [
+    "/fill 1 64 2 7 70 9 minecraft:air",
+    "/fill 2 64 3 6 64 7 minecraft:cobblestone",
+    "/fill 2 65 3 2 67 7 minecraft:cobblestone",
+    "/fill 3 65 3 6 66 3 minecraft:cobblestone",
+    "/setblock 3 65 7 minecraft:glass",
+    "/setblock 4 65 7 minecraft:glass",
+    "/fill 5 65 7 6 66 7 minecraft:oak_leaves[persistent=true]",
+    "/setblock 6 65 5 minecraft:grass_block",
+    "/setblock 4 65 5 minecraft:chest[facing=east]",
+    "/setblock 6 67 3 minecraft:glowstone",
+    "/setblock 3 66 5 minecraft:wall_torch[facing=east]",
+    "/setblock 5 65 4 minecraft:torch",
+]
+
+
 def main():
-    seconds = float(sys.argv[1]) if len(sys.argv) > 1 else 60.0
-    out_png = sys.argv[2] if len(sys.argv) > 2 else os.path.join("tools", "out", "overlay.png")
+    args = [a for a in sys.argv[1:]]
+    scene_out = None
+    if "--scene" in args:
+        i = args.index("--scene")
+        scene_out = os.path.abspath(args[i + 1])
+        del args[i:i + 2]
+    seconds = float(args[0]) if len(args) > 0 else 60.0
+    out_png = args[1] if len(args) > 1 else os.path.join("tools", "out", "overlay.png")
     path = link_path()
     link = Link(path)
     print(f"fake host: pid {os.getpid()}, link {path} ({SIZE >> 20} MiB, protocol v{VERSION})")
@@ -307,6 +356,13 @@ def main():
               f"({opaque} of {samples} sampled pixels visible) -> {out_png}")
     else:
         check(False, "received an overlay frame")
+    if scene_out and linked_at is not None:
+        for c in SCENE:
+            st, reply = link.command(c)
+            if st != 0:
+                print(f"  command {c!r}: status {st} {reply}")
+        st, reply = link.command(f"subcraft dump {scene_out} 6 4 66 5", timeout=60)
+        check(st == 0, f"scene dump: {reply}")
     if peak_rss:
         print(f"  Minecraft peak RSS seen: {peak_rss} MB")
     if link.render_msgs:

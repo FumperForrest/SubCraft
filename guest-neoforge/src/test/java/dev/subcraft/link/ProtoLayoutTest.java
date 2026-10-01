@@ -131,6 +131,15 @@ class ProtoLayoutTest {
 	}
 
 	@Test
+	void commandBox() {
+		assertEquals(Proto.OFF_COMMAND_BOX, constant("kOffCommandBox"));
+		assertEquals(Proto.COMMAND_TEXT_BYTES, constant("kCommandTextBytes"));
+		assertEquals(Proto.COMMAND_REPLY_BYTES, constant("kCommandReplyBytes"));
+		fields("CommandBox", Map.of("seq", Proto.CB_SEQ, "ack", Proto.CB_ACK, "status", Proto.CB_STATUS, "textLen", Proto.CB_TEXT_LEN,
+			"text", Proto.CB_TEXT, "reply", Proto.CB_REPLY));
+	}
+
+	@Test
 	void rings() {
 		assertEquals(Proto.INPUT_EVENT_BYTES, size("InputEvent"));
 		fields("InputEvent", Map.of("type", 0L, "code", 2L, "a", 4L, "b", 8L, "c", 12L));

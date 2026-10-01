@@ -9,7 +9,7 @@ public final class Proto {
 	}
 
 	public static final int MAGIC = 0x43425553; // "SUBC"
-	public static final int VERSION = 11;
+	public static final int VERSION = 12;
 	public static final String LINK_FILE_NAME = "link.bin";
 	public static final long HEARTBEAT_TIMEOUT_NS = 2_000_000_000L;
 
@@ -19,6 +19,7 @@ public final class Proto {
 	public static final long OFF_MC_STATE = 0x200;
 	public static final long OFF_OVERLAY_CTL = 0x300;
 	public static final long OFF_OVERLAY_SLOT_HDR = 0x340;
+	public static final long OFF_COMMAND_BOX = 0x400;
 	public static final long OFF_INPUT_RING = 0x1000;
 	public static final long OFF_CREATURE_TABLE = 0x12000;
 	public static final long OFF_EVENT_RING = 0x17000;
@@ -125,6 +126,11 @@ public final class Proto {
 	public static final long SH_HEIGHT = 0x04;
 	public static final long SH_FLAGS = 0x08;
 	public static final long SH_FRAME_ID = 0x10;
+
+	// ---- Command box (relative to OFF_COMMAND_BOX, v12) ----
+	public static final long CB_SEQ = 0x00, CB_ACK = 0x04, CB_STATUS = 0x08, CB_TEXT_LEN = 0x0C, CB_TEXT = 0x10, CB_REPLY = 0x400;
+	public static final int COMMAND_TEXT_BYTES = 1008, COMMAND_REPLY_BYTES = 1024;
+	public static final int CMD_OK = 0, CMD_FAILED = 1, CMD_UNKNOWN = 2;
 
 	// ---- Input ring (relative to OFF_INPUT_RING) ----
 	public static final int INPUT_RING_ENTRIES = 4096;

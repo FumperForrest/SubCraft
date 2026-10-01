@@ -96,6 +96,14 @@ namespace SubCraft.Tests
 			foreach (var kv in ms) Assert.True(kv.Value == F("McState", kv.Key), "McState." + kv.Key);
 			Assert.Equal(Proto.SlotHdrBytes, Size("OverlaySlotHdr"));
 			Assert.Equal(Proto.ShFrameId, F("OverlaySlotHdr", "frameId"));
+			Assert.Equal(Proto.OffCommandBox, C("kOffCommandBox"));
+			Assert.Equal(Proto.CommandTextBytes, C("kCommandTextBytes"));
+			Assert.Equal(Proto.CommandReplyBytes, C("kCommandReplyBytes"));
+			Assert.Equal(Proto.CbAck, F("CommandBox", "ack"));
+			Assert.Equal(Proto.CbStatus, F("CommandBox", "status"));
+			Assert.Equal(Proto.CbTextLen, F("CommandBox", "textLen"));
+			Assert.Equal(Proto.CbText, F("CommandBox", "text"));
+			Assert.Equal(Proto.CbReply, F("CommandBox", "reply"));
 			Assert.Equal(Proto.InputEventBytes, Size("InputEvent"));
 			Assert.Equal(Proto.EventBytes, Size("McEvent"));
 			Assert.Equal(Proto.CreatureRecordBytes, Size("CreatureRecord"));

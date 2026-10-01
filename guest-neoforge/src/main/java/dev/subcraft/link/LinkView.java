@@ -263,6 +263,35 @@ public final class LinkView {
 		setIntRelease(b + MS_SEQ, seq + 2);
 	}
 
+	// ---- command box (v12) ----
+
+	/** A command the host is waiting on, or null. */
+	public record Command(int seq, String text) {
+	}
+
+	public Command pendingCommand() {
+		long b = OFF_COMMAND_BOX;
+		int seq = getIntAcquire(b + CB_SEQ);
+		if (seq == getInt(b + CB_ACK)) {
+			return null;
+		}
+		int len = Math.min(Math.max(getInt(b + CB_TEXT_LEN), 0), COMMAND_TEXT_BYTES);
+		byte[] text = new byte[len];
+		this.buf.get((int) (b + CB_TEXT), text);
+		return new Command(seq, new String(text, StandardCharsets.UTF_8));
+	}
+
+	/** Answers command {@code seq}: reply (truncated to fit), status, then ack. */
+	public void completeCommand(int seq, int status, String reply) {
+		long b = OFF_COMMAND_BOX;
+		byte[] r = reply.getBytes(StandardCharsets.UTF_8);
+		int n = Math.min(r.length, COMMAND_REPLY_BYTES - 1);
+		this.buf.put((int) (b + CB_REPLY), r, 0, n);
+		this.buf.put((int) (b + CB_REPLY + n), (byte) 0);
+		putInt(b + CB_STATUS, status);
+		setIntRelease(b + CB_ACK, seq);
+	}
+
 	// ---- input ring (consume) ----
 
 	public interface InputSink {

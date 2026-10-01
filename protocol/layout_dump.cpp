@@ -47,6 +47,9 @@ int main()
 	C(kOffMcState);
 	C(kOffOverlayCtl);
 	C(kOffOverlaySlotHdr);
+	C(kOffCommandBox);
+	C(kCommandTextBytes);
+	C(kCommandReplyBytes);
 	C(kOffInputRing);
 	C(kOffCreatureTable);
 	C(kOffEventRing);
@@ -110,6 +113,10 @@ int main()
 
 	S(OverlaySlotHdr);
 	F(OverlaySlotHdr, width); F(OverlaySlotHdr, height); F(OverlaySlotHdr, flags); F(OverlaySlotHdr, frameId);
+	endStruct();
+
+	S(CommandBox);
+	F(CommandBox, seq); F(CommandBox, ack); F(CommandBox, status); F(CommandBox, textLen); F(CommandBox, text); F(CommandBox, reply);
 	endStruct();
 
 	S(InputEvent);
