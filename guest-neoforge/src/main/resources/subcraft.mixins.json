@@ -4,6 +4,7 @@
   "package": "dev.subcraft.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
+    "CubeVoxelShapeInvoker",
     "EntityMixin"
   ],
   "client": [

@@ -345,11 +345,10 @@ namespace SubCraft.World
 
 		private void AddCollider(Collider c, Vector3 lo, Vector3 hi)
 		{
-			uint flags = c.gameObject.layer == LayerID.TerrainCollider
-				? Proto.TriTerrain | ((uint)Proto.MatRock << Proto.TriMaterialShift)
-				: (c.GetComponentInParent<Base>() != null || c.GetComponentInParent<SubRoot>() != null
-					? Proto.TriStructure | ((uint)Proto.MatMetal << Proto.TriMaterialShift)
-					: (uint)Proto.MatRock << Proto.TriMaterialShift);
+			bool terrain = c.gameObject.layer == LayerID.TerrainCollider;
+			bool structure = !terrain && (c.GetComponentInParent<Base>() != null || c.GetComponentInParent<SubRoot>() != null);
+			byte objMat = terrain ? Proto.MatRock : SurfaceMaterial(Utils.GetObjectSurfaceType(c.gameObject), structure ? Proto.MatMetal : Proto.MatRock);
+			uint flags = (terrain ? Proto.TriTerrain : structure ? Proto.TriStructure : 0u) | ((uint)objMat << Proto.TriMaterialShift);
 			var m = c.transform.localToWorldMatrix;
 			switch (c)
 			{
@@ -359,8 +358,11 @@ namespace SubCraft.World
 					{
 						for (int i = 0; i + 2 < cached.Indices.Length; i += 3)
 						{
-							Tri(m.MultiplyPoint3x4(cached.Vertices[cached.Indices[i]]), m.MultiplyPoint3x4(cached.Vertices[cached.Indices[i + 1]]),
-								m.MultiplyPoint3x4(cached.Vertices[cached.Indices[i + 2]]), flags, lo, hi);
+							var a = m.MultiplyPoint3x4(cached.Vertices[cached.Indices[i]]);
+							var b = m.MultiplyPoint3x4(cached.Vertices[cached.Indices[i + 1]]);
+							var d = m.MultiplyPoint3x4(cached.Vertices[cached.Indices[i + 2]]);
+							uint f = terrain ? Proto.TriTerrain | ((uint)TerrainMaterial(a, b, d) << Proto.TriMaterialShift) : flags;
+							Tri(a, b, d, f, lo, hi);
 						}
 					}
 					else
@@ -379,6 +381,69 @@ namespace SubCraft.World
 					var half = Mathf.Max(0, cc.height / 2 - cc.radius);
 					Ellipsoid(m, cc.center, Vector3.one * cc.radius, half, axis, flags, lo, hi);
 					break;
+			}
+		}
+
+		private readonly Dictionary<long, byte> terrainMaterials = new Dictionary<long, byte>();
+
+		/// <summary>
+		/// Subnautica's own surface type for a terrain triangle (what its footsteps and impact effects
+		/// use: <c>MaterialDatabase.GetTerrainMaterial</c>, the voxel block type at the point plus the
+		/// slope), cached per block and 10-degree slope band.
+		/// </summary>
+		private byte TerrainMaterial(Vector3 a, Vector3 b, Vector3 c)
+		{
+			var n = Vector3.Cross(b - a, c - a);
+			if (n.sqrMagnitude < 1e-12f)
+			{
+				return Proto.MatRock;
+			}
+			n.Normalize();
+			var centre = (a + b + c) / 3f;
+			int band = (int)(Vector3.Angle(n, Vector3.up) / 10f);
+			long key = ((long)Mathf.FloorToInt(centre.x) & 0xFFFFF) << 40 | ((long)Mathf.FloorToInt(centre.y) & 0xFFFFF) << 20
+				| ((long)Mathf.FloorToInt(centre.z) & 0xFFFFF);
+			key = key * 19 + band;
+			if (terrainMaterials.TryGetValue(key, out byte mat))
+			{
+				return mat;
+			}
+			string name = MaterialDatabase.GetTerrainMaterial(centre, n);
+			var type = VFXSurfaceTypes.none;
+			if (!string.IsNullOrEmpty(name))
+			{
+				try
+				{
+					type = (VFXSurfaceTypes)Enum.Parse(typeof(VFXSurfaceTypes), name, true);
+				}
+				catch (ArgumentException)
+				{
+				}
+			}
+			mat = SurfaceMaterial(type, Proto.MatRock);
+			if (terrainMaterials.Count > 200000)
+			{
+				terrainMaterials.Clear();
+			}
+			terrainMaterials[key] = mat;
+			return mat;
+		}
+
+		internal static byte SurfaceMaterial(VFXSurfaceTypes type, byte fallback)
+		{
+			switch (type)
+			{
+				case VFXSurfaceTypes.sand: return Proto.MatSand;
+				case VFXSurfaceTypes.rock: return Proto.MatRock;
+				case VFXSurfaceTypes.coral: return Proto.MatCoral;
+				case VFXSurfaceTypes.metal:
+				case VFXSurfaceTypes.electronic: return Proto.MatMetal;
+				case VFXSurfaceTypes.glass: return Proto.MatGlass;
+				case VFXSurfaceTypes.organic:
+				case VFXSurfaceTypes.vegetation:
+				case VFXSurfaceTypes.wood: return Proto.MatOrganic;
+				case VFXSurfaceTypes.ionCrystal: return Proto.MatPrecursor;
+				default: return fallback;
 			}
 		}
 

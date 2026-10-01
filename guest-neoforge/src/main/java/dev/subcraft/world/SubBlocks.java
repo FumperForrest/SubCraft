@@ -20,6 +20,12 @@ public final class SubBlocks {
 			.sound(SoundType.STONE)
 			.pushReaction(PushReaction.BLOCK)
 			.isValidSpawn((state, level, pos, type) -> true)
+			// Partial blocks' shapes depend on the position (MaskStore): no per-state shape cache.
+			.dynamicShape()
+			// The player's capsule follows the exact triangles, which the voxels can overshoot by
+			// a sub-voxel: hugging a rock face must not suffocate anyone or black out the view.
+			.isSuffocating((state, level, pos) -> false)
+			.isViewBlocking((state, level, pos) -> false)
 	));
 
 	private SubBlocks() {

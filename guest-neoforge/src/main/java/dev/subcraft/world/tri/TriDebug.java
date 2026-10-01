@@ -17,6 +17,7 @@ public final class TriDebug {
 		// Nearest triangle below the point within 10 blocks, by vertical distance under (x, z).
 		double[] best = {Double.NaN};
 		double[] tmp = new double[6];
+		float[] normal = new float[3];
 		TriStore.query(x - 0.5, y - 10, z - 0.5, x + 0.5, y + 2, z + 0.5, (sec, i) -> {
 			double[] c = new double[3];
 			TriGeometry.closestPointTriangle(x, y, z, sec.v()[i * 9], sec.v()[i * 9 + 1], sec.v()[i * 9 + 2], sec.v()[i * 9 + 3], sec.v()[i * 9 + 4],
@@ -27,14 +28,26 @@ public final class TriDebug {
 				tmp[0] = c[0];
 				tmp[1] = c[1];
 				tmp[2] = c[2];
+				float[] t = sec.v();
+				int o = i * 9;
+				float e1x = t[o + 3] - t[o], e1y = t[o + 4] - t[o + 1], e1z = t[o + 5] - t[o + 2];
+				float e2x = t[o + 6] - t[o], e2y = t[o + 7] - t[o + 1], e2z = t[o + 8] - t[o + 2];
+				float nx = e1y * e2z - e1z * e2y, ny = e1z * e2x - e1x * e2z, nz = e1x * e2y - e1y * e2x;
+				float len = (float) Math.sqrt(nx * nx + ny * ny + nz * nz);
+				normal[0] = nx / len;
+				normal[1] = ny / len;
+				normal[2] = nz / len;
+				tmp[3] = sec.flags()[i] >>> 8 & 0xFF;
 			}
 		});
-		sb.append(Double.isNaN(best[0]) ? "no triangle within the column below" : String.format("nearest triangle point %.2f %.2f %.2f (distance %.3f)", tmp[0], tmp[1], tmp[2], best[0]));
+		sb.append(Double.isNaN(best[0]) ? "no triangle within the column below" : String.format("nearest triangle point %.2f %.2f %.2f (distance %.3f), outward normal %.2f %.2f %.2f, material %d", tmp[0], tmp[1],
+			tmp[2], best[0], normal[0], normal[1], normal[2], (int) tmp[3]));
 		// The collider itself: a 3-block fall from 2 blocks above, standing shape.
 		TriCollider c = TriCollider.get();
 		double[] m = c.resolve(x, y + 2, z, 0.3, 1.8, 0, false, 0, -3, 0);
 		sb.append(String.format("%nfall probe from y %.2f: moved %.3f (stopped at %.3f), touched %s, considered %d triangles", y + 2, m[1], y + 2 + m[1],
 			c.touched, c.lastCount()));
+		sb.append('\n').append(dev.subcraft.world.ghost.GhostTerrain.stats());
 		return sb.toString();
 	}
 }

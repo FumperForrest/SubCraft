@@ -5,6 +5,7 @@ import static dev.subcraft.link.Proto.*;
 import dev.subcraft.SubCraft;
 import dev.subcraft.link.LinkView;
 import dev.subcraft.link.SubLink;
+import dev.subcraft.world.ghost.GhostTerrain;
 import dev.subcraft.world.tri.TriStore;
 import java.util.ArrayDeque;
 import net.minecraft.core.BlockPos;
@@ -17,8 +18,9 @@ import net.minecraft.world.level.block.state.BlockState;
  * Applies the host's collision ring to the SubCraft world as ghost terrain blocks. Runs on the
  * server thread; spreads large regions over several ticks.
  *
- * Phase 0a: any occupied cell becomes a full terrain block (the "temporary collision injection"
- * MISSION.md allows). Phase 1 replaces this with per-chunk masks, patch stamps and dry volumes.
+ * kColTris (Subnautica): triangles go to the player collider ({@link TriStore}) and are voxelized
+ * into ghost terrain ({@link GhostTerrain}). kColRegion (fake_host.py): any occupied cell becomes
+ * a full terrain block.
  */
 public final class CollisionConsumer {
 	private static final int BLOCK_BUDGET_PER_TICK = 20_000;
@@ -50,9 +52,11 @@ public final class CollisionConsumer {
 			pending.clear();
 			current = null;
 			TriStore.clear();
+			GhostTerrain.clear();
 		}
 		view.drainCollision((type, off, bytes) -> read(view, type, off, bytes), 256);
 		apply(level);
+		GhostTerrain.tick(level);
 	}
 
 	private static void read(LinkView v, int type, long off, int bytes) {
@@ -67,6 +71,7 @@ public final class CollisionConsumer {
 				pending.clear();
 				current = null;
 				TriStore.clear();
+				GhostTerrain.clear();
 				SubCraft.LOG.info("SubCraft: collision epoch {}", epoch);
 			}
 			return;
@@ -97,7 +102,7 @@ public final class CollisionConsumer {
 		pending.add(new Region(minX, minY, minZ, maxX, maxY, maxZ, java.util.Arrays.copyOf(solid, n)));
 	}
 
-	/** kColTris: a section's exact triangles for the player collider (and, next, the block layer). */
+	/** kColTris: a section's exact triangles, for the player collider and the ghost-terrain blocks. */
 	private static void readTris(LinkView v, long off, int bytes) {
 		int minX = v.getInt(off), minY = v.getInt(off + 4), minZ = v.getInt(off + 8);
 		int count = v.getInt(off + 28);
@@ -115,6 +120,7 @@ public final class CollisionConsumer {
 			flags[i] = v.getInt(t + 36);
 		}
 		TriStore.put(minX >> 4, minY >> 4, minZ >> 4, verts, flags);
+		GhostTerrain.sectionChanged(minX >> 4, minY >> 4, minZ >> 4);
 		triRegions++;
 		triTotal += count;
 		if (triRegions <= 5 || triRegions % 200 == 0) {
