@@ -1,0 +1,6 @@
+<!-- Copy to GamePath.props (untracked) if Subnautica isn't in Steam's default folder. -->
+<Project>
+  <PropertyGroup>
+    <SubnauticaDir>/path/to/steamapps/common/Subnautica</SubnauticaDir>
+  </PropertyGroup>
+</Project>
