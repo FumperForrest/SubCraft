@@ -11,7 +11,9 @@ This file is the practical how-to for this repo and this machine.
   Gradle's toolchain (foojay) provisions Java 21 for compiling and running Minecraft.
 - Subnautica: `~/Library/Application Support/Steam/steamapps/common/Subnautica` (BepInEx 5.4.23.5
   already installed, Steam launch options route through it). Launch with `open steam://run/264710`.
-- .NET SDK 10 (`dotnet`), clang++, Python 3.9 (stdlib only: no numpy/PIL).
+- .NET SDK 10 (`dotnet`), ilspycmd (`~/.dotnet/tools`, needs `DOTNET_ROLL_FORWARD=Major`), clang++,
+  Python 3.9 (stdlib only: no numpy/PIL).
+- Subnautica: Unity 2019.4.36f1 Mono, OpenGL 4.1, saves in `Subnautica.app/SNAppData/SavedGames`.
 - SkyCraft reference clone: `../SkyCraft`. It targets Minecraft 26.3/Fabric (SDL, renderpearl),
   so its client code ports as ideas, not line for line.
 
@@ -33,7 +35,17 @@ tools/check_layout.sh            # header -> layout.json still matches (use --wr
 cd guest-neoforge && ./gradlew build test      # build the mod, run the no-game tests
 cd guest-neoforge && ./gradlew runClient       # dev client (2 GB heap), game dir guest-neoforge/run
 python3 tools/fake_host.py 60 tools/out/overlay.png   # stand-in Subnautica for one-game tests
+tools/mc_dev.sh start|stop|status          # exactly one dev Minecraft (never pkill by hand)
+cd host-subnautica && dotnet build SubCraft.Host.csproj   # build + deploy plugin (game must be closed)
+cd host-subnautica/tests && dotnet test    # host no-game tests (net10.0)
+tools/sn_dev.sh start|stop|status|log      # Subnautica via Steam, 960x540; stop restores Sean's prefs
+python3 tools/sn_cmd.py '{"cmd":"dump"}'   # dev harness; --scenario tools/scenarios/*.jsonl
+python3 tools/fake_minecraft.py 60         # stand-in Minecraft for one-game Subnautica tests
 ```
+
+Harness rules: the dev save slot is `slot0002` (BepInEx config `DevSlot`); never load, save or
+touch `slot0000`/`slot0001` (Sean's). Back up `SNAppData/SavedGames` before save-related work.
+Run `dotnet build-server shutdown` after builds to free memory before launching games.
 
 ## Rules of thumb
 

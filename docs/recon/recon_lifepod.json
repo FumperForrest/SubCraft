@@ -1,0 +1,1230 @@
+{
+  "camera": {
+    "name": "MainCamera",
+    "renderingPath": "DeferredShading",
+    "actualRenderingPath": "DeferredShading",
+    "allowHDR": true,
+    "allowMSAA": false,
+    "clearFlags": "Skybox",
+    "depthTextureMode": "Depth",
+    "near": 0.03,
+    "far": 1700.0,
+    "fov": 60.0,
+    "cullingMask": 1711275799,
+    "components": [
+      "UnityEngine.Transform",
+      "UnityEngine.Camera",
+      "UnityEngine.FlareLayer",
+      "CullingCamera (disabled)",
+      "ShaderGlobals",
+      "WaterscapeVolumeOnCamera",
+      "WaterSurfaceOnCamera",
+      "WaterSunShaftsOnCamera (disabled)",
+      "WBOIT",
+      "LensWaterController",
+      "LensWater (disabled)",
+      "RadiationsScreenFX (disabled)",
+      "ExplosionScreenFX (disabled)",
+      "DamageScreenFX (disabled)",
+      "TeleportScreenFX (disabled)",
+      "WarpScreenFX (disabled)",
+      "MesmerizedScreenFX (disabled)",
+      "MapRoomCameraScreenFX (disabled)",
+      "TelepathyScreenFX (disabled)",
+      "SonarScreenFX (disabled)",
+      "EndSequenceWarpScreenFX (disabled)",
+      "RadialBlurScreenFX (disabled)",
+      "CyclopsSmokeScreenFX (disabled)",
+      "UnityEngine.PostProcessing.PostProcessingBehaviour",
+      "ColorCorrection",
+      "VisualizeDepth (disabled)",
+      "UWE.FrameTimeOverlay (disabled)",
+      "LensWaterController",
+      "RadiationsScreenFXController",
+      "UnityStandardAssets.ImageEffects.Grayscale (disabled)",
+      "MapRoomCameraScreenFXController",
+      "TeleportScreenFXController",
+      "WarpScreenFXController",
+      "MesmerizedScreenFXController",
+      "CyclopsSmokeScreenFXController",
+      "TelepathyScreenFXController",
+      "EndSequenceWarpScreenFXController",
+      "RadialBlurScreenFXController",
+      "MainCamera",
+      "MainCameraV2",
+      "UwePostProcessingManager",
+      "UnityEngine.StreamingController"
+    ],
+    "commandBuffers": {
+      "BeforeForwardAlpha": [
+        "Unnamed command buffer"
+      ],
+      "AfterForwardAlpha": [
+        "Builder Obstacles"
+      ]
+    }
+  },
+  "otherCameras": [
+    "MainCamera (UI) depth 2 path Forward mask 32 target screen",
+    "ImguiCamera depth 4 path Forward mask -2147483648 target screen"
+  ],
+  "graphics": {
+    "device": "OpenGLCore",
+    "deviceVersion": "OpenGL 4.1 Metal - 90.5",
+    "renderPipeline": "built-in",
+    "colorSpace": "Linear",
+    "quality": "Low",
+    "pixelLightCount": 0,
+    "shadows": "Disable",
+    "shadowDistance": 0.0,
+    "shadowCascades": 1,
+    "fog": false,
+    "fogMode": "ExponentialSquared",
+    "fogColor": "RGBA(0.584, 0.704, 0.735, 1.000)",
+    "ambientMode": "Flat",
+    "sun": "SunAndCaustics"
+  },
+  "graphicsTier": [
+    "Tier3"
+  ],
+  "renderers": {
+    "other": [
+      {
+        "shader": "MarmosetUBER",
+        "keywords": [
+          "_ZWRITE_ON",
+          "MARMO_EMISSION",
+          "MARMO_SPECMAP"
+        ],
+        "renderQueue": 2000,
+        "textures": [
+          "_MainTex",
+          "_BumpMap",
+          "_SpecTex",
+          "_Illum"
+        ],
+        "examples": [
+          "CellRoot(Clone)/ExplorableWreck_SafeShallows_39(Clone)/Props/Starship_exploded_debris_05(Clone)/Starship_exploded_debris_05 [MeshRenderer, material submarine_engine_01_01, shadows On/True]",
+          "CellRoot(Clone)/ExplorableWreck_SafeShallows_39(Clone)/Props/Starship_exploded_debris_05(Clone)/Starship_exploded_debris_05 [MeshRenderer, material submarine_pipes_02, shadows On/True]",
+          "CellRoot(Clone)/Coral_reef_slanted_coral_plates_01_01(Clone)/Coral_reef_slanted_coral_plates_01_01_LOD2 [MeshRenderer, material slanted_coral_plates_01, shadows On/True]",
+          "CellRoot(Clone)/Coral_reef_slanted_coral_plates_01_01(Clone)/Coral_reef_slanted_coral_plates_01_01 [MeshRenderer, material slanted_coral_plates_01, shadows On/True]"
+        ],
+        "count": 443
+      },
+      {
+        "shader": "MarmosetUBER",
+        "keywords": [
+          "_ZWRITE_ON",
+          "MARMO_EMISSION",
+          "MARMO_SPECMAP",
+          "UWE_WAVING"
+        ],
+        "renderQueue": 2000,
+        "textures": [
+          "_MainTex",
+          "_BumpMap",
+          "_SpecTex",
+          "_Illum"
+        ],
+        "examples": [
+          "CellRoot(Clone)/Coral_reef_purple_tentacle_plant_01_02(Clone)/Coral_reef_purple_tentacle_plant_01_02_LOD3 [MeshRenderer, material Coral_reef_purple_tentacle_plant_01, shadows On/True]",
+          "CellRoot(Clone)/Coral_reef_purple_tentacle_plant_01_02(Clone)/Coral_reef_purple_tentacle_plant_01_02 [MeshRenderer, material purple_tentacle_plant_01, shadows On/True]",
+          "CellRoot(Clone)/Coral_reef_purple_tentacle_plant_01_01(Clone)/Coral_reef_purple_tentacle_plant_01_01_LOD02 [MeshRenderer, material Coral_reef_purple_tentacle_plant_01, shadows On/True]",
+          "CellRoot(Clone)/Coral_reef_purple_tentacle_plant_01_01(Clone)/Coral_reef_purple_tentacle_plant_01_01 [MeshRenderer, material Coral_reef_purple_tentacle_plant_01, shadows On/True]"
+        ],
+        "count": 162
+      },
+      {
+        "shader": "MarmosetUBER",
+        "keywords": [
+          "_ZWRITE_ON",
+          "FX_KELP",
+          "MARMO_SPECMAP"
+        ],
+        "renderQueue": 1900,
+        "textures": [
+          "_MainTex",
+          "_BumpMap",
+          "_SpecTex",
+          "_AnimMask"
+        ],
+        "examples": [
+          "CellRoot(Clone)/Coral_reef_kelp_dense_03(Clone)/head/Coral_reef_kelp_dense_03_LOD3/Coral_reef_kelp_dense_03_head [MeshRenderer, material Coral_reef_kelp, shadows On/True]",
+          "CellRoot(Clone)/Coral_reef_kelp_dense_03(Clone)/head/Coral_reef_kelp_dense_03_LOD3/Coral_reef_kelp_dense_03_head [MeshRenderer, material Coral_reef_Kelp_core, shadows On/True]",
+          "CellRoot(Clone)/Coral_reef_kelp_dense_03(Clone)/head/Coral_reef_kelp_dense_03_LOD2/Coral_reef_kelp_dense_03_head [MeshRenderer, material Coral_reef_kelp, shadows On/True]",
+          "CellRoot(Clone)/Coral_reef_kelp_dense_03(Clone)/head/Coral_reef_kelp_dense_03_LOD2/Coral_reef_kelp_dense_03_head [MeshRenderer, material Coral_reef_Kelp_core, shadows On/True]"
+        ],
+        "count": 45
+      },
+      {
+        "shader": "MarmosetUBER",
+        "keywords": [
+          "_ZWRITE_ON",
+          "MARMO_ALPHA_CLIP",
+          "MARMO_EMISSION",
+          "MARMO_SPECMAP",
+          "UWE_WAVING"
+        ],
+        "renderQueue": 2000,
+        "textures": [
+          "_MainTex",
+          "_BumpMap",
+          "_SpecTex",
+          "_Illum"
+        ],
+        "examples": [
+          "CellRoot(Clone)/Coral_reef_purple_fan(Clone)/Coral_reef_purple_fan_LOD1 [MeshRenderer, material Coral_reef_purple_fan, shadows On/True]",
+          "CellRoot(Clone)/Coral_reef_purple_fan(Clone)/Coral_reef_purple_fan_LOD1 [MeshRenderer, material Coral_reef_purple_fan, shadows On/True]",
+          "CellRoot(Clone)/coral_reef_small_deco_15_red(Clone)/coral_reef_small_deco_15_red [MeshRenderer, material coral_reef_small_deco_15_red, shadows On/True]",
+          "CellRoot(Clone)/coral_reef_small_deco_15_red(Clone)/coral_reef_small_deco_15_red [MeshRenderer, material coral_reef_small_deco_15_red, shadows On/True]"
+        ],
+        "count": 40
+      },
+      {
+        "shader": "MarmosetUBER",
+        "keywords": [
+          "_ZWRITE_ON",
+          "MARMO_SPECMAP"
+        ],
+        "renderQueue": 2000,
+        "textures": [
+          "_MainTex",
+          "_BumpMap",
+          "_SpecTex"
+        ],
+        "examples": [
+          "CellRoot(Clone)/ExplorableWreck_SafeShallows_39(Clone)/Props/explorable_wreckage_modular_room_details_12(Clone)/explorable_wreckage_modular_room_details_12 [MeshRenderer, material starship_exploded_interrior_girder_03, shadows On/True]",
+          "CellRoot(Clone)/ExplorableWreck_SafeShallows_39(Clone)/Props/explorable_wreckage_modular_room_details_12(Clone)/explorable_wreckage_modular_room_details_12 [MeshRenderer, material starship_exploded_exterrior_hull_armor_01_half_02, shadows On/True]",
+          "CellRoot(Clone)/ExplorableWreck_SafeShallows_39(Clone)/Props/explorable_wreckage_modular_room_details_12(Clone)/explorable_wreckage_modular_room_details_12 [MeshRenderer, material starship_exploded_exterrior_hull_armor_01_trim_02, shadows On/True]",
+          "CellRoot(Clone)/ExplorableWreck_SafeShallows_39(Clone)/Props/explorable_wreckage_modular_room_details_12(Clone)/explorable_wreckage_modular_room_details_12 [MeshRenderer, material starship_exploded_exterrior_hull_armor_01_trim_01, shadows On/True]"
+        ],
+        "count": 34
+      },
+      {
+        "shader": "MarmosetUBER",
+        "keywords": [
+          "_ZWRITE_ON",
+          "MARMO_ALPHA_CLIP",
+          "MARMO_SPECMAP"
+        ],
+        "renderQueue": 2000,
+        "textures": [
+          "_MainTex",
+          "_BumpMap",
+          "_SpecTex"
+        ],
+        "examples": [
+          "CellRoot(Clone)/coral_reef_small_deco_12(Clone)/coral_reef_small_deco_12 [MeshRenderer, material coral_reef_small_deco_12, shadows On/True]",
+          "CellRoot(Clone)/coral_reef_small_deco_12(Clone)/coral_reef_small_deco_12 [MeshRenderer, material coral_reef_small_deco_12, shadows On/True]",
+          "CellRoot(Clone)/coral_reef_small_deco_12(Clone)/coral_reef_small_deco_12 [MeshRenderer, material coral_reef_small_deco_12, shadows On/True]",
+          "CellRoot(Clone)/coral_reef_small_deco_12(Clone)/coral_reef_small_deco_12 [MeshRenderer, material coral_reef_small_deco_12, shadows On/True]"
+        ],
+        "count": 16
+      },
+      {
+        "shader": "UWE/Particles/UBER",
+        "keywords": [
+          "FX_DEFORM_OFF",
+          "FX_NEARCLIP_OFF",
+          "FX_SOFTEDGES_OFF",
+          "FX_UNDERWATER_OFF"
+        ],
+        "renderQueue": 3000,
+        "textures": [
+          "_MainTex"
+        ],
+        "examples": [
+          "CellRoot(Clone)/Coral_reef_kelp_young_04(Clone)/young_04_stem/Coral_reef_kelp_young_04_billboard/Quad [MeshRenderer, material coral_reef_kelp_young_04_billboard, shadows On/True]",
+          "CellRoot(Clone)/Coral_reef_kelp_young_04(Clone)/young_04_stem/Coral_reef_kelp_young_04_billboard/Quad [MeshRenderer, material coral_reef_kelp_young_04_billboard, shadows On/True]",
+          "CellRoot(Clone)/Coral_reef_kelp_young_04(Clone)/young_04_stem/Coral_reef_kelp_young_04_billboard/Quad [MeshRenderer, material coral_reef_kelp_young_04_billboard, shadows On/True]",
+          "CellRoot(Clone)/Coral_reef_kelp_young_04(Clone)/young_04_stem/Coral_reef_kelp_young_04_billboard/Quad [MeshRenderer, material coral_reef_kelp_young_04_billboard, shadows On/True]"
+        ],
+        "count": 12
+      },
+      {
+        "shader": "MarmosetUBER",
+        "keywords": [
+          "_ZWRITE_ON",
+          "MARMO_ALPHA_CLIP",
+          "MARMO_SPECMAP",
+          "UWE_WAVING"
+        ],
+        "renderQueue": 2000,
+        "textures": [
+          "_MainTex",
+          "_BumpMap",
+          "_SpecTex"
+        ],
+        "examples": [
+          "CellRoot(Clone)/coral_reef_small_deco_11(Clone)/coral_reef_small_deco_11 [MeshRenderer, material coral_reef_small_deco_11, shadows On/True]",
+          "CellRoot(Clone)/coral_reef_small_deco_11(Clone)/coral_reef_small_deco_11 [MeshRenderer, material coral_reef_small_deco_11, shadows On/True]",
+          "CellRoot(Clone)/coral_reef_small_deco_11(Clone)/coral_reef_small_deco_11 [MeshRenderer, material coral_reef_small_deco_11, shadows On/True]",
+          "CellRoot(Clone)/coral_reef_small_deco_11(Clone)/coral_reef_small_deco_11 [MeshRenderer, material coral_reef_small_deco_11, shadows On/True]"
+        ],
+        "count": 10
+      },
+      {
+        "shader": "MarmosetUBER",
+        "keywords": [
+          "_ZWRITE_ON",
+          "FX_KELP",
+          "MARMO_ALPHA_CLIP",
+          "MARMO_SPECMAP"
+        ],
+        "renderQueue": 1900,
+        "textures": [
+          "_MainTex",
+          "_BumpMap",
+          "_SpecTex",
+          "_Illum",
+          "_AnimMask"
+        ],
+        "examples": [
+          "CellRoot(Clone)/Coral_reef_kelp_young_01(Clone)/head/Coral_reef_kelp_young_01_LOD2/Coral_reef_kelp_young_01_head [MeshRenderer, material Coral_reef_Kelp_alpha, shadows On/True]",
+          "CellRoot(Clone)/Coral_reef_kelp_young_01(Clone)/head/Coral_reef_kelp_young_01_LOD3/Coral_reef_kelp_young_01_head [MeshRenderer, material Coral_reef_Kelp_alpha, shadows On/True]",
+          "CellRoot(Clone)/Coral_reef_kelp_young_01(Clone)/head/Coral_reef_kelp_young_01_LOD1/Coral_reef_kelp_young_01_head [MeshRenderer, material Coral_reef_Kelp_alpha, shadows On/True]",
+          "CellRoot(Clone)/Coral_reef_kelp_young_01(Clone)/head/Coral_reef_kelp_young_01_LOD2/Coral_reef_kelp_young_01_head [MeshRenderer, material Coral_reef_Kelp_alpha, shadows On/True]"
+        ],
+        "count": 9
+      },
+      {
+        "shader": "UWE/SIG Triplanar with Capping",
+        "keywords": [],
+        "renderQueue": 2000,
+        "textures": [
+          "_CapTexture",
+          "_CapBumpMap",
+          "_SideTexture",
+          "_SideBumpMap",
+          "_CapSIGMap",
+          "_SideSIGMap"
+        ],
+        "examples": [
+          "CellRoot(Clone)/Coral_Clump02c(Clone) [MeshRenderer, material SS_Prop_Coral03, shadows On/True]",
+          "CellRoot(Clone)/Coral_Clump02b(Clone) [MeshRenderer, material SS_Prop_Coral02, shadows On/True]",
+          "CellRoot(Clone)/Coral_Clump02b(Clone) [MeshRenderer, material SS_Prop_Coral02, shadows On/True]",
+          "CellRoot(Clone)/Coral_Clump01b(Clone) [MeshRenderer, material SS_Prop_Coral02, shadows On/True]"
+        ],
+        "count": 8
+      },
+      {
+        "shader": "MarmosetUBER",
+        "keywords": [
+          "_ZWRITE_ON",
+          "MARMO_ALPHA",
+          "MARMO_EMISSION",
+          "MARMO_SPECMAP"
+        ],
+        "renderQueue": 3000,
+        "textures": [
+          "_MainTex",
+          "_BumpMap",
+          "_SpecTex",
+          "_Illum"
+        ],
+        "examples": [
+          "CellRoot(Clone)/SeaglideJunkFragment(Clone)/Starship_cargo_damaged_opened_01(Clone)/Starship_cargo_damaged_opened_01/dirt_01 [MeshRenderer, material starship_exploded_exterrior_hull_dirt_decals_03, shadows On/True]",
+          "CellRoot(Clone)/SeaglideJunkFragment(Clone)/seaglidefragment(Clone)/model/SeaGlide_01_damaged [MeshRenderer, material starship_exploded_exterrior_hull_dirt_decals_03, shadows On/True]",
+          "CellRoot(Clone)/SeaglideJunkFragment(Clone)/Starship_cargo_damaged_opened_01(Clone)/Starship_cargo_damaged_opened_01/dirt_01 [MeshRenderer, material starship_exploded_exterrior_hull_dirt_decals_03, shadows On/True]",
+          "CellRoot(Clone)/SeaglideJunkFragment(Clone)/seaglidefragment(Clone)/model/SeaGlide_01_damaged [MeshRenderer, material starship_exploded_exterrior_hull_dirt_decals_03, shadows On/True]"
+        ],
+        "count": 4
+      },
+      {
+        "shader": "MarmosetUBER",
+        "keywords": [
+          "_ZWRITE_ON",
+          "FX_DEFORM",
+          "FX_SINWAVE",
+          "MARMO_NORMALMAP",
+          "MARMO_SPECMAP",
+          "WBOIT"
+        ],
+        "renderQueue": 3101,
+        "textures": [
+          "_MainTex",
+          "_SpecTex",
+          "_DeformMap"
+        ],
+        "examples": [
+          "Bubble(Clone)/bubbleSphere [MeshRenderer, material bubbleSphere, shadows Off/True]",
+          "Bubble(Clone)/bubbleSphere [MeshRenderer, material bubbleSphere, shadows Off/True]"
+        ],
+        "count": 2
+      },
+      {
+        "shader": "MarmosetUBER",
+        "keywords": [
+          "_ZWRITE_ON",
+          "MARMO_ALPHA_CLIP",
+          "MARMO_EMISSION",
+          "MARMO_SPECMAP"
+        ],
+        "renderQueue": 2000,
+        "textures": [
+          "_MainTex",
+          "_BumpMap",
+          "_SpecTex",
+          "_Illum"
+        ],
+        "examples": [
+          "CellRoot(Clone)/ExplorableWreck_SafeShallows_39(Clone)/Props/Starship_exploded_debris_31(Clone)/Starship_exploded_debris_31 [MeshRenderer, material starship_exploded_interrior_damage_tile_06, shadows On/True]",
+          "CellRoot(Clone)/ExplorableWreck_SafeShallows_39(Clone)/Props/Starship_exploded_debris_17(Clone)/Starship_exploded_debris_17 [MeshRenderer, material starship_exploded_exterrior, shadows On/True]"
+        ],
+        "count": 2
+      },
+      {
+        "shader": "MarmosetUBER",
+        "keywords": [
+          "_ALPHAPREMULTIPLY_ON",
+          "MARMO_SPECMAP",
+          "WBOIT"
+        ],
+        "renderQueue": 3101,
+        "textures": [
+          "_MainTex",
+          "_BumpMap",
+          "_SpecTex"
+        ],
+        "examples": [
+          "CellRoot(Clone)/SeaglideJunkFragment(Clone)/Starship_cargo_damaged_opened_01(Clone)/Starship_cargo_damaged_opened_01 [MeshRenderer, material Starship_cargo_alpha, shadows On/True]",
+          "CellRoot(Clone)/SeaglideJunkFragment(Clone)/Starship_cargo_damaged_opened_01(Clone)/Starship_cargo_damaged_opened_01 [MeshRenderer, material Starship_cargo_alpha, shadows On/True]"
+        ],
+        "count": 2
+      },
+      {
+        "shader": "MarmosetUBER",
+        "keywords": [
+          "_ALPHAPREMULTIPLY_ON",
+          "MARMO_SPECMAP"
+        ],
+        "renderQueue": 2000,
+        "textures": [
+          "_MainTex",
+          "_BumpMap",
+          "_SpecTex"
+        ],
+        "examples": [
+          "CellRoot(Clone)/SeaglideJunkFragment(Clone)/seaglidefragment(Clone)/model/SeaGlide_01_damaged [MeshRenderer, material Submersible_SeaMoth_damage, shadows On/True]",
+          "CellRoot(Clone)/SeaglideJunkFragment(Clone)/seaglidefragment(Clone)/model/SeaGlide_01_damaged [MeshRenderer, material Submersible_SeaMoth_damage, shadows On/True]"
+        ],
+        "count": 2
+      },
+      {
+        "shader": "FX/Clouds",
+        "keywords": [
+          "ENABLE_ISLAND_CLOUDS",
+          "FX_ALPHAPOW",
+          "FX_FRESNELCLIP",
+          "FX_ISMESH",
+          "FX_MULMAP",
+          "FX_REFRACT_OFF",
+          "FX_SCROLL",
+          "FX_SOFTEDGES"
+        ],
+        "renderQueue": 3002,
+        "textures": [
+          "_MainTex",
+          "_DeformMap",
+          "_MainTex2",
+          "_MixerTex"
+        ],
+        "examples": [
+          "x_Clouds(Clone)/x_IslandClouds2 [MeshRenderer, material x_CloudsIslandHaze (Instance), shadows On/True]",
+          "x_Clouds(Clone)/x_HorizonClouds [MeshRenderer, material x_CloudsHorizon, shadows On/True]"
+        ],
+        "count": 2
+      },
+      {
+        "shader": "MarmosetUBER",
+        "keywords": [
+          "_ALPHAPREMULTIPLY_ON",
+          "MARMO_EMISSION",
+          "MARMO_SPECMAP"
+        ],
+        "renderQueue": 2000,
+        "textures": [
+          "_MainTex",
+          "_BumpMap",
+          "_SpecTex",
+          "_Illum"
+        ],
+        "examples": [
+          "CellRoot(Clone)/ExplorableWreck_SafeShallows_39(Clone)/Props/Starship_doors_door(Clone)/Starship_door [MeshRenderer, material Starship_doors_automatic, shadows On/True]"
+        ],
+        "count": 1
+      },
+      {
+        "shader": "MarmosetUBER",
+        "keywords": [
+          "_ALPHAPREMULTIPLY_ON",
+          "MARMO_ALPHA",
+          "MARMO_SPECMAP"
+        ],
+        "renderQueue": 3000,
+        "textures": [
+          "_MainTex",
+          "_BumpMap",
+          "_SpecTex"
+        ],
+        "examples": [
+          "CellRoot(Clone)/ExplorableWreck_SafeShallows_39(Clone)/Props/Starship_doors_door(Clone)/Starship_door [MeshRenderer, material Starship_doors_automatic_alpha, shadows On/True]"
+        ],
+        "count": 1
+      }
+    ],
+    "player": [
+      {
+        "shader": "UWE/Particles/UBER",
+        "keywords": [
+          "FX_DEFORM_OFF",
+          "FX_LIGHT_2SIDED",
+          "FX_LIGHTMODE_PIXEL",
+          "FX_NEARCLIP",
+          "FX_SOFTEDGES",
+          "FX_UNDERWATER",
+          "WBOIT"
+        ],
+        "renderQueue": 3101,
+        "textures": [
+          "_MainTex"
+        ],
+        "examples": [
+          "PlayerFX(Clone)/WaterParticlesSpawner/WaterParticles(Clone)/WaterAmbiantParticles/WaterDotsClose [ParticleSystemRenderer, material flare_01_premul_underwaterClipCloseVertexLit, shadows Off/False]",
+          "SpawnPlayerFX/PlayerFX(Clone)/WaterParticlesSpawner/WaterParticles(Clone)/WaterAmbiantParticles [ParticleSystemRenderer, material flare_01_premul_underwaterClipCloseVertexLit, shadows Off/False]",
+          "SpawnPlayerFX/PlayerFX(Clone)/WaterParticlesSpawner/WaterParticles(Clone)/WaterPlankton [ParticleSystemRenderer, material dots_cloud_01_sheet_premul_underwaterClipFarVertexLit, shadows Off/False]",
+          "SpawnPlayerFX/PlayerFX(Clone)/WaterParticlesSpawner/WaterParticles(Clone)/WaterTurbulences [ParticleSystemRenderer, material waterBlob_01_sheet_premul_underwaterClipFarVertexLit, shadows Off/False]"
+        ],
+        "count": 5
+      },
+      {
+        "shader": "MarmosetUBER",
+        "keywords": [
+          "_ZWRITE_ON",
+          "MARMO_SPECMAP",
+          "UWE_VR_FADEOUT"
+        ],
+        "renderQueue": 2000,
+        "textures": [
+          "_MainTex",
+          "_BumpMap",
+          "_SpecTex",
+          "_NoiseTex",
+          "_VrFadeMask",
+          "_InfectionNoiseTex"
+        ],
+        "examples": [
+          "body/player_view/male_geo/diveSuit/diveSuit_hands_geo [SkinnedMeshRenderer, material player_02_arms_01, shadows On/True]",
+          "body/player_view/male_geo/diveSuit/diveSuit_body_geo [SkinnedMeshRenderer, material player_02_body_01, shadows On/True]",
+          "body/player_view/male_geo/diveSuit/diveSuit_body_geo [SkinnedMeshRenderer, material player_02_arms_01, shadows On/True]"
+        ],
+        "count": 3
+      },
+      {
+        "shader": "UWE/Marmoset/PropulsionCannon",
+        "keywords": [
+          "_ZWRITE_ON",
+          "FX_PROPULSIONCANNON",
+          "MARMO_EMISSION",
+          "MARMO_SPECMAP"
+        ],
+        "renderQueue": 2000,
+        "textures": [
+          "_MainTex",
+          "_BumpMap",
+          "_SpecTex",
+          "_Illum",
+          "_ScrollTex",
+          "_GlowScrollMask"
+        ],
+        "examples": [
+          "attach1/PropulsionCannon(Clone)/1st person model/Propulsion_Cannon_anim/Propulsion_Cannon_geo [SkinnedMeshRenderer, material Propulsion_Cannon (Instance), shadows On/True]"
+        ],
+        "count": 1
+      },
+      {
+        "shader": "MarmosetUBER",
+        "keywords": [
+          "_ZWRITE_ON",
+          "MARMO_EMISSION",
+          "MARMO_SPECMAP"
+        ],
+        "renderQueue": 2000,
+        "textures": [
+          "_MainTex",
+          "_BumpMap",
+          "_SpecTex",
+          "_Illum"
+        ],
+        "examples": [
+          "attach1/PropulsionCannon(Clone)/1st person model/Propulsion_Cannon_anim/battery_geo [SkinnedMeshRenderer, material battery_01, shadows On/True]"
+        ],
+        "count": 1
+      },
+      {
+        "shader": "UWE/Particles/UBER",
+        "keywords": [
+          "FX_DEFORM_OFF",
+          "FX_LIGHTMODE_PIXEL",
+          "FX_NEARCLIP",
+          "FX_SOFTEDGES_OFF",
+          "FX_UNDERWATER",
+          "WBOIT"
+        ],
+        "renderQueue": 3101,
+        "textures": [
+          "_MainTex"
+        ],
+        "examples": [
+          "PlayerFX(Clone)/WaterParticlesSpawner/WaterParticles(Clone)/WaterAmbiantParticles/WaterDotsMid [ParticleSystemRenderer, material vegetation_01_sheet_alpha_underwaterClipClose_Lit, shadows Off/False]"
+        ],
+        "count": 1
+      },
+      {
+        "shader": "UWE/Particles/UBER",
+        "keywords": [
+          "FX_DEFORM_OFF",
+          "FX_LIGHT_2SIDED",
+          "FX_LIGHTMODE_VERTEX",
+          "FX_NEARCLIP",
+          "FX_REFRACT",
+          "FX_SOFTEDGES",
+          "FX_UNDERWATER",
+          "WBOIT"
+        ],
+        "renderQueue": 3101,
+        "textures": [
+          "_MainTex"
+        ],
+        "examples": [
+          "SpawnPlayerFX/PlayerFX(Clone)/WaterParticlesSpawner/WaterParticles(Clone)/WaterBubbles [ParticleSystemRenderer, material bubble_01_sheet_premul_underwaterClipCloseVertexLit, shadows Off/False]"
+        ],
+        "count": 1
+      },
+      {
+        "shader": "UWE/Particles/UBER",
+        "keywords": [
+          "FX_LIGHT_2SIDED",
+          "FX_LIGHTMODE_PIXEL",
+          "FX_NEARCLIP",
+          "FX_SOFTEDGES",
+          "FX_UNDERWATER",
+          "WBOIT"
+        ],
+        "renderQueue": 3101,
+        "textures": [
+          "_MainTex",
+          "_DeformMap"
+        ],
+        "examples": [
+          "pdaCamPivot/SpawnPlayerFX/PlayerFX(Clone)/WaterParticlesSpawner/WaterParticles(Clone) [ParticleSystemRenderer, material dots_cloud_03_premul_underwaterClipFarVertexLit, shadows Off/False]"
+        ],
+        "count": 1
+      },
+      {
+        "shader": "UWE/WBOIT/Clear",
+        "keywords": [],
+        "renderQueue": 3100,
+        "textures": [],
+        "examples": [
+          "camRoot/camOffset/pdaCamPivot/PlayerCameras/WBOITClear [MeshRenderer, material WBOITClear, shadows Off/True]"
+        ],
+        "count": 1
+      },
+      {
+        "shader": "MarmosetUBER",
+        "keywords": [
+          "_ZWRITE_ON",
+          "MARMO_SPECMAP"
+        ],
+        "renderQueue": 2000,
+        "textures": [
+          "_MainTex",
+          "_BumpMap",
+          "_SpecTex"
+        ],
+        "examples": [
+          "body/player_view/male_geo/diveSuit/diveSuit_head_geo [SkinnedMeshRenderer, material player_02_head, shadows ShadowsOnly/True]"
+        ],
+        "count": 1
+      }
+    ],
+    "creature": [
+      {
+        "shader": "MarmosetUBER",
+        "keywords": [
+          "_ZWRITE_ON",
+          "MARMO_EMISSION",
+          "MARMO_SPECMAP"
+        ],
+        "renderQueue": 2000,
+        "textures": [
+          "_MainTex",
+          "_BumpMap",
+          "_SpecTex",
+          "_Illum"
+        ],
+        "examples": [
+          "CellRoot(Clone)/Skyray(Clone)/BirdSml/Bird_sml_rig_Bird_01 [SkinnedMeshRenderer, material bird_02, shadows On/True]",
+          "CellRoot(Clone)/Skyray(Clone)/BirdSml/Bird_sml_rig_Bird_01 [SkinnedMeshRenderer, material bird_02, shadows On/True]",
+          "CellRoot(Clone)/Skyray(Clone)/BirdSml/Bird_sml_rig_Bird_01 [SkinnedMeshRenderer, material bird_02, shadows On/True]",
+          "CellRoot(Clone)/Skyray(Clone)/BirdSml/Bird_sml_rig_Bird_01 [SkinnedMeshRenderer, material bird_02, shadows On/True]"
+        ],
+        "count": 104
+      },
+      {
+        "shader": "MarmosetUBER",
+        "keywords": [
+          "_ZWRITE_ON",
+          "MARMO_EMISSION",
+          "MARMO_SPECMAP",
+          "WBOIT"
+        ],
+        "renderQueue": 3101,
+        "textures": [
+          "_MainTex",
+          "_BumpMap",
+          "_SpecTex",
+          "_Illum"
+        ],
+        "examples": [
+          "CellRoot(Clone)/BladderFish(Clone)/model/airsack_fish_geo_LOD3 [SkinnedMeshRenderer, material airsack_fish_opacity, shadows On/True]",
+          "CellRoot(Clone)/BladderFish(Clone)/model/airsack_fish_geo_LOD2 [SkinnedMeshRenderer, material airsack_fish_opacity, shadows On/True]",
+          "CellRoot(Clone)/BladderFish(Clone)/model/airsack_fish_geo_LOD1 [SkinnedMeshRenderer, material airsack_fish_opacity, shadows On/True]",
+          "CellRoot(Clone)/BladderFish(Clone)/model/airsack_fish_geo [SkinnedMeshRenderer, material airsack_fish_opacity, shadows On/True]"
+        ],
+        "count": 32
+      },
+      {
+        "shader": "UWE/Particles/UBER",
+        "keywords": [
+          "FX_DEFORM_OFF",
+          "FX_LIGHTMODE_VERTEX",
+          "FX_NEARCLIP_OFF",
+          "FX_SCROLL",
+          "FX_SOFTEDGES",
+          "FX_TRAILNOISE",
+          "FX_UNDERWATER",
+          "WBOIT"
+        ],
+        "renderQueue": 3101,
+        "textures": [
+          "_MainTex",
+          "_MainTex2"
+        ],
+        "examples": [
+          "CellRoot(Clone)/Peeper(Clone)/xPeeperTrail(Clone)/xTrail_top [LineRenderer, material smokeTrail_03_alpha (Instance), shadows Off/False]",
+          "CellRoot(Clone)/Peeper(Clone)/xPeeperTrail(Clone)/xTrail_bot [LineRenderer, material smokeTrail_03_alpha (Instance), shadows Off/False]",
+          "CellRoot(Clone)/Peeper(Clone)/xPeeperTrail(Clone)/xTrail_top [LineRenderer, material smokeTrail_03_alpha (Instance), shadows Off/False]",
+          "CellRoot(Clone)/Peeper(Clone)/xPeeperTrail(Clone)/xTrail_bot [LineRenderer, material smokeTrail_03_alpha (Instance), shadows Off/False]"
+        ],
+        "count": 14
+      },
+      {
+        "shader": "MarmosetUBER",
+        "keywords": [
+          "_ZWRITE_ON",
+          "MARMO_SPECMAP"
+        ],
+        "renderQueue": 2000,
+        "textures": [
+          "_MainTex",
+          "_BumpMap",
+          "_SpecTex"
+        ],
+        "examples": [
+          "CellRoot(Clone)/GarryFish(Clone)/model/Small_Fish_02_LOD3 [SkinnedMeshRenderer, material Small_Fish_02, shadows On/True]",
+          "CellRoot(Clone)/GarryFish(Clone)/model/Small_Fish_02_LOD2 [SkinnedMeshRenderer, material Small_Fish_02, shadows On/True]",
+          "CellRoot(Clone)/GarryFish(Clone)/model/Small_Fish_02_LOD1 [SkinnedMeshRenderer, material Small_Fish_02, shadows On/True]",
+          "CellRoot(Clone)/GarryFish(Clone)/model/Small_Fish_02 [SkinnedMeshRenderer, material Small_Fish_02, shadows On/True]"
+        ],
+        "count": 12
+      },
+      {
+        "shader": "Legacy Shaders/Transparent/Diffuse",
+        "keywords": [],
+        "renderQueue": 3000,
+        "textures": [
+          "_MainTex"
+        ],
+        "examples": [
+          "Peeper(Clone)/model/peeper/aqua_bird_LOD1/Aqua_Bird [SkinnedMeshRenderer, material aqua_bird_01_lens, shadows On/True]",
+          "Peeper(Clone)/model/peeper/aqua_bird_LOD1/Aqua_Bird [SkinnedMeshRenderer, material aqua_bird_01_lens, shadows On/True]",
+          "Peeper(Clone)/model/peeper/aqua_bird_LOD1/Aqua_Bird [SkinnedMeshRenderer, material aqua_bird_01_lens, shadows On/True]",
+          "Peeper(Clone)/model/peeper/aqua_bird_LOD1/Aqua_Bird [SkinnedMeshRenderer, material aqua_bird_01_lens, shadows On/True]"
+        ],
+        "count": 7
+      },
+      {
+        "shader": "MarmosetUBER",
+        "keywords": [
+          "_ZWRITE_ON",
+          "FX_DEFORM",
+          "FX_SINWAVE",
+          "MARMO_ALPHA_CLIP",
+          "MARMO_EMISSION",
+          "MARMO_NORMALMAP",
+          "MARMO_SPEC",
+          "UWE_SCHOOLFISH",
+          "UWE_SIG"
+        ],
+        "renderQueue": 2000,
+        "textures": [
+          "_MainTex",
+          "_BumpMap",
+          "_SIGMap",
+          "_DeformMap"
+        ],
+        "examples": [
+          "CellRoot(Clone)/BoomerangFishSchool(Clone)/BoomerangFishParticles [MeshRenderer, material BoomerangFishSchool_billboard, shadows On/True]",
+          "CellRoot(Clone)/BoomerangFishSchool(Clone)/BoomerangFishParticles [MeshRenderer, material BoomerangFishSchool_billboard, shadows On/True]",
+          "CellRoot(Clone)/BoomerangFishSchool(Clone)/BoomerangFishParticles [MeshRenderer, material BoomerangFishSchool_billboard, shadows On/True]",
+          "CellRoot(Clone)/BoomerangFishSchool(Clone)/BoomerangFishParticles [MeshRenderer, material BoomerangFishSchool_billboard, shadows On/True]"
+        ],
+        "count": 5
+      }
+    ],
+    "lifepod": [
+      {
+        "shader": "MarmosetUBER",
+        "keywords": [
+          "_ZWRITE_ON",
+          "MARMO_EMISSION",
+          "MARMO_SPECMAP",
+          "UWE_LIGHTMAP"
+        ],
+        "renderQueue": 2000,
+        "textures": [
+          "_MainTex",
+          "_BumpMap",
+          "_SpecTex",
+          "_Illum",
+          "_Lightmap"
+        ],
+        "examples": [
+          "EscapePod/ModulesRoot/PowerCell3Root/RegenPowerCell(Clone)/model [MeshRenderer, material submarine_power_cell_01_damaged, shadows On/True]",
+          "EscapePod/ModulesRoot/PowerCell2Root/RegenPowerCell(Clone)/model [MeshRenderer, material submarine_power_cell_01_damaged, shadows On/True]",
+          "EscapePod/ModulesRoot/PowerCell1Root/RegenPowerCell(Clone)/model [MeshRenderer, material submarine_power_cell_01_damaged, shadows On/True]",
+          "EscapePod/ModulesRoot/MedCabRoot/MedicalCabinet(Clone)/Base [MeshRenderer, material sumbarine_aid_box_01_damaged, shadows On/True]"
+        ],
+        "count": 27
+      },
+      {
+        "shader": "UWE/Particles/UBER",
+        "keywords": [
+          "FX_ADDFOG",
+          "FX_DEFORM_OFF",
+          "FX_NEARCLIP_OFF",
+          "FX_SOFTEDGES",
+          "FX_UNDERWATER_OFF",
+          "WBOIT"
+        ],
+        "renderQueue": 3101,
+        "textures": [
+          "_MainTex"
+        ],
+        "examples": [
+          "ModulesRoot/RadioRoot/Radio(Clone)/xSparksElecLoop(Clone)/xSparkDot [ParticleSystemRenderer, material flare_04_add_glow, shadows Off/False]",
+          "ModulesRoot/RadioRoot/Radio(Clone)/xSparksElecLoop(Clone)/xFlash [ParticleSystemRenderer, material flare_01_add, shadows Off/False]",
+          "ModulesRoot/RadioRoot/Radio(Clone)/xSparksElecLoop(Clone)/xSpark [ParticleSystemRenderer, material spark_01_add, shadows Off/False]",
+          "EscapePod/ModulesRoot/RadioRoot/Radio(Clone)/xSparksElecLoop(Clone) [ParticleSystemRenderer, material flare_04_add_glow, shadows Off/False]"
+        ],
+        "count": 22
+      },
+      {
+        "shader": "MarmosetUBER",
+        "keywords": [
+          "_ZWRITE_ON",
+          "MARMO_EMISSION",
+          "MARMO_SPECMAP"
+        ],
+        "renderQueue": 2000,
+        "textures": [
+          "_MainTex",
+          "_BumpMap",
+          "_SpecTex",
+          "_Illum"
+        ],
+        "examples": [
+          "ModulesRoot/FabricatorRoot/Fabricator(Clone)/submarine_fabricator_01/fabricator_01 [SkinnedMeshRenderer, material submarine_fabricator_01, shadows On/True]",
+          "EscapePod/ModulesRoot/RadioRoot/Radio(Clone)/Mesh [MeshRenderer, material Starship_tech_box_01, shadows On/True]",
+          "models/Life_Pod_damaged_LOD1/lifepod_damaged_03_geo/submarine_hatch_06_base/submarine_hatch_06 [SkinnedMeshRenderer, material submarine_hatch_06_damaged, shadows On/True]",
+          "EscapePod/models/Life_Pod_damaged_LOD1/lifepod_damaged_03_geo/submarine_hatch_05 [SkinnedMeshRenderer, material submarine_hatch_05_damaged, shadows On/True]"
+        ],
+        "count": 12
+      },
+      {
+        "shader": "UWE/Particles/UBER",
+        "keywords": [
+          "FX_DEFORM_OFF",
+          "FX_NEARCLIP",
+          "FX_SOFTEDGES",
+          "FX_UNDERWATER_OFF",
+          "WBOIT"
+        ],
+        "renderQueue": 3101,
+        "textures": [
+          "_MainTex"
+        ],
+        "examples": [
+          "ModulesRoot/RadioRoot/Radio(Clone)/xSparksElecLoop(Clone)/xSmoke [ParticleSystemRenderer, material smoke_loop_01_sheet_alpha_ClipClose, shadows Off/False]",
+          "EscapePod-MainPrefab/EscapePod/LifePodDamagedFX(Clone)/xSmokePanel [ParticleSystemRenderer, material smoke_loop_01_sheet_alpha_ClipClose, shadows Off/False]",
+          "EscapePod-MainPrefab/EscapePod/LifePodDamagedFX(Clone)/xSmokeDark_Small [ParticleSystemRenderer, material smoke_loop_01_sheet_alpha_ClipClose, shadows Off/False]",
+          "EscapePod-MainPrefab/EscapePod/LifePodDamagedFX(Clone)/xExteriorSmoke_Top [ParticleSystemRenderer, material smoke_loop_01_sheet_alpha_ClipClose, shadows Off/False]"
+        ],
+        "count": 6
+      },
+      {
+        "shader": "MarmosetUBER",
+        "keywords": [
+          "_ZWRITE_ON",
+          "MARMO_SPECMAP"
+        ],
+        "renderQueue": 2000,
+        "textures": [
+          "_MainTex",
+          "_BumpMap",
+          "_SpecTex"
+        ],
+        "examples": [
+          "ModulesRoot/MedCabRoot/MedicalCabinet(Clone)/MedKit/Mesh [MeshRenderer, material FirstAidKit, shadows On/True]",
+          "EscapePod/models/Life_Pod_damaged_LOD1/lifepod_damaged_03_geo/life_pod_damaged [SkinnedMeshRenderer, material life_pod_exterior, shadows On/True]",
+          "EscapePod/models/Life_Pod_damaged_03/lifepod_damaged_03_geo/life_pod_damaged [SkinnedMeshRenderer, material life_pod_exterior, shadows On/True]",
+          "EscapePod/models/Life_Pod_damaged_03/lifepod_damaged_03_geo/life_pod_interior_damaged1 [SkinnedMeshRenderer, material life_pod_interior_decals_01_damaged, shadows On/True]"
+        ],
+        "count": 4
+      },
+      {
+        "shader": "UWE/Particles/UBER",
+        "keywords": [
+          "FX_ADDFOG",
+          "FX_DEFORM",
+          "FX_NEARCLIP_OFF",
+          "FX_SOFTEDGES",
+          "FX_UNDERWATER_OFF",
+          "WBOIT"
+        ],
+        "renderQueue": 3101,
+        "textures": [
+          "_MainTex",
+          "_DeformMap"
+        ],
+        "examples": [
+          "ModulesRoot/RadioRoot/Radio(Clone)/xSparksElecLoop(Clone)/xElec [ParticleSystemRenderer, material elecTrail_01, shadows Off/False]",
+          "EscapePod-MainPrefab/EscapePod/LifePodDamagedFX(Clone)/xSparksElec_3s_Small/xElec [ParticleSystemRenderer, material elecTrail_01, shadows Off/False]",
+          "EscapePod-MainPrefab/EscapePod/LifePodDamagedFX(Clone)/xSparksElec_3s_Small/xElec [ParticleSystemRenderer, material elecTrail_01, shadows Off/False]"
+        ],
+        "count": 3
+      },
+      {
+        "shader": "UWE/Particles/UBER",
+        "keywords": [
+          "FX_DEFORM",
+          "FX_NEARCLIP_OFF",
+          "FX_SCROLL",
+          "FX_SOFTEDGES",
+          "FX_UNDERWATER_OFF",
+          "WBOIT"
+        ],
+        "renderQueue": 3101,
+        "textures": [
+          "_MainTex",
+          "_DeformMap"
+        ],
+        "examples": [
+          "EscapePod-MainPrefab/EscapePod/LifePodDamagedFX(Clone)/xSparksOrange_1s_Small/xSmk [ParticleSystemRenderer, material smoke_01_alpha, shadows Off/False]",
+          "EscapePod-MainPrefab/EscapePod/LifePodDamagedFX(Clone)/xSparksElec_3s_Small/xSmk [ParticleSystemRenderer, material smoke_01_alpha, shadows Off/False]",
+          "EscapePod-MainPrefab/EscapePod/LifePodDamagedFX(Clone)/xSparksBlue_3s_Small/xSmk [ParticleSystemRenderer, material smoke_01_alpha, shadows Off/False]"
+        ],
+        "count": 3
+      },
+      {
+        "shader": "MarmosetUBER",
+        "keywords": [
+          "_ZWRITE_ON",
+          "MARMO_SPECMAP",
+          "UWE_LIGHTMAP"
+        ],
+        "renderQueue": 2000,
+        "textures": [
+          "_MainTex",
+          "_BumpMap",
+          "_SpecTex",
+          "_Lightmap"
+        ],
+        "examples": [
+          "models/Life_Pod_damaged_03/lifepod_damaged_03_geo/submarine_ladder_05/sumbarine_floormods_03_plate [SkinnedMeshRenderer, material sumbarine_floormods_03_plate_damaged, shadows On/True]",
+          "EscapePod/models/Life_Pod_damaged_03/lifepod_damaged_03_geo/submarine_ladder_05 [SkinnedMeshRenderer, material submarine_ladder_05_damaged, shadows On/True]",
+          "EscapePod/models/Life_Pod_damaged_03/lifepod_damaged_03_geo/life_pod_interior_damaged1 [SkinnedMeshRenderer, material life_pod_floormods_01_damaged, shadows On/True]"
+        ],
+        "count": 3
+      },
+      {
+        "shader": "MarmosetUBER",
+        "keywords": [
+          "_ZWRITE_ON",
+          "MARMO_ALPHA",
+          "MARMO_SIMPLE_GLASS",
+          "MARMO_SPECMAP"
+        ],
+        "renderQueue": 3000,
+        "textures": [
+          "_MainTex"
+        ],
+        "examples": [
+          "EscapePod/ModulesRoot/MedCabRoot/MedicalCabinet(Clone)/Door [MeshRenderer, material sumbarine_aid_box_01_glass, shadows On/True]",
+          "ModulesRoot/FabricatorRoot/Fabricator(Clone)/submarine_fabricator_01/fabricator_01 [SkinnedMeshRenderer, material submarine_fabricator_01_glass, shadows On/True]"
+        ],
+        "count": 2
+      },
+      {
+        "shader": "MarmosetUBER",
+        "keywords": [
+          "_ZWRITE_ON",
+          "MARMO_ALPHA_CLIP",
+          "MARMO_EMISSION",
+          "MARMO_SPECMAP",
+          "UWE_LIGHTMAP"
+        ],
+        "renderQueue": 2000,
+        "textures": [
+          "_MainTex",
+          "_SpecTex",
+          "_Illum",
+          "_Lightmap"
+        ],
+        "examples": [
+          "EscapePod/models/Life_Pod_damaged_03/root/life_pod_interior_emissives_01 [MeshRenderer, material life_pod_emissives_01, shadows On/True]",
+          "EscapePod/models/Life_Pod_damaged_03/lifepod_damaged_03_geo/life_pod_interior_damaged1 [SkinnedMeshRenderer, material life_pod_interior_damaged_alpha, shadows On/True]"
+        ],
+        "count": 2
+      },
+      {
+        "shader": "MarmosetUBER",
+        "keywords": [
+          "_ZWRITE_ON",
+          "MARMO_ALPHA",
+          "MARMO_EMISSION",
+          "MARMO_SPECMAP"
+        ],
+        "renderQueue": 3000,
+        "textures": [
+          "_MainTex",
+          "_Illum"
+        ],
+        "examples": [
+          "EscapePod/models/Life_Pod_damaged_LOD1/lifepod_damaged_03_geo/life_pod_damaged [SkinnedMeshRenderer, material life_pod_exterior_decals_01, shadows On/True]",
+          "EscapePod/models/Life_Pod_damaged_03/lifepod_damaged_03_geo/life_pod_damaged [SkinnedMeshRenderer, material life_pod_exterior_decals_01, shadows On/True]"
+        ],
+        "count": 2
+      },
+      {
+        "shader": "MarmosetUBER",
+        "keywords": [
+          "_EMISSION",
+          "_ZWRITE_ON",
+          "MARMO_SIMPLE_GLASS",
+          "MARMO_SPECMAP",
+          "WBOIT"
+        ],
+        "renderQueue": 3101,
+        "textures": [],
+        "examples": [
+          "models/Life_Pod_damaged_LOD1/lifepod_damaged_03_geo/submarine_hatch_06_base/submarine_hatch_06 [SkinnedMeshRenderer, material submarine_hatch_06_glass2, shadows On/True]",
+          "models/Life_Pod_damaged_03/lifepod_damaged_03_geo/submarine_hatch_06_base/submarine_hatch_06Glass [SkinnedMeshRenderer, material submarine_hatch_06_glass2, shadows On/True]"
+        ],
+        "count": 2
+      },
+      {
+        "shader": "UWE/Particles/UBER",
+        "keywords": [
+          "FX_DEFORM",
+          "FX_FRESNELCLIP",
+          "FX_MULMAP",
+          "FX_SCROLL",
+          "FX_SOFTEDGES",
+          "WBOIT"
+        ],
+        "renderQueue": 3101,
+        "textures": [
+          "_MainTex",
+          "_DeformMap",
+          "_MainTex2"
+        ],
+        "examples": [
+          "EscapePod-MainPrefab/EscapePod/LifePodDamagedFX(Clone)/xAmbiantSmoke_Lifepod [ParticleSystemRenderer, material x_AmbiantSmoke_Lifepod, shadows On/True]"
+        ],
+        "count": 1
+      },
+      {
+        "shader": "Custom/DistanceField/ClipDistanceField",
+        "keywords": [
+          "SHAPE_DISTANCE_FIELD"
+        ],
+        "renderQueue": 2000,
+        "textures": [
+          "_DistanceFieldTexture",
+          "_WaterDisplacementTexture"
+        ],
+        "examples": [
+          "EscapePod-MainPrefab/EscapePod/DistanceFieldProxy [MeshRenderer, material WaterClip (Instance), shadows On/True]"
+        ],
+        "count": 1
+      },
+      {
+        "shader": "Legacy Shaders/Particles/Additive",
+        "keywords": [],
+        "renderQueue": 3000,
+        "textures": [
+          "_MainTex"
+        ],
+        "examples": [
+          "EscapePod/ModulesRoot/RadioRoot/Radio(Clone)/xFlare [ParticleSystemRenderer, material Flare, shadows Off/True]"
+        ],
+        "count": 1
+      },
+      {
+        "shader": "MarmosetUBER",
+        "keywords": [
+          "MARMO_ALPHA_CLIP",
+          "MARMO_EMISSION"
+        ],
+        "renderQueue": 2000,
+        "textures": [
+          "_MainTex",
+          "_Illum"
+        ],
+        "examples": [
+          "EscapePod/models/Life_Pod_damaged_03/lifepod_damaged_03_geo/life_pod_exterior_emissives_01 [MeshRenderer, material cyclops_emissives_01, shadows On/True]"
+        ],
+        "count": 1
+      },
+      {
+        "shader": "MarmosetUBER",
+        "keywords": [
+          "_ALPHAPREMULTIPLY_ON",
+          "MARMO_ALPHA",
+          "MARMO_SPECMAP"
+        ],
+        "renderQueue": 3000,
+        "textures": [
+          "_MainTex",
+          "_SpecTex"
+        ],
+        "examples": [
+          "EscapePod/models/Life_Pod_damaged_03/lifepod_damaged_03_geo/life_pod_interior_damaged1 [SkinnedMeshRenderer, material life_pod_interior_decals_01_damaged_alpha, shadows On/True]"
+        ],
+        "count": 1
+      }
+    ],
+    "particles": [
+      {
+        "shader": "Legacy Shaders/Particles/Alpha Blended Premultiply",
+        "keywords": [],
+        "renderQueue": 3000,
+        "textures": [
+          "_MainTex"
+        ],
+        "examples": [
+          "Aurora-MainPrefab/Aurora/unexplodedFX/Ship_Exterior_CrashedFX(Clone) [ParticleSystemRenderer, material Default-Particle, shadows On/True]"
+        ],
+        "count": 1
+      }
+    ],
+    "terrain": [
+      {
+        "shader": "UWE/Terrain/Triplanar with Capping",
+        "keywords": [],
+        "renderQueue": 1000,
+        "textures": [
+          "_CapTexture",
+          "_CapBumpMap",
+          "_SideTexture",
+          "_SideBumpMap"
+        ],
+        "examples": [
+          "ChunkLayer(Clone) [MeshRenderer, material Sand02ToCoral15, shadows Off/False]",
+          "ChunkLayer(Clone) [MeshRenderer, material SS_SandToRock, shadows Off/False]",
+          "ChunkLayer(Clone) [MeshRenderer, material Sand02ToCoral15, shadows Off/False]",
+          "ChunkLayer(Clone) [MeshRenderer, material SS_SandToRock, shadows Off/False]"
+        ],
+        "count": 139
+      },
+      {
+        "shader": "UWE/Terrain/Triplanar",
+        "keywords": [],
+        "renderQueue": 2001,
+        "textures": [
+          "_MainTex",
+          "_BumpMap"
+        ],
+        "examples": [
+          "ChunkLayer(Clone) [MeshRenderer, material Sand02, shadows Off/False]",
+          "ChunkLayer(Clone) [MeshRenderer, material Sand04, shadows Off/False]",
+          "ChunkLayer(Clone) [MeshRenderer, material Coral15, shadows Off/False]",
+          "ChunkLayer(Clone) [MeshRenderer, material Rock02, shadows Off/False]"
+        ],
+        "count": 90
+      },
+      {
+        "shader": "UWE/Terrain/Triplanar",
+        "keywords": [
+          "UWE_SIG"
+        ],
+        "renderQueue": 2001,
+        "textures": [
+          "_MainTex",
+          "_BumpMap",
+          "_SIGMap"
+        ],
+        "examples": [
+          "ChunkLayer(Clone) [MeshRenderer, material Coral07, shadows Off/False]",
+          "ChunkLayer(Clone) [MeshRenderer, material Coral07, shadows Off/False]",
+          "ChunkLayer(Clone) [MeshRenderer, material Mossy_ground01, shadows Off/False]",
+          "ChunkLayer(Clone) [MeshRenderer, material Mossy_ground01, shadows Off/False]"
+        ],
+        "count": 29
+      },
+      {
+        "shader": "UWE/SIG Terrain Grass",
+        "keywords": [],
+        "renderQueue": 2450,
+        "textures": [
+          "_MainTex",
+          "_BumpMap",
+          "_SIGMap",
+          "_Mask"
+        ],
+        "examples": [
+          "ChunkGrass(Clone) [MeshRenderer, material coral_reef_grass_kelp_01, shadows Off/False]",
+          "ChunkGrass(Clone) [MeshRenderer, material coral_reef_small_deco_12_grass, shadows Off/False]",
+          "ChunkGrass(Clone) [MeshRenderer, material coral_reef_grass_kelp_02, shadows Off/False]",
+          "ChunkGrass(Clone) [MeshRenderer, material coral_reef_grass_kelp_01, shadows Off/False]"
+        ],
+        "count": 24
+      },
+      {
+        "shader": "UWE/SIG",
+        "keywords": [
+          "UWE_SIG"
+        ],
+        "renderQueue": 2000,
+        "textures": [
+          "_MainTex",
+          "_BumpMap",
+          "_SIGMap"
+        ],
+        "examples": [
+          "ChunkGrass(Clone) [MeshRenderer, material Coral_reef_small_deco_07, shadows Off/False]",
+          "ChunkGrass(Clone) [MeshRenderer, material Coral_reef_small_deco_07, shadows Off/False]",
+          "ChunkGrass(Clone) [MeshRenderer, material Coral_reef_small_deco_07, shadows Off/False]",
+          "ChunkGrass(Clone) [MeshRenderer, material Coral_reef_small_deco_07, shadows Off/False]"
+        ],
+        "count": 16
+      }
+    ]
+  },
+  "lights": [
+    "AtmosphereDirector/defaultLights/SunAndCaustics: Directional RGBA(0.992, 0.920, 0.816, 1.000) intensity 0.9041952 range 10 shadows None mode ForcePixel"
+  ]
+}

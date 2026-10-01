@@ -38,9 +38,82 @@ API facts, layout decisions and findings. Code wins over this file when they dis
   `onScroll`, `onMove` are private (invokers).
 - The dimension type `min_y -2032, height 2288` is accepted.
 
-## Open (Phase 0b)
+## Host (Subnautica, BepInEx 5)
 
-- Subnautica render path, camera image effects, terrain/base/creature shaders -> material strategy
-  for §3.2.
-- Whether Subnautica's loading screens stall its main thread past the 2 s heartbeat timeout.
-- Mono clock under Rosetta equals the JVM's.
+- Plugin `host-subnautica` (net472, `SubCraft.dll` in `BepInEx/plugins/SubCraft`). The Unity-free
+  part (`src/Link`: Proto, Platform, LinkView, HostLink, Coords, KeyMap) also builds into a
+  net10.0 xunit project, so it is tested on the Mac without Mono.
+- Link: `MemoryMappedFile` over the sparse file, raw pointer; seq/head/tail via `Volatile` and
+  `Interlocked` (overlay exchange). Clock: `clock_gettime_nsec_np(CLOCK_UPTIME_RAW)` from
+  libSystem. Measured under Rosetta: Minecraft's heartbeat age as seen by the host is 1-22 ms
+  (one frame), so the x86_64 Mono and arm64 JVM clocks agree.
+- Frame: `LinkDriver.Update` heartbeats, reads `McState`, forwards input, places the puppet
+  (before the camera's LateUpdate); `LateUpdate` writes `HostState` with the camera's look.
+
+### Player puppet (verified in game)
+
+- Subnautica's motor is skipped with a Harmony prefix on `PlayerController.UpdateController`
+  while Minecraft drives; the rigidbody is kinematic and restored on release.
+- **Anchor is the eye, not the collider:** Subnautica's collider shrinks while swimming (camera
+  0.56 m above its bottom when diving, 1.56 m when walking), Minecraft's player doesn't. The
+  puppet puts Subnautica's camera at Minecraft's eye (feet + eye height), and "host feet" sent in
+  teleports are camera minus 1.62, so teleports round-trip without drift.
+- Teleport handshake: the host bumps `teleportSeq` on link up, entering the game, a Minecraft
+  death, and whenever it moves the player itself (warp, harness teleport: > 2 m jump while
+  puppeted). Before taking over, if Minecraft is > 2 m from the host player, it teleports again
+  instead of yanking the player (found when a harness teleport landed during a pending one).
+- Minecraft holds its player until the destination chunk is loaded on the client and there is
+  ground or water there (an unloaded chunk reads as air: the first two-game run fell to y -800 and
+  dragged the Subnautica player with it).
+- Released to Subnautica when: link lost (2 s), not in game, piloting, cinematic mode. Measured
+  hard-kill of Minecraft -> control back after 2.09 s (2.0 s timeout + a frame + polling).
+- Subnautica's loading screens stall its main thread (and heartbeat) for 2-6 s: Minecraft pauses
+  and resumes, as the fail-safe intends.
+
+### Input (Phase 0b level)
+
+- Unity legacy `Input` polled each frame for every mapped KeyCode -> GLFW events (table in
+  `KeyMap.cs`, tested). Tab (PDA) and Esc (pause) stay Subnautica's; mouse look stays
+  Subnautica's. Not yet: suppressing Subnautica's own reaction to routed keys (number keys pick
+  both hotbars), Minecraft screens getting the cursor. Phase 1.
+
+### Dev harness
+
+- `$TMPDIR/subcraft/cmd.jsonl` (JSON lines) -> `out/results.jsonl`, `out/*.png`, `out/*.json`.
+  `tools/sn_cmd.py` sends and waits; `tools/scenarios/*.jsonl` are scripts.
+- New game -> its slot becomes `DevSlot` in `BepInEx/config/dev.subcraft.host.cfg`; `save` refuses
+  any other slot. Dev slot: `slot0002`. Sean's `slot0000`/`slot0001` verified byte-identical to the
+  backup after every session so far.
+- Dev window size goes through Unity's screen prefs (a `steam://run` URL with arguments makes
+  Steam ask for confirmation); `tools/sn_dev.sh stop` restores Sean's originals from the exported
+  plist (`tools/sn_prefs.py`).
+
+## Subnautica render path (Phase 0b recon, `docs/recon/*.json`)
+
+| | Finding |
+|---|---|
+| Pipeline | Built-in, **deferred shading**, HDR, linear colour space, OpenGLCore 4.1 (over Metal), no MSAA |
+| Main camera components | `WaterscapeVolumeOnCamera` (underwater fog/absorption), `WaterSurfaceOnCamera`, `WBOIT` (weighted blended OIT), `LensWaterController`, PostProcessing stack, `ColorCorrection`, `UwePostProcessingManager`, many screen FX (disabled) |
+| Command buffers | `BeforeForwardAlpha` (unnamed), `AfterForwardAlpha` "Builder Obstacles" |
+| Unity fog | **off**: fog is Subnautica's own (`WaterscapeVolume`), so built-in fog keywords won't do it |
+| Lights | one directional `SunAndCaustics` (ForcePixel, shadows none at this quality) |
+| Quality (dev machine) | "Low": shadows disabled, pixelLightCount 0 (deferred lights unaffected) |
+| Props, wrecks, lifepod, creatures, player tools | **`MarmosetUBER`** (`_MainTex`, `_BumpMap`, `_SpecTex`, `_Illum`); keywords `_ZWRITE_ON MARMO_SPECMAP`, `+MARMO_EMISSION`, `+MARMO_ALPHA_CLIP` (cutout), `+UWE_WAVING`, `+FX_KELP`; transparent variants add `WBOIT` at queue 3101; lifepod adds `UWE_LIGHTMAP` |
+| Terrain | `UWE/Terrain/Triplanar`, `Triplanar with Capping`, `UWE/SIG`, `UWE/SIG Terrain Grass` (queue 1000-2450, no shadows) |
+| Particles | `UWE/Particles/UBER` with `FX_UNDERWATER`, `FX_ADDFOG`, `WBOIT` |
+
+**Material strategy for Phase 0c (decision):** draw captured Minecraft geometry with the game's
+own `MarmosetUBER` shader, taking an existing MarmosetUBER material as the template (so every
+property the deferred and waterscape passes need is set) and swapping in the Minecraft atlas
+(point filtered) as `_MainTex`:
+opaque -> base keywords; cutout -> `MARMO_ALPHA_CLIP`; block light -> `MARMO_EMISSION` with an
+emission map/vertex colour; translucent -> the `WBOIT` variant at queue 3101. Because MarmosetUBER
+renders in the deferred G-buffer, Subnautica's sun, caustics, flashlight and waterscape fog light
+it like native props. Unknowns for 0c: how MarmosetUBER takes vertex colour (Minecraft's tint and
+AO live in vertex colours) — likely needs `_Color` per batch or a baked tint texture; normals
+(blocks have flat faces, `_BumpMap` can be a flat normal map).
+
+## Open
+
+- MarmosetUBER vertex-colour support (Phase 0c).
+- Whether the WaterscapeVolume pass needs anything from our renderers beyond depth.

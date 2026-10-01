@@ -5,8 +5,18 @@ unless marked **unverified**.
 
 ## Decisions waiting for you
 
-1. **Project licence.** The mod metadata says MIT (matching SkyCraft) but there is no `LICENSE`
-   file. Keep MIT, or something else?
+None right now. (Licence: MIT, decided 2026-10-01.)
+
+## Things Claude changed on your machine
+
+- Your Subnautica saves were copied to `~/Development/Modding/SubCraft-save-backups/` before any
+  plugin code ran; `slot0000`/`slot0001` have stayed byte-identical. SubCraft's dev game is
+  `slot0002` — the harness may only ever save that slot.
+- `SubCraft.dll` is installed in `Subnautica/BepInEx/plugins/SubCraft/`. Remove that folder to play
+  plain Subnautica.
+- Dev runs set Subnautica to a 960x540 window through its Unity prefs; `tools/sn_dev.sh stop`
+  restores your 2940x1912 fullscreen (checked). If you ever start Subnautica and it's a small
+  window, run `python3 tools/sn_prefs.py`.
 
 ---
 
@@ -37,3 +47,42 @@ tools/mc_dev.sh stop
 and `tools/out/overlay.png`.
 
 **Unverified:** App Nap when Minecraft is launched by Prism instead of Gradle.
+
+---
+
+## Phase 0b — Subnautica driven by Minecraft
+
+What it proves: with both games running, pressing W in Subnautica moves you through Minecraft's
+physics, Minecraft's hotbar/hearts/air show on top, and Subnautica takes control back if Minecraft
+dies.
+
+**Steps** (close other big apps first; 8 GB is tight)
+
+```sh
+cd ~/Development/Modding/Subnauticraft
+tools/mc_dev.sh start                     # Minecraft first (hides itself once linked)
+tools/sn_dev.sh start                     # Subnautica through Steam, 960x540 window
+python3 tools/sn_cmd.py --scenario tools/scenarios/load_dev_slot.jsonl
+```
+
+Then click into the Subnautica window and play:
+
+1. You're in the dev game (Creative). Swim out of the lifepod.
+2. Hold **W**: you move forward, a bit slower than Subnautica swimming, and you slowly **sink**
+   (Minecraft has no seabed here yet, and Minecraft players sink in water). Mouse look is
+   Subnautica's. **Space** swims up (Minecraft's swim-up).
+3. Bottom of the screen: Minecraft's hearts, air bubbles, hunger and hotbar over Subnautica's
+   (Subnautica's quickslots are still underneath — known, Phase 1).
+4. Run `tools/mc_dev.sh stop` in a terminal: within ~2 s Subnautica's own swimming works again.
+
+**Expected / known rough edges:** number keys change both hotbars; left click also uses
+Subnautica's tool; E opens Minecraft's inventory but you can't click in it yet; Tab still opens the
+PDA (intended). Frame rate may stutter while both games run.
+
+**Afterwards:** `tools/sn_dev.sh stop` (also restores your screen settings), `tools/mc_dev.sh stop`.
+
+**Send back:** what W/Space felt like (speed, sinking, any jitter of the camera), whether the
+Minecraft HUD looked crisp at your window size, and if anything failed:
+`tools/sn_dev.sh log 80`, `guest-neoforge/run/logs/latest.log`.
+
+**Unverified by Claude:** your real keyboard (Claude injected W through the same input ring).

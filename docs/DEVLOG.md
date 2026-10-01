@@ -2,6 +2,78 @@
 
 Newest first. One entry per session (MISSION.md rule 11).
 
+## 2026-10-01 — Session 2: Phase 0b (Subnautica link)
+
+**Done**
+
+- Licence: MIT (Sean's decision), `LICENSE` added.
+- Saves backed up before anything ran: `~/Development/Modding/SubCraft-save-backups/` (SavedGames
+  copy + exported Unity prefs). Sean's `slot0000`/`slot0001` diffed byte-identical afterwards.
+- Decompiled Assembly-CSharp(+firstpass) with ilspycmd 11.1 into `.decompiled/` (git-ignored).
+- **`host-subnautica`** (net472, BepInEx 5.4.23.5, HarmonyX, publicized Assembly-CSharp via
+  BepInEx.AssemblyPublicizer.MSBuild, built with .NET SDK 10 on macOS, post-build deploy):
+  - `src/Link`: Proto.cs (mirror of the header), Platform (CLOCK_UPTIME_RAW via libSystem, paths),
+    LinkView (unsafe, Volatile/Interlocked), HostLink (creates the sparse 191 MiB file, magic
+    written last), Coords (Unity <-> MC, look), KeyMap (Unity KeyCode -> GLFW);
+  - `LinkDriver`/`HostState`: heartbeat, McState, events, HostState with camera look, viewport, day;
+  - `Player/PlayerPuppet`: Harmony prefix skips `PlayerController.UpdateController` while
+    Minecraft drives; camera placed at Minecraft's eye; teleport handshake;
+  - `Player/InputCapture`: real keyboard/mouse -> GLFW events (Tab, Esc stay Subnautica's);
+  - `Hud/OverlayView`: Minecraft's overlay drawn on top (IMGUI for now);
+  - `Dev/DevHarness`, `StateDump`, `RenderRecon`: command-file harness (rule 12).
+- **Tests (no game, net10.0 xunit):** layout vs `layout.json`, coordinate and look mapping (round
+  trips, Unity euler yaw), key table, input/collision rings, McState seqlock under a writer,
+  overlay exchange, HostLink file creation, clock equality with Python's CLOCK_UPTIME_RAW. 34/34.
+- **Tools:** `tools/sn_dev.sh` (launch through Steam windowed 960x540, stop + restore prefs),
+  `tools/sn_prefs.py`, `tools/sn_cmd.py` (harness client), `tools/fake_minecraft.py` (stand-in
+  Minecraft), `tools/scenarios/phase0b.jsonl`, `load_dev_slot.jsonl`.
+- **Guest fixes found by the two-game run:** hold the player until the destination chunk is on the
+  client and there is ground or water (hold timer now resets per teleport); Minecraft never drowns
+  the player in the SubCraft world while linked (host owns oxygen; Phase 1 mirrors it).
+
+**Phase 0b result: done.**
+- One game (Subnautica + `fake_minecraft.py`): link up, teleport acked, puppet takes over, injected
+  W walks the Subnautica player 14 m; overlay test pattern drawn.
+- Both games (Minecraft dev client + Subnautica, dev slot `slot0002`): W injected through the
+  harness -> Minecraft's physics moves its player 8 blocks underwater (sinking, in-water flags) ->
+  Subnautica's player and camera follow exactly (`docs/screens/0b-before-w.png`, `0b-after-w.png`:
+  Minecraft hearts, air, hunger and hotbar over Subnautica's shallows).
+- Hard-killing Minecraft returns control to Subnautica after 2.09 s (2.0 s timeout + polling).
+- Render-path recon written up in `docs/DESIGN.md` (deferred, HDR, linear, MarmosetUBER
+  everywhere, Subnautica's own waterscape fog, WBOIT transparency) with the 0c material strategy.
+
+**Bugs found and fixed on the way:** Steam asks for confirmation when a `steam://run` URL carries
+arguments (dev window size moved to Unity prefs); PlistBuddy splits keys on spaces, so the first
+prefs restore silently did nothing (rewritten with plistlib, verified); new-game setup briefly uses
+a scratch slot named `test`, which the dev-slot detection grabbed; a harness teleport during a
+pending teleport got yanked back (re-teleport when Minecraft and host disagree by > 2 m); a
+released player in an unloaded chunk fell to y -800 and dragged Subnautica's player with it.
+
+**Decisions**
+- Puppet anchors on the eye (camera at Minecraft's eye; host feet = camera - 1.62), not the
+  collider, because Subnautica's collider shrinks while swimming.
+- Subnautica keeps the mouse look (host owns the look, as SkyCraft); Tab and Esc stay Subnautica's.
+- Fail-safe stays at 2 s even though Subnautica's loading stalls its heartbeat 2-6 s: Minecraft
+  pausing during loading is harmless and resumes on its own.
+
+**Unverified / not done yet**
+- Real keyboard input from a person (all W tests injected through the harness on the same ring
+  `InputCapture` writes to). Sean's TESTING step covers it.
+- Subnautica still acts on routed keys too (number keys select both hotbars; left click uses
+  Subnautica's tool) — Phase 1 input routing.
+- Minecraft screens (inventory) can't get the cursor yet — Phase 1.
+- Overlay is drawn with IMGUI over everything including Subnautica's PDA — Phase 1 moves it to a
+  uGUI canvas below Subnautica's menus.
+
+**Memory (both games):** Minecraft RSS ~0.6-0.9 GB (heap ~0.7 GB used of 2), Subnautica RSS
+~0.26 GB at the menu (macOS compresses heavily); swap used 6.7-7.4 GB of 8 GB with Brave and the
+Claude app also open. Frame rate dipped to single digits during some seconds; usable for scripted
+checks. Two-game runs should stay short on this machine (rule 15).
+
+**Next:** Phase 0c — the look spike: capture a small Minecraft scene (cobblestone, glass, oak
+leaves, torch, glowstone, chest) to a dump file, load it in Subnautica with MarmosetUBER
+materials and point lights, screenshot noon/dusk/night+flashlight/underwater/above/far.
+
 ## 2026-10-01 — Session 1: skeleton and Phase 0a
 
 **Done**

@@ -1,0 +1,16 @@
+// Phase 0b check: run with Minecraft (tools/mc_dev.sh start) and Subnautica (tools/sn_dev.sh start) both up,
+// the dev slot loaded:  python3 tools/sn_cmd.py --scenario tools/scenarios/phase0b.jsonl
+{"cmd": "waitingame", "timeout": 300}
+{"cmd": "teleport", "x": 28, "y": -6, "z": 185}
+{"cmd": "look", "yaw": 180, "pitch": 5}
+{"cmd": "time", "value": 0.5}
+{"cmd": "wait", "seconds": 12}
+{"cmd": "dump", "name": "0b_before_w", "print": false}
+{"cmd": "screenshot", "name": "0b_before_w"}
+{"cmd": "key", "glfw": 87, "down": true}
+{"cmd": "wait", "seconds": 4}
+{"cmd": "key", "glfw": 87, "down": false}
+{"cmd": "wait", "seconds": 1}
+{"cmd": "dump", "name": "0b_after_w", "print": false}
+{"cmd": "screenshot", "name": "0b_after_w"}
+{"cmd": "recon", "name": "0b_recon"}

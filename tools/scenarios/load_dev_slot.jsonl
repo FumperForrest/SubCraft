@@ -1,0 +1,3 @@
+// From the main menu: load the dev slot (BepInEx config DevSlot) and wait until in game.
+{"cmd": "load"}
+{"cmd": "waitingame", "timeout": 300}
