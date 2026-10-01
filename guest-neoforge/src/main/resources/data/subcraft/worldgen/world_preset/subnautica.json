@@ -1,0 +1,19 @@
+{
+  "dimensions": {
+    "minecraft:overworld": {
+      "type": "subcraft:subnautica",
+      "generator": {
+        "type": "minecraft:flat",
+        "settings": {
+          "biome": "minecraft:deep_ocean",
+          "features": false,
+          "lakes": false,
+          "structure_overrides": [],
+          "layers": [
+            { "block": "minecraft:water", "height": 2032 }
+          ]
+        }
+      }
+    }
+  }
+}

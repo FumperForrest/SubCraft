@@ -1,0 +1,35 @@
+# macOS
+.DS_Store
+
+# IDEs
+.idea/
+.vscode/
+*.iml
+.vs/
+
+# Decompiled game code: never committed (MISSION.md rule 4)
+.decompiled/
+
+# Local game paths (MISSION.md rule 5)
+GamePath.props
+*.user
+
+# Gradle / NeoForge
+guest-neoforge/.gradle/
+guest-neoforge/build/
+guest-neoforge/run/
+guest-neoforge/run-server/
+guest-neoforge/runs/
+
+# .NET
+host-subnautica/**/bin/
+host-subnautica/**/obj/
+host-subnautica/lib/
+
+# Python
+__pycache__/
+*.pyc
+
+# Tool output
+tools/out/
+*.scdump

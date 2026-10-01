@@ -1,0 +1,85 @@
+plugins {
+	id 'java-library'
+	id 'net.neoforged.moddev' version '2.0.148'
+}
+
+version = mod_version
+group = mod_group_id
+
+base {
+	archivesName = mod_id
+}
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+
+neoForge {
+	version = project.neo_version
+
+	runs {
+		configureEach {
+			systemProperty 'forge.logging.markers', 'REGISTRIES'
+			logLevel = org.slf4j.event.Level.INFO
+			// Dev profile for an 8 GB machine (MISSION.md section 2).
+			jvmArguments.addAll('-Xmx2G', '-XX:+UseG1GC')
+		}
+		client {
+			client()
+			gameDirectory = project.file('run')
+			programArguments.addAll('--username', 'SubCraftDev')
+			// -Dsubcraft.showWindow=true keeps the window visible while linked (debugging).
+			systemProperty 'subcraft.diagnostics', 'true'
+		}
+		server {
+			server()
+			gameDirectory = project.file('run-server')
+			programArgument '--nogui'
+		}
+	}
+
+	mods {
+		"${mod_id}" {
+			sourceSet(sourceSets.main)
+		}
+	}
+}
+
+dependencies {
+	testImplementation platform('org.junit:junit-bom:5.11.4')
+	testImplementation 'org.junit.jupiter:junit-jupiter'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+	// Plain unit tests don't see Minecraft's libraries; the layout test reads JSON.
+	testImplementation 'com.google.code.gson:gson:2.10.1'
+}
+
+test {
+	useJUnitPlatform()
+	// Layout tests read ../protocol/layout.json.
+	systemProperty 'subcraft.repoRoot', rootProject.projectDir.parentFile.absolutePath
+	testLogging { events 'passed', 'failed'; exceptionFormat 'full' }
+}
+
+var generateModMetadata = tasks.register('generateModMetadata', ProcessResources) {
+	var replaceProperties = [
+		minecraft_version      : minecraft_version,
+		minecraft_version_range: minecraft_version_range,
+		neo_version            : neo_version,
+		neo_version_range      : neo_version_range,
+		loader_version_range   : loader_version_range,
+		mod_id                 : mod_id,
+		mod_name               : mod_name,
+		mod_license            : mod_license,
+		mod_version            : mod_version,
+		mod_authors            : mod_authors,
+		mod_description        : mod_description,
+	]
+	inputs.properties replaceProperties
+	expand replaceProperties
+	from 'src/main/templates'
+	into 'build/generated/sources/modMetadata'
+}
+sourceSets.main.resources.srcDir generateModMetadata
+neoForge.ideSyncTask generateModMetadata
+
+tasks.withType(JavaCompile).configureEach {
+	options.encoding = 'UTF-8'
+}

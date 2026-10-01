@@ -1,0 +1,15 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "dev.subcraft.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [],
+  "client": [
+    "client.GameRendererInvoker",
+    "client.InputConstantsMixin",
+    "client.LevelRendererMixin",
+    "client.MinecraftMixin",
+    "client.MouseHandlerInvoker"
+  ],
+  "injectors": { "defaultRequire": 1 }
+}
