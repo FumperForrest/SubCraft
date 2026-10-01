@@ -41,7 +41,16 @@ cd host-subnautica/tests && dotnet test    # host no-game tests (net10.0)
 tools/sn_dev.sh start|stop|status|log      # Subnautica via Steam, 960x540; stop restores Sean's prefs
 python3 tools/sn_cmd.py '{"cmd":"dump"}'   # dev harness; --scenario tools/scenarios/*.jsonl
 python3 tools/fake_minecraft.py 60         # stand-in Minecraft for one-game Subnautica tests
+tools/sn_restart.sh [scenario.jsonl]       # rebuild+deploy plugin, restart Subnautica, load dev slot
+python3 tools/mc_cmd.py "subcraft tris"    # command into the running Minecraft (also "/..." commands)
+python3 tools/capture_dump.py f.scdump --preview out.png   # inspect a capture dump without games
+python3 tools/look_shots.py docs/look      # Phase 0c screenshot set (scene placed by look_place.jsonl)
 ```
+
+Harness commands (`host-subnautica/src/Dev/DevHarness.cs`): wait, screenshot, dump, recon,
+console, teleport, look, time, key, newgame, load, save, skipintro, waitingame, quit, loaddump,
+unloaddump, matinfo, matset, lightset, rendinfo, equip, holster, colprobe, harvestprobe, tricheck.
+Minecraft's own: `subcraft dump|tris|pos` and any `/command` (DebugCommands.java).
 
 Harness rules: the dev save slot is `slot0002` (BepInEx config `DevSlot`); never load, save or
 touch `slot0000`/`slot0001` (Sean's). Back up `SNAppData/SavedGames` before save-related work.
@@ -57,3 +66,8 @@ Run `dotnet build-server shutdown` after builds to free memory before launching 
 - Change behaviour only in the SubCraft world/dimension, and only while linked.
 - NeoForge events over Mixins; Mixins only `@Inject` / MixinExtras / accessors and invokers.
 - Every session: a `docs/DEVLOG.md` entry, `docs/TESTING.md` up to date, small commits, push.
+- Subnautica facts that cost time (details in `docs/DESIGN.md`): props/creatures use MarmosetUBER,
+  ambient comes from `SkyApplier`, the Low preset drops top mips (no mips on our textures), terrain
+  collision meshes are cleared after cooking (we capture them), terrain collision exists only in a
+  5x5x5 window of 16-block cells aligned with Minecraft sections.
+- Sean's goal: the Minecraft character fully replaces Subnautica's diver (hands, tools, body).

@@ -2,6 +2,76 @@
 
 Newest first. One entry per session (MISSION.md rule 11).
 
+## 2026-10-01 — Session 4: Phase 1 begins — exact collision
+
+**Sean's direction:** collision must be "ultra fine": swimming along a terrain face in Subnautica
+must be the same movement in Minecraft. Sean approved the Phase 0c look ("everything looks great").
+
+**Decision (extends MISSION.md 3.1, recorded in DESIGN.md):** two collision layers from one source.
+The **player** collides with Subnautica's exact collision triangles (capsule collide-and-slide in
+Minecraft, as SkyCraft's smooth collider does for Skyrim); the **ghost-terrain blocks** (8x8x8
+masks) stay for mobs, pathfinding and other mods, and have no collision for players wherever the
+triangles are known (otherwise players would be stair-stepped and the server's movement check
+would disagree with the client).
+
+**Done**
+- Protocol **v13**: `kColTris` = `ColRegion` + `ColTri[count]` (40 bytes: 9 floats + flags with
+  structure/terrain bits and material), one message per 16-block section, count 0 = known empty.
+- Host `World/CollisionHarvester`: sections around the player nearest-first (5x5x5), colliders
+  from `OverlapBox` on the layers the player's layer collides with, minus triggers, creatures,
+  pickupables, vehicles and dynamic rigidbodies; mesh colliders as their triangles, box/sphere/
+  capsule tessellated; mirrored into MC space; re-sent when a section's collider signature changes.
+- Host `World/TerrainMeshCapture`: Harmony prefix on `ClipmapCell.FinalizeCollidersIfNecessary`
+  copies each terrain chunk's collision mesh just before the game clears it.
+- Guest `world/tri`: `TriStore` (per-section snapshots, box queries, used by client and server),
+  `TriGeometry` (Ericson segment-triangle closest points), `TriCollider` (capsule sized to the
+  player's pose; 0.1-block sub-steps; depenetration; step-up with a vertical settle; ~50 degree
+  slope limit), `TriDebug` (`subcraft tris`). `EntityMixin`: `@ModifyReturnValue` on
+  `Entity.collide` for players in the SubCraft world, and only the into-surface part of the velocity
+  is removed after a triangle contact (vanilla zeroes whole axes). Unknown sections are solid.
+- Fixes found on the way: the command box ignored commands after a host restart (seq restarts at
+  1; "already running" is now per host instance); hold-until-ground also accepts triangles.
+- Dev tools: harness `colprobe`, `harvestprobe`, `tricheck`; state dump shows collision stats and
+  Minecraft's feet-to-surface gap; `tools/mc_cmd.py` (command box while the real host runs).
+- Tests: guest +7 collider tests (floor, terminal velocity, wall slide, 45 degree face glide at
+  exactly one radius, ledge step, gentle slope with no creep, out of reach); host 37, all green.
+
+**Verified in game (both games, dev slot):**
+- `tricheck`: the harvested copy of a terrain chunk matches Unity's raycast to 0.0000 m (same
+  triangle index).
+- Landing: the player settles on the seabed 6 cm above the surface point under its feet on a slope
+  (the geometric value for a 0.3 m capsule) and stays put.
+- Walking W uphill for 6 s across ~12 m of seabed: feet within 2-11 cm of Subnautica's surface;
+  0.45-0.65 m only where the ray under the feet' centre finds a dip the 0.6-wide body bridges.
+
+**What it took (each found from measurements):**
+1. Terrain collision meshes read as **0 vertices**: Subnautica cooks them into PhysX and clears the
+   mesh. -> capture before the clear.
+2. First copies didn't match: `Mesh.GetTriangles(List, ...)` *replaces* the list, and the base
+   vertex must be applied. -> per-submesh read with `applyBaseVertex: true`.
+3. A section was sent "empty" before its terrain streamed in, and the player fell into the rock.
+   `LargeWorldStreamer.IsRangeActiveAndBuilt` was then too strict (pads into cells outside the
+   window, waits for far object cells). The collision clipmap level is a 5x5x5 window of 16-block
+   cells around the camera, aligned with Minecraft sections: a section is sent once its cell is
+   loaded; until then Minecraft treats it as solid.
+4. Frictionless sliding down slopes under gravity. -> slope limit: ground (<= ~50 degrees) is
+   resolved vertically, steeper faces slide.
+
+**Unverified / open**
+- Sean's own feel test of swimming along faces (in TESTING.md).
+- Ghost-terrain block layer from the triangles (mobs still don't collide with terrain).
+- Harvest churn: ~300 section sends in the first minute (terrain chunks finishing, LOD); fine at
+  ~0.5 MB/s, to watch.
+- The terrain rescue (lift out if inside terrain) fired in the broken runs; untested since the fix.
+- Moving structures (Cyclops, Seamoth) are excluded from the harvest for now.
+
+**Memory:** both games ran together most of the session; swap 2-7 GB used of 8; Minecraft heap
+~1 GB; frame rate 40-140. Subnautica restarts took ~2 minutes each (build + Steam + load).
+
+**Next (rest of Phase 1):** ghost-terrain masks from the triangles (voxelize: surface shell + solid
+fill), oxygen bridge, input routing (keys stop acting in both games), overlay on a uGUI canvas,
+camera, and the first step of replacing the diver (hide its first-person arms and tools).
+
 ## 2026-10-01 — Session 3: Phase 0c (look spike)
 
 **Sean's direction (recorded):** the Minecraft character must replace Subnautica's diver

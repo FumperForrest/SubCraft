@@ -8,8 +8,10 @@ combat math, blocks and Minecraft mobs. **Subnautica owns the world**: terrain, 
 sound and saves, and it draws every pixel of the 3D scene, including Minecraft's blocks and mobs,
 which it captures as geometry and lights like its own.
 
-Status: early development. See `MISSION.md` for the plan, `docs/DEVLOG.md` for progress and
-`docs/TESTING.md` for what to try.
+Status: early development. Done: the link (0a), Subnautica driven by Minecraft's physics (0b), the
+look spike (0c: Minecraft blocks drawn by Subnautica's own shader). In progress: Phase 1, starting
+with exact collision (Minecraft's player collides with Subnautica's real collision surface). See
+`MISSION.md` for the plan, `docs/DEVLOG.md` for progress and `docs/TESTING.md` for what to try.
 
 ## Repository
 

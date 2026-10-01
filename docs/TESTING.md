@@ -3,19 +3,35 @@
 Things only you can judge (feel, taste) or decide. Everything here was already run by Claude
 unless marked **unverified**.
 
-## Review the look (Phase 0c gate) — please look first
+## Phase 1 — exact collision: please try it first
 
-Open `docs/look/`. A small Minecraft hut (cobblestone, glass, oak leaves, grass, torch, glowstone,
-chest) captured from Minecraft and drawn by Subnautica with its own shader, on the seabed near the
-lifepod: `0c-near-noon`, `0c-mid-noon`, `0c-near-dusk`, `0c-mid-dusk`,
-`0c-near-night-flashlight`, `0c-mid-night-flashlight`, `0c-far-noon-fog`,
-`0c-above-surface-noon` (`0c-before-fixes` is the first attempt, for contrast).
+What it does: Minecraft's player collides with Subnautica's exact collision surface (the same
+triangles the diver bumps into), not with blocks. Swimming along a rock face or the seabed should
+glide along it, in both games at once.
 
-**Does it look like it belongs?** Things to judge: brightness of the blocks next to the sand and
-rocks; whether the far shot fades into the water like the rocks do; torch/glowstone glow strength
-and the warm light they throw; leaves and grass green. Known: the diver's hands/tools are still
-Subnautica's (they get replaced by Minecraft's hand later); no shadows because your quality preset
-has them off.
+**Steps** (close other big apps first)
+
+```sh
+cd ~/Development/Modding/Subnauticraft
+tools/mc_dev.sh start
+tools/sn_dev.sh start
+python3 tools/sn_cmd.py --scenario tools/scenarios/load_dev_slot.jsonl
+```
+
+Then click into Subnautica and play: sink onto the seabed (Minecraft players sink in water), walk
+up and down slopes, swim along rock faces and under arches.
+
+**Expected:** you stand still on slopes (no creeping), walk up gentle slopes, slide along steep
+faces, never sink into the ground. At the edge of the ~80 m area Subnautica has loaded you stop
+until it catches up (normally never noticeable).
+
+**Send back:** how it feels (snagging on edges, jitter of the camera, places you went through or
+got stuck), and for any problem the output of `python3 tools/mc_cmd.py "subcraft tris"` taken
+right there, plus `tools/sn_dev.sh log 80`.
+
+## Phase 0c look — approved by Sean (2026-10-01)
+
+`docs/look/` keeps the screenshot set (noon/dusk/night+flashlight, near/mid/far, above surface).
 
 ## Decisions waiting for you
 
@@ -100,3 +116,5 @@ Minecraft HUD looked crisp at your window size, and if anything failed:
 `tools/sn_dev.sh log 80`, `guest-neoforge/run/logs/latest.log`.
 
 **Verified by Sean (2026-10-01):** real keyboard and mouse work.
+
+Note since Phase 1: with exact collision you no longer sink forever — you land on the seabed.

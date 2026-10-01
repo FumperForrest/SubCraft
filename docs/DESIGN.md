@@ -150,9 +150,64 @@ AO live in vertex colours) — likely needs `_Color` per batch or a baked tint t
   bake stays unless it fails at world scale (Phase 2): then a custom shader is the fallback (ask
   Sean before installing the editor).
 
+## Phase 1: exact collision (verified in game)
+
+**Two layers, one source.** Subnautica's collision triangles around the player go to Minecraft
+(`kColTris`, protocol v13). The **player** moves against them with a capsule collide-and-slide
+(`TriCollider`); the **ghost-terrain blocks** (8x8x8 masks, next step) are voxelized from the same
+triangles for mobs, pathfinding and other mods, and give players no collision where triangles are
+known. Minecraft still computes every velocity; only "what stops me" changes.
+
+**Host harvest (`World/CollisionHarvester`)**
+- Sections: 16-block Minecraft sections around the player (5x5x5), nearest first, a few per frame,
+  re-sent only when the section's collider signature changes (id, transform, mesh id/size).
+- Colliders: `OverlapBox` on the layers the player's collider layer collides with (Unity layer
+  matrix); skipped: triggers, `Creature`, `Pickupable`, `Vehicle`, the player, non-kinematic bodies.
+- Terrain is `ChunkCollider(Clone)` `MeshCollider`s on layer `TerrainCollider` (30). Their meshes
+  read as **0 vertices**: `ClipmapCell.FinalizeCollidersIfNecessary` cooks them into PhysX and
+  calls `sharedMesh.Clear()`. `TerrainMeshCapture` (Harmony prefix, read-only) copies vertices and
+  indices first, keyed by mesh (pooled meshes are re-finalized and overwrite their copy).
+  Read with `GetTriangles(list, submesh, applyBaseVertex: true)` per submesh (it *replaces* the list).
+- **Readiness:** terrain collision only exists in the collision clipmap level's window: 5x5x5 cells
+  of 16 blocks around the camera (`ClipmapLevel.cellSize` 16, `arraySize` 5,5,5). The land origin
+  is a multiple of 16 away from Unity's, so each Minecraft section is exactly one cell. A section is
+  sent once that cell `IsLoaded()` (inside the window and built); `LargeWorldStreamer.
+  IsRangeActiveAndBuilt` is unusable per section (pads the range into cells outside the window and
+  waits for object cells down to "very far").
+- Box/sphere/capsule colliders are tessellated (lat-long 10x8); unreadable meshes fall back to their
+  bounds (warned once per mesh).
+
+**Guest (`world/tri`)**
+- `TriStore`: immutable per-section snapshots in a concurrent map; client and integrated server
+  read the same store.
+- `TriCollider`: capsule (radius = half the player's width, height = its pose height; a sphere when
+  swimming-shaped), 0.1-block sub-steps (< radius: no tunnelling, up to 48 per tick), 4
+  depenetration passes per sub-step along the closest-point direction. Ground (normal within ~50
+  degrees of up, `WALKABLE_NY` 0.64) is resolved by lifting straight up, so gravity doesn't slide
+  you down slopes; steeper faces push along the normal, so motion along them survives. On ground,
+  a blocked move retries one step height up and settles vertically (rounded feet would otherwise
+  roll back off a ledge).
+- `EntityMixin`: `@ModifyReturnValue` on `Entity.collide` (after vanilla collided with real
+  blocks) for `Player`s in the SubCraft world, on client and server; `move` HEAD/TAIL keep the
+  velocity along a touched surface (vanilla zeroes the whole axis). A move into an unknown section
+  is refused (unknown = solid).
+- `TerrainBlock.getCollisionShape`: empty for players where `TriStore.isKnown`.
+
+**Measured:** harvested copy vs Unity raycast 0.0000 m; resting on a slope 6 cm above the point
+under the feet (capsule geometry); walking 12 m uphill within 2-11 cm of the surface.
+
+**Debugging aids:** harness `colprobe {x,y,z,radius}` (colliders, layers, filter verdicts, clipmap
+cells), `harvestprobe {sx,sy,sz}` (one section's harvest step by step), `tricheck {x,z,fromY}`
+(physics hit vs our copy); Minecraft `subcraft tris` via `tools/mc_cmd.py` (sections known around
+the player, nearest triangle, a fall probe through the collider); state dump `link.collision` and
+`link.mcFeetToSurface`.
+
 ## Open
 
 - AlbedoBake memory at world scale (Phase 2): measure cells per section; animated sprites (water,
   lava, fire) need the bake redone per frame or a separate path.
 - Translucent geometry (stained glass, water from mods): the WBOIT variants, untested so far.
 - Whether the WaterscapeVolume pass needs anything from our renderers beyond depth.
+- Collision: ghost-terrain voxelization (shell + solid fill from triangle orientation), moving
+  structures (Cyclops/Seamoth as kinematic triangle sets), harvest churn while terrain settles,
+  material per triangle (footstep sounds) from Subnautica's surface types.
