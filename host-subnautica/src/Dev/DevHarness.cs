@@ -174,6 +174,32 @@ namespace SubCraft.Dev
 							msg = "no intro showing";
 						}
 						break;
+					case "loaddump":
+						msg = LoadDump(cmd);
+						break;
+					case "unloaddump":
+						if (loaded != null) Destroy(loaded);
+						loaded = null;
+						break;
+					case "matset":
+						Color? col = cmd["color"] is JArray ca ? new Color((float)ca[0], (float)ca[1], (float)ca[2], ca.Count > 3 ? (float)ca[3] : 1f) : (Color?)null;
+						msg = $"{Render.MaterialFactory.Set((string)cmd["keyword"], (bool?)cmd["on"], (string)cmd["property"], (float?)cmd["value"], col, (bool?)cmd["glowOnly"] ?? false)} materials";
+						break;
+					case "lightset":
+						if (cmd["rangePerLevel"] != null) Render.BlockLights.RangePerLevel = (float)cmd["rangePerLevel"];
+						if (cmd["intensity"] != null) Render.BlockLights.Intensity = (float)cmd["intensity"];
+						if (cmd["lightmapStrength"] != null) Render.MaterialFactory.LightmapStrength = (float)cmd["lightmapStrength"];
+						msg = "applies to the next loaddump";
+						break;
+					case "rendinfo":
+						msg = Write("rendinfo.json", RendInfo((string)cmd["match"] ?? "", (int?)cmd["max"] ?? 3).ToString());
+						break;
+					case "matinfo":
+						msg = Write("matinfo.json", Render.MaterialFactory.Describe().ToString());
+						break;
+					case "equip":
+						msg = Equip((string)cmd["tech"], (bool?)cmd["lights"]);
+						break;
 					case "waitingame":
 						inner = WaitInGame((float?)cmd["timeout"] ?? 180f);
 						break;
@@ -202,6 +228,126 @@ namespace SubCraft.Dev
 			}
 			Result(name, ok, msg);
 			busy = false;
+		}
+
+		private GameObject loaded;
+
+		private static readonly string[] SkyVectors = { "_ExposureIBL", "_ExposureLM", "_SkyMin", "_SkyMax", "_SH0", "_SH1", "_SH2", "_SH3", "_SH4", "_BlendWeightIBL", "_Outdoors", "_AffectedByDayNightCycle" };
+		private static readonly string[] MatProps = { "_Lightmap", "_LightmapStrength", "_EnableLightmap", "_Illum", "_EnableGlow", "_GlowStrength", "_SpecInt", "_Shininess", "_EnableCutOff", "_Cutoff", "_Color" };
+
+		/// <summary>rendinfo {match, max}: property block + material state of renderers whose path contains match.</summary>
+		private static JObject RendInfo(string match, int max)
+		{
+			var o = new JObject();
+			var cam = MainCamera.camera.transform.position;
+			int n = 0;
+			foreach (var r in FindObjectsOfType<MeshRenderer>())
+			{
+				string path = r.transform.parent != null ? r.transform.parent.name + "/" + r.name : r.name;
+				if (path.IndexOf(match, StringComparison.OrdinalIgnoreCase) < 0 || (r.bounds.center - cam).sqrMagnitude > 120 * 120)
+				{
+					continue;
+				}
+				var block = new MaterialPropertyBlock();
+				r.GetPropertyBlock(block);
+				var pb = new JObject { ["empty"] = block.isEmpty };
+				foreach (var name in SkyVectors)
+				{
+					pb[name] = block.GetVector(name).ToString("F3");
+				}
+				var tex = block.GetTexture("_SpecCubeIBL");
+				pb["_SpecCubeIBL"] = tex != null ? tex.name : "null";
+				var mats = new JArray();
+				foreach (var m in r.sharedMaterials)
+				{
+					if (m == null) continue;
+					var mo = new JObject { ["name"] = m.name, ["shader"] = m.shader.name, ["keywords"] = string.Join(" ", m.shaderKeywords), ["queue"] = m.renderQueue };
+					foreach (var p in MatProps)
+					{
+						if (!m.HasProperty(p)) continue;
+						if (p == "_Lightmap" || p == "_Illum") mo[p] = m.GetTexture(p) != null ? m.GetTexture(p).name : "null";
+						else if (p == "_Color") mo[p] = m.GetColor(p).ToString();
+						else mo[p] = m.GetFloat(p);
+					}
+					mats.Add(mo);
+				}
+				o[$"{path} #{n}"] = new JObject { ["layer"] = r.gameObject.layer, ["lightProbes"] = r.lightProbeUsage.ToString(), ["block"] = pb, ["materials"] = mats };
+				if (++n >= max) break;
+			}
+			return o;
+		}
+
+		/// <summary>
+		/// loaddump {path, x, y, z, snap}: builds a capture dump in the world. The dump's minimum
+		/// corner goes to Unity (x, y, z); with snap the floor is dropped onto whatever is below
+		/// (seabed) by a ray cast down from y + 30.
+		/// </summary>
+		private string LoadDump(JObject cmd)
+		{
+			string path = (string)cmd["path"] ?? Path.Combine(outDir, "scene.scdump");
+			var dump = Render.DumpReader.Read(path);
+			float minX = float.MaxValue, minY = float.MaxValue, maxZ = float.MinValue;
+			foreach (var b in dump.Batches)
+			{
+				foreach (var v in b.Vertices)
+				{
+					minX = Mathf.Min(minX, v.X);
+					minY = Mathf.Min(minY, v.Y);
+					maxZ = Mathf.Max(maxZ, v.Z); // MC max z = Unity min z
+				}
+			}
+			var at = new Vector3((float)cmd["x"], (float)cmd["y"], (float)cmd["z"]);
+			if ((bool?)cmd["snap"] ?? true)
+			{
+				var hits = Physics.RaycastAll(at + Vector3.up * 30f, Vector3.down, 200f);
+				float best = float.MinValue;
+				foreach (var h in hits)
+				{
+					if (h.collider.GetComponentInParent<global::Player>() == null && h.point.y > best)
+					{
+						best = h.point.y;
+					}
+				}
+				if (best > float.MinValue)
+				{
+					at.y = best;
+				}
+			}
+			// Unity = (mcX, mcY, -mcZ) + offset; the corner (minX, minY, maxZ) lands on `at`.
+			var offset = new Vector3(at.x - minX, at.y - minY, at.z + maxZ);
+			if (loaded != null) Destroy(loaded);
+			loaded = Render.SceneBuilder.Build(dump, offset, Path.GetFileNameWithoutExtension(path));
+			return $"built {Path.GetFileName(path)} at {at} (offset {offset}), {dump.Lights.Count} lights";
+		}
+
+		/// <summary>equip {tech, lights}: puts a tool from the inventory in the player's hand (dev console "item" gives one).</summary>
+		private static string Equip(string tech, bool? lights)
+		{
+			if (!System.Enum.TryParse(tech, true, out TechType type))
+			{
+				throw new System.ArgumentException("unknown TechType " + tech);
+			}
+			var inv = Inventory.main;
+			var items = inv.container.GetItems(type);
+			if (items == null || items.Count == 0)
+			{
+				DevConsole.SendConsoleCommand("item " + tech);
+				items = inv.container.GetItems(type);
+				if (items == null || items.Count == 0)
+				{
+					throw new System.InvalidOperationException("couldn't get a " + tech);
+				}
+			}
+			inv.quickSlots.Bind(0, items[0]);
+			inv.quickSlots.SelectImmediate(0);
+			if (lights.HasValue)
+			{
+				foreach (var t in global::Player.main.GetComponentsInChildren<ToggleLights>(true))
+				{
+					t.SetLightsActive(lights.Value);
+				}
+			}
+			return $"holding {type}";
 		}
 
 		private static IEnumerator Wait(float seconds)

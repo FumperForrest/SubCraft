@@ -21,6 +21,7 @@ public final class CaptureBuffer implements VertexConsumer {
 	private int vertices;
 	private float ox, oy, oz;
 	private int material = Proto.REN_MAT_CUTOUT;
+	private boolean emitter;
 
 	/** Origin subtracted from every position (section origin or scene origin). */
 	public CaptureBuffer origin(float x, float y, float z) {
@@ -33,6 +34,13 @@ public final class CaptureBuffer implements VertexConsumer {
 	public CaptureBuffer material(int material) {
 		flushPartial();
 		this.material = material;
+		return this;
+	}
+
+	/** The geometry that follows belongs to a block that emits light itself (it glows). */
+	public CaptureBuffer emitter(boolean emitter) {
+		flushPartial();
+		this.emitter = emitter;
 		return this;
 	}
 
@@ -116,7 +124,7 @@ public final class CaptureBuffer implements VertexConsumer {
 		float[] nrm = this.quadNormal[0];
 		Direction dir = Direction.getNearest(nrm[0], nrm[1], nrm[2]);
 		boolean hasNormal = nrm[0] != 0 || nrm[1] != 0 || nrm[2] != 0;
-		int flags = (this.material & 0x7) | (hasNormal ? (dir.ordinal() + 1) << 4 : 0);
+		int flags = (this.material & 0x7) | (this.emitter ? 1 << 3 : 0) | (hasNormal ? (dir.ordinal() + 1) << 4 : 0);
 		ensure(6 * Proto.REN_VERTEX_BYTES);
 		for (int i : new int[] {0, 1, 2, 0, 2, 3}) {
 			float[] v = this.quad[i];

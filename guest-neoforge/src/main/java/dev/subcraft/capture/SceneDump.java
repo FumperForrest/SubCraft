@@ -84,7 +84,7 @@ public final class SceneDump {
 						var bakedModel = blocks.getBlockModel(state);
 						ModelData data = level.getModelData(pos);
 						for (RenderType layer : bakedModel.getRenderTypes(state, random, data)) {
-							CaptureBuffer buf = sec.buffer.material(RenderClassifier.classify(layer).material());
+							CaptureBuffer buf = sec.buffer.material(RenderClassifier.classify(layer).material()).emitter(light);
 							pose.pushPose();
 							pose.translate(x - sec.originX(), y - sec.originY(), z - sec.originZ());
 							random.setSeed(state.getSeed(pos));
@@ -94,7 +94,7 @@ public final class SceneDump {
 					}
 					if (drawFluid) {
 						// renderLiquid writes positions relative to the section already.
-						sec.buffer.material(RenderClassifier.classify(ItemBlockRenderTypes.getRenderLayer(fluid)).material());
+						sec.buffer.material(RenderClassifier.classify(ItemBlockRenderTypes.getRenderLayer(fluid)).material()).emitter(fluid.createLegacyBlock().getLightEmission() > 0);
 						blocks.renderLiquid(pos.immutable(), level, sec.buffer, state, fluid);
 					}
 					if (light) {

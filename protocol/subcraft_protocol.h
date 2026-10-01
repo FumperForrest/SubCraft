@@ -437,8 +437,9 @@ namespace subcraft::proto
 		float         u, v;     // texture UV
 		std::uint32_t color;    // RGBA8 (tint * ambient occlusion; Minecraft's face shading left out)
 		std::uint32_t light;    // low byte: block light 0-15, next byte: sky light 0-15
-		std::uint32_t flags;    // bits 0-2: RenMaterial; bits 4-6: face normal as MC Direction ordinal + 1
-		                        // (0 = none)
+		std::uint32_t flags;    // bits 0-2: RenMaterial; bit 3: emitter (the block emits light itself:
+		                        // the host draws it glowing); bits 4-6: face normal as MC Direction
+		                        // ordinal + 1 (0 = none)
 	};
 	static_assert(sizeof(RenVertex) == 32);
 

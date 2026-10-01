@@ -1,0 +1,8 @@
+// Phase 0c (in game): put the captured scene on the seabed in the shallows, frame it.
+{"cmd": "teleport", "x": 28, "y": -6, "z": 185}
+{"cmd": "wait", "seconds": 6}
+{"cmd": "loaddump", "x": 26, "y": -10, "z": 178, "snap": true}
+{"cmd": "time", "value": 0.5}
+{"cmd": "teleport", "x": 33, "y": -23.5, "z": 182}
+{"cmd": "look", "yaw": 215, "pitch": 15}
+{"cmd": "wait", "seconds": 3}

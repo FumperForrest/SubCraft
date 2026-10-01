@@ -99,5 +99,8 @@ namespace SubCraft.Link
 		public const uint DumpMagic = 0x4D444353; // "SCDM"
 		public const uint RenPad = 0, RenAtlas = 1, RenSection = 2, RenClearAll = 3, RenTexture = 4, RenScene = 6, RenAtlasRegion = 7, RenLights = 8;
 		public const int RenVertexBytes = 32, RenBatchBytes = 16;
+		public const int RenMatOpaque = 0, RenMatCutout = 1, RenMatTranslucent = 2, RenMatEmissive = 3, RenMatAdditive = 4;
+		public const uint VertexEmitter = 1 << 3;
+		public const int LightSteady = 0, LightFlame = 1, LightLava = 2;
 	}
 }
