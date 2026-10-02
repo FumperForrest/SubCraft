@@ -3,6 +3,23 @@
 Things only you can judge (feel, taste) or decide. Everything here was already run by Claude
 unless marked **unverified**.
 
+## Phase 3 — mobs, items, particles and your hand drawn by Subnautica: please try it first
+
+What it does: everything that moves in Minecraft (mobs, dropped items, chests and other block
+entities, particles, your hand and held item) is drawn by Subnautica, lit by its sun, torches and
+flashlight. Animated blocks (lava, fire, magma, sea lantern) animate.
+
+**Try:** `python3 tools/mc_cmd.py "/summon zombie ~ ~ ~3"`, drop an item (Q), open and close a
+chest, place a magma block, hold different items and an empty hand, at noon and at night with the
+flashlight (`{"cmd":"equip","tech":"Flashlight","lights":true}`).
+
+**Expected rough edges:** smoke particles are dark and don't fade; dropped items float up in
+water (Minecraft); Create contraptions and other mods' special renderers aren't drawn yet (they
+need the compat machine, see compat/README.md).
+
+**Send back:** your hand/held item (size, position, brightness compared with Minecraft), anything
+that flickers, missing mobs or items, frame-rate drops with many mobs.
+
 ## Phase 2 — Minecraft blocks drawn by Subnautica: please try it first
 
 What it does: blocks you place in Minecraft appear in Subnautica, lit by Subnautica (sun,

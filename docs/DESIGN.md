@@ -275,6 +275,24 @@ within 2 blocks and no wanted object collider; the exact harvest replaces it.
 - MarmosetUBER templates exist only once the game scene is loaded: nothing is built before
   `HostState.InGame()`.
 
+## Phase 3: dynamic draws (verified in game)
+
+- Guest: `DynamicCapture.frame` from `LevelRendererMixin` (render thread). Entities:
+  `EntityRenderDispatcher.render(e, pos - camera, lerped yaw, partial, pose, source, FULL_BRIGHT)`;
+  block entities: `BlockEntityRenderDispatcher.render` per chunk; particles: `ParticleEngine.
+  particles` (accessor) per sheet, `Particle.render(buffer, camera, partial)` (camera-relative).
+  `source` is a `MultiBufferSource.BufferSource` subclass handing out one CaptureBuffer per
+  RenderType (endBatch no-ops). Hand: `ItemInHandRenderer.renderHandsWithItems` with a fresh
+  PoseStack + `bobHurt`/`bobView` (invokers) = view space (GL: -z forward); host local =
+  `(x, y, -z)` under the camera. `GameRenderer.renderItemInHand` cancelled.
+- Texture ids: 0 = block atlas (kRenAtlas), others as first used (`TextureGrabber`, GPU
+  readback). Lightmap ignored (host lights); full-bright packed light passed.
+- Host: one drawable for the scene (moved to the scene origin, SkyApplier dynamic) and one for the
+  hand. Translucent -> cutout unless texels with 8 < alpha < 247 lie under the quads (cached per
+  texture rect). Normals: per triangle, cross product after the mirror.
+- Animated sprites: `SpriteContents.getUniqueFrames().count() > 1` -> 64 vanilla sprites; diffed
+  per 250 ms readback; host patches its atlas copy and refills only overlapping bake cells.
+
 ## Open
 
 - AlbedoBake memory at world scale (Phase 2): measure cells per section; animated sprites (water,

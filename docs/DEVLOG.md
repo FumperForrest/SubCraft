@@ -2,6 +2,45 @@
 
 Newest first. One entry per session (MISSION.md rule 11).
 
+## 2026-10-02 — Session 8: Phase 3 — everything dynamic (as far as this Mac can test)
+
+**Done**
+- Guest `DynamicCapture`: each frame, inside the skipped world pass, entities, block entities and
+  particles render through Minecraft's own renderers into capture buffers (one per RenderType;
+  particles per sheet, each drawing itself relative to the camera) -> one kRenScene relative to
+  the camera. The first-person hand and held item render into view space -> kRenHand (protocol
+  v17). Textures (skins, particle atlas) go once as kRenTexture. Minecraft's own hand in the
+  overlay is cancelled; entity blob shadows off; ambient suspended particles (underwater specks)
+  skipped; no per-frame draws while the host isn't in game. No-cull RenderTypes set RenBatch bit 8.
+- `AtlasAnimator`: block atlas read back 4x a second; animated sprites that changed ->
+  kRenAtlasRegion; host `BakeCache.Refill` redoes the cells using them (64 animated sprites in
+  vanilla; 67-204 cells re-baked in the first seconds).
+- Host `LiveWorld` generalized: any texture id with its own bake cache (all-white batches skip the
+  bake), flat normals from the triangles (our vertex only knows block-face directions), back faces
+  for double-sided batches, the newest scene only, hand mesh parented to Subnautica's camera.
+
+**Found on the way**
+- Held and dropped items rendered as dark glass: Minecraft draws items with a translucent
+  RenderType, which picked MarmosetUBER's WBOIT glass template. Translucent batches whose texture
+  has no partial alpha under their quads are now drawn as cutout.
+- Sections arrived ~15 s late after a restart: ~35,000 stale per-frame scenes had queued while
+  Subnautica loaded. Fixed on the guest.
+- Items float up in water (Minecraft physics): the test sword sat at the surface.
+- Sean was building in the dev world meanwhile (door, glowstone, more torches) and asked about
+  the black hand: it was the pickaxe, drawn as glass (fixed above).
+
+**Verified in game (docs/look/3-*)**: a zombie, the held block, the bare arm and a door lit by
+Subnautica at noon and by the flashlight at night; the dropped sword visible at the surface;
+flame and smoke particles; sea lantern glowing; animated cells re-baked live; `fake_host.py` all
+[ok].
+
+**Not on this machine (compat/README.md):** Flywheel backend, fallback layer, moving-structure
+colliders, the Create water-wheel check. Mod-free dev profile (MISSION.md section 2).
+
+**Open:** smoke particles are opaque dark (alpha fade lost: bake keys drop alpha); the bare arm
+is bright at noon close to the camera (judge by eye); hand drawn with Subnautica's FOV, not
+Minecraft's hand FOV.
+
 ## 2026-10-02 — Session 7: fast-flight freeze fixed; Phase 2 — Unity draws Minecraft's blocks
 
 **Sean's report:** flying fast on an elytra froze him mid-air. Cause, as he suspected: Minecraft

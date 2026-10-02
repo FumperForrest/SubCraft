@@ -23,6 +23,19 @@ bigger machine or a later session.
 | Most-downloaded vehicle mod | modded vehicles | — |
 | Most-downloaded base-piece mod | modded habitats | — |
 
+## Waiting for this machine (from Phase 3)
+
+These Phase 3 items need the mods above and are not built or verified on the dev Mac:
+
+- **Flywheel** (Create's instanced parts): a SubCraft backend, or a Mixin on its instancer, sending
+  models once and instance arrays per frame. Today Flywheel-drawn parts are simply missing.
+- **Fallback layer** for draws the capture can't classify (custom shaders, raw GL, level-stage
+  events): every such RenderType is logged once in Minecraft's log as
+  `capturing fallback: <type> failed: ... render type not captured` -> collect those lines.
+- **Moving structures' colliders** (contraptions, Aeronautics ships) for Unity.
+- Done-when to check: a Create water wheel and gearbox turn, lit by Subnautica; the compat pack
+  runs with fallback draws logged.
+
 ## Results
 
 None yet.
