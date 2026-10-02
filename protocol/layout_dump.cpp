@@ -78,6 +78,7 @@ int main()
 	C(kColRingDataOff);
 	C(kColRingDataBytes);
 	C(kTriMaterialShift);
+	C(kBiomeCells);
 	C(kRenRingHeadOff);
 	C(kRenRingTailOff);
 	C(kRenRingDataOff);
@@ -151,6 +152,10 @@ int main()
 
 	S(ColDryHeader);
 	F(ColDryHeader, epoch); F(ColDryHeader, count);
+	endStruct();
+
+	S(ColBiomes);
+	F(ColBiomes, sx); F(ColBiomes, sy); F(ColBiomes, sz); F(ColBiomes, nameCount);
 	endStruct();
 
 	S(DryBox);

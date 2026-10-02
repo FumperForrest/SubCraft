@@ -26,7 +26,7 @@
 namespace subcraft::proto
 {
 	inline constexpr std::uint32_t kMagic = 0x43425553;  // "SUBC"
-	inline constexpr std::uint32_t kVersion = 14;
+	inline constexpr std::uint32_t kVersion = 15;
 
 	// Default file locations: macOS $TMPDIR/subcraft/link.bin, Windows %LOCALAPPDATA%\SubCraft\link.bin.
 	// Both sides accept an override (Java -Dsubcraft.link=<path>, host config, env SUBCRAFT_LINK).
@@ -321,7 +321,21 @@ namespace subcraft::proto
 		kColDry = 4,     // payload: ColDryHeader + DryBox[count] (v14): every dry volume near the player
 		                 // (lifepod, habitats, subs). Replaces the previous set; count 0 = none. Water
 		                 // inside them becomes air in Minecraft.
+		kColBiomes = 5,  // payload: ColBiomes + u8 cell[64] + names (v15): the host's biome in each 4x4x4
+		                 // cell of a 16-block section (Minecraft's biome resolution). cell index =
+		                 // (y * 4 + z) * 4 + x in MC axes, value = index into the names that follow
+		                 // (nameCount NUL-terminated UTF-8 strings), 255 = unknown.
 	};
+
+	struct ColBiomes
+	{
+		std::int32_t sx, sy, sz;  // section coords
+		std::uint8_t nameCount;
+		std::uint8_t pad[3];
+	};
+	static_assert(sizeof(ColBiomes) == 16);
+	inline constexpr std::uint32_t kBiomeCells = 64;
+	inline constexpr std::uint8_t kBiomeUnknown = 255;
 
 	struct ColMsgHeader
 	{

@@ -1,0 +1,38 @@
+{
+  "has_precipitation": false,
+  "temperature": 0.8,
+  "downfall": 0.5,
+  "effects": {
+    "sky_color": 7907327,
+    "fog_color": 12638463,
+    "water_color": 4037828,
+    "water_fog_color": 666684
+  },
+  "spawners": {
+    "water_ambient": [
+      {
+        "type": "minecraft:tropical_fish",
+        "weight": 25,
+        "minCount": 8,
+        "maxCount": 8
+      },
+      {
+        "type": "minecraft:pufferfish",
+        "weight": 15,
+        "minCount": 1,
+        "maxCount": 3
+      }
+    ],
+    "water_creature": [
+      {
+        "type": "minecraft:squid",
+        "weight": 10,
+        "minCount": 1,
+        "maxCount": 4
+      }
+    ]
+  },
+  "spawn_costs": {},
+  "carvers": {},
+  "features": []
+}

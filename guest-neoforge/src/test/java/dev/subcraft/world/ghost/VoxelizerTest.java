@@ -15,6 +15,7 @@ class VoxelizerTest {
 	private final List<Integer> mats = new ArrayList<>();
 	private final Map<Long, TriStore.Section> store = new HashMap<>();
 	private int material = 1;
+	private int structureFlag;
 
 	@BeforeEach
 	void reset() {
@@ -31,7 +32,7 @@ class VoxelizerTest {
 
 	private void tri(double[] a, double[] b, double[] c) {
 		this.tris.add(new float[] {(float) a[0], (float) a[1], (float) a[2], (float) b[0], (float) b[1], (float) b[2], (float) c[0], (float) c[1], (float) c[2]});
-		this.mats.add(this.material << 8);
+		this.mats.add(this.material << 8 | this.structureFlag);
 	}
 
 	/** A floor (solid below) at height y over the given xz box. */
@@ -177,5 +178,35 @@ class VoxelizerTest {
 		Voxelizer.Result r = run(0);
 		assertEquals(2, r.material[index(1, 7, 1)]);
 		assertEquals(2, r.material[index(1, 0, 1)]);
+	}
+
+	@Test
+	void structureTrianglesMarkTheirBlocks() {
+		this.material = 4; // metal
+		this.structureFlag = 1; // kTriStructure
+		floor(-20, -20, 20, 20, 5.5);
+		commit();
+		Voxelizer.Result r = run(0);
+		int m = r.material[index(2, 5, 2)] & 0xFF;
+		assertEquals(Voxelizer.STRUCTURE_BIT, m & Voxelizer.STRUCTURE_BIT);
+		assertEquals(4, m & ~Voxelizer.STRUCTURE_BIT);
+	}
+
+	@Test
+	void structureHullIsAShellNotAFill() {
+		this.structureFlag = 1;
+		// A closed 4x4x4 box (top, bottom, four walls) from (4,4,4) to (8,8,8).
+		floor(4, 4, 8, 8, 8);
+		ceiling(4, 4, 8, 8, 4);
+		quad(new double[] {4, 4, 4}, new double[] {4, 8, 4}, new double[] {8, 8, 4}, new double[] {8, 4, 4});
+		quad(new double[] {4, 4, 8}, new double[] {8, 4, 8}, new double[] {8, 8, 8}, new double[] {4, 8, 8});
+		quad(new double[] {4, 4, 4}, new double[] {4, 4, 8}, new double[] {4, 8, 8}, new double[] {4, 8, 4});
+		quad(new double[] {8, 4, 4}, new double[] {8, 8, 4}, new double[] {8, 8, 8}, new double[] {8, 4, 8});
+		commit(1, -1);
+		Voxelizer.Result r = run(0);
+		assertEquals(Voxelizer.EMPTY, r.kind[index(6, 6, 6)], "inside the hull is open");
+		assertEquals(Voxelizer.PARTIAL, r.kind[index(6, 4, 6)], "the floor plate");
+		assertEquals(Voxelizer.PARTIAL, r.kind[index(4, 6, 6)], "a wall");
+		assertEquals(0, r.full);
 	}
 }

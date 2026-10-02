@@ -55,16 +55,22 @@ public final class CollisionConsumer {
 			TriStore.clear();
 			GhostTerrain.clear();
 			DryVolumes.clear();
+			dev.subcraft.world.ghost.BiomePatcher.clear();
 		}
 		view.drainCollision((type, off, bytes) -> read(view, type, off, bytes), 256);
 		apply(level);
 		GhostTerrain.tick(level);
 		DryVolumes.tick(level);
+		dev.subcraft.world.ghost.BiomePatcher.tick(level);
 	}
 
 	private static void read(LinkView v, int type, long off, int bytes) {
 		if (type == COL_TRIS) {
 			readTris(v, off, bytes);
+			return;
+		}
+		if (type == COL_BIOMES) {
+			readBiomes(v, off, bytes);
 			return;
 		}
 		if (type == COL_DRY) {
@@ -146,6 +152,31 @@ public final class CollisionConsumer {
 			SubCraft.LOG.info("SubCraft: triangles for section ({}, {}, {}): {} (regions so far {}, triangles {})", minX >> 4, minY >> 4, minZ >> 4, count,
 				triRegions, triTotal);
 		}
+	}
+
+	/** kColBiomes: 64 cells of host biome names -> SubCraft biomes. */
+	private static void readBiomes(LinkView v, long off, int bytes) {
+		if (bytes < COL_BIOMES_BYTES + BIOME_CELLS) {
+			return;
+		}
+		int sx = v.getInt(off), sy = v.getInt(off + 4), sz = v.getInt(off + 8);
+		int nameCount = v.getByte(off + 12);
+		String[] names = new String[nameCount];
+		long p = off + COL_BIOMES_BYTES + BIOME_CELLS, end = off + bytes;
+		for (int i = 0; i < nameCount && p < end; i++) {
+			var sb = new java.io.ByteArrayOutputStream();
+			int b;
+			while (p < end && (b = v.getByte(p++)) != 0) {
+				sb.write(b);
+			}
+			names[i] = dev.subcraft.world.ghost.BiomePatcher.map(sb.toString(java.nio.charset.StandardCharsets.UTF_8));
+		}
+		String[] cells = new String[BIOME_CELLS];
+		for (int i = 0; i < BIOME_CELLS; i++) {
+			int idx = v.getByte(off + COL_BIOMES_BYTES + i);
+			cells[i] = idx < nameCount ? names[idx] : null;
+		}
+		dev.subcraft.world.ghost.BiomePatcher.put(sx, sy, sz, cells);
 	}
 
 	private static int triRegions;

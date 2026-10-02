@@ -20,6 +20,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.LevelChunk;
 
 /**
  * Keeps the ghost-terrain blocks in step with the host's triangles (MISSION.md 3.1): every section
@@ -46,6 +47,8 @@ public final class GhostTerrain {
 	private static final ArrayDeque<Voxelizer.Result> ready = new ArrayDeque<>();
 	private static final ArrayDeque<Voxelizer.Result> waitingForChunk = new ArrayDeque<>();
 	private static Voxelizer.Result applying;
+	private static LevelChunk applyingChunk;
+	private static int sectionsSkipped, chunksRestored;
 	private static int cursor;
 	private static int generation;
 	private static long lastChunkRetry;
@@ -79,11 +82,11 @@ public final class GhostTerrain {
 		ready.clear();
 		waitingForChunk.clear();
 		applying = null;
-		MaskStore.clear();
+		// MaskStore stays: it mirrors the loaded chunks' saved masks, which stamps rely on.
 	}
 
 	public static void tick(ServerLevel level) {
-		submit();
+		submit(level);
 		Object[] d;
 		while ((d = done.poll()) != null) {
 			Voxelizer.Result r = (Voxelizer.Result) d[1];
@@ -106,7 +109,43 @@ public final class GhostTerrain {
 		apply(level);
 	}
 
-	private static void submit() {
+	private static final java.util.Map<TriStore.Section, Long> sectionHashes = java.util.Collections.synchronizedMap(new java.util.WeakHashMap<>());
+
+	private static long hash(TriStore.Section s) {
+		if (s == null) {
+			return 0;
+		}
+		// Order-independent: the host may send the same triangles in another order.
+		return sectionHashes.computeIfAbsent(s, k -> {
+			float[] v = k.v();
+			int[] f = k.flags();
+			long sum = 0;
+			for (int t = 0; t < f.length; t++) {
+				long h = f[t];
+				for (int i = 0; i < 9; i++) {
+					h = h * 0x9E3779B97F4A7C15L + Float.floatToIntBits(v[t * 9 + i]);
+				}
+				h ^= h >>> 31;
+				h *= 0xBF58476D1CE4E5B9L;
+				sum += h ^ (h >>> 29);
+			}
+			return sum * 31 + f.length + 1;
+		});
+	}
+
+	/**
+	 * Everything a section's voxels depend on: the voxelizer version, its own triangles and those of
+	 * every section in its column it may borrow from. Equal stamps, equal blocks.
+	 */
+	static long stamp(TriStore.Section s) {
+		long h = ChunkGhostData.VOXEL_VERSION;
+		for (int d = -REACH; d <= REACH; d++) {
+			h = h * 1_000_003L + hash(d == 0 ? s : TriStore.section(s.sx(), s.sy() + d, s.sz()));
+		}
+		return h;
+	}
+
+	private static void submit(ServerLevel level) {
 		Iterator<Long> it = dirty.iterator();
 		while (inFlight.get() < MAX_IN_FLIGHT && it.hasNext()) {
 			long k = it.next();
@@ -115,12 +154,21 @@ public final class GhostTerrain {
 			if (s == null) {
 				continue;
 			}
+			long stamp = stamp(s);
+			LevelChunk chunk = level.getChunkSource().getChunkNow(s.sx(), s.sz());
+			Long saved = chunk != null ? ChunkGhostData.of(chunk).stamps.get(s.sy()) : null;
+			if (chunk != null && Long.valueOf(stamp).equals(saved)) {
+				sectionsSkipped++; // already built from these very triangles (and saved)
+				dependsOnNeighbours.add(k); // unknown after a skip: assume so (re-checked by stamp)
+				continue;
+			}
 			int gen = generation;
 			inFlight.incrementAndGet();
 			WORKER.execute(() -> {
 				try {
 					long t0 = System.nanoTime();
 					Voxelizer.Result r = Voxelizer.voxelize(TriStore::section, s.sx(), s.sy(), s.sz());
+					r.stamp = stamp;
 					voxelNanos += System.nanoTime() - t0;
 					sectionsVoxelized++;
 					done.add(new Object[] {gen, r});
@@ -141,7 +189,8 @@ public final class GhostTerrain {
 	private static void apply(ServerLevel level) {
 		int budget = BLOCK_BUDGET_PER_TICK;
 		BlockState terrain = SubBlocks.TERRAIN.get().defaultBlockState();
-		Block terrainBlock = terrain.getBlock();
+		BlockState structure = SubBlocks.STRUCTURE.get().defaultBlockState();
+		Block terrainBlock = terrain.getBlock(), structureBlock = structure.getBlock();
 		BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
 		while (budget > 0) {
 			if (applying == null) {
@@ -150,13 +199,15 @@ public final class GhostTerrain {
 				if (applying == null) {
 					return;
 				}
-				if (!level.hasChunk(applying.sx, applying.sz)) {
+				applyingChunk = level.getChunkSource().getChunkNow(applying.sx, applying.sz);
+				if (applyingChunk == null) {
 					waitingForChunk.add(applying); // never force-load a chunk for this
 					applying = null;
 					continue;
 				}
 			}
 			Voxelizer.Result r = applying;
+			ChunkGhostData data = ChunkGhostData.of(applyingChunk);
 			int bx = r.sx << 4, by = r.sy << 4, bz = r.sz << 4;
 			for (; cursor < 4096 && budget > 0; cursor++, budget--) {
 				int i = cursor;
@@ -165,19 +216,25 @@ public final class GhostTerrain {
 					continue;
 				}
 				long key = pos.asLong();
+				int dataKey = ChunkGhostData.key(pos.getX(), pos.getY(), pos.getZ());
 				boolean water = pos.getY() < SubWorld.SEA_LEVEL;
 				byte kind = r.kind[i];
 				BlockState want;
 				if (kind == Voxelizer.EMPTY) {
 					want = water && !DryVolumes.isDry(pos.getX(), pos.getY(), pos.getZ()) ? Blocks.WATER.defaultBlockState() : Blocks.AIR.defaultBlockState();
 					MaskStore.remove(key);
+					data.masks.remove(dataKey);
 				} else {
-					want = terrain.setValue(TerrainBlock.WATERLOGGED, water).setValue(TerrainBlock.PARTIAL, kind == Voxelizer.PARTIAL)
-						.setValue(TerrainBlock.MATERIAL, TerrainMaterial.of(r.material[i] & 0xFF));
+					int mat = r.material[i] & 0xFF;
+					want = ((mat & Voxelizer.STRUCTURE_BIT) != 0 ? structure : terrain).setValue(TerrainBlock.WATERLOGGED, water)
+						.setValue(TerrainBlock.PARTIAL, kind == Voxelizer.PARTIAL)
+						.setValue(TerrainBlock.MATERIAL, TerrainMaterial.of(mat & ~Voxelizer.STRUCTURE_BIT));
 					if (kind == Voxelizer.PARTIAL) {
 						MaskStore.put(key, r.masks, i * 8);
+						data.masks.put(dataKey, r.mask(i));
 					} else {
 						MaskStore.remove(key);
+						data.masks.remove(dataKey);
 					}
 				}
 				BlockState have = level.getBlockState(pos);
@@ -185,7 +242,7 @@ public final class GhostTerrain {
 					continue;
 				}
 				// Open cells only replace our own terrain; solid cells also fill air and water.
-				boolean ours = have.is(terrainBlock);
+				boolean ours = have.is(terrainBlock) || have.is(structureBlock);
 				if (kind == Voxelizer.EMPTY ? ours : ours || have.isAir() || have.is(Blocks.WATER)) {
 					level.setBlock(pos, want, FLAGS);
 					blocksSet++;
@@ -193,6 +250,13 @@ public final class GhostTerrain {
 			}
 			if (cursor >= 4096) {
 				applying = null;
+				// Unresolved columns may still change without any input we hashed: no stamp.
+				if (r.unresolved) {
+					data.stamps.remove(r.sy);
+				} else {
+					data.stamps.put(r.sy, r.stamp);
+				}
+				applyingChunk.setUnsaved(true);
 				if (sectionsApplied++ < 5 || sectionsApplied % 200 == 0) {
 					SubCraft.LOG.info("SubCraft: ghost terrain for section ({}, {}, {}): {} full, {} partial{} ({})", r.sx, r.sy, r.sz, r.full, r.partial,
 						r.unresolved ? ", some columns unknown" : "", stats());
@@ -201,9 +265,24 @@ public final class GhostTerrain {
 		}
 	}
 
+	/** A chunk loaded: its saved partial-block shapes are back in MaskStore. */
+	public static void chunkLoaded(LevelChunk chunk) {
+		int bx = chunk.getPos().getMinBlockX(), bz = chunk.getPos().getMinBlockZ();
+		ChunkGhostData d = ChunkGhostData.of(chunk);
+		if (!d.stamps.isEmpty() && chunksRestored++ < 5) {
+			SubCraft.LOG.info("SubCraft: chunk {} restored {} masks, {} section stamps", chunk.getPos(), d.masks.size(), d.stamps.size());
+		}
+		d.masks.forEach((k, bits) -> MaskStore.put(BlockPos.asLong(bx + (k & 15), ChunkGhostData.keyY(k), bz + (k >> 4 & 15)), bits, 0));
+	}
+
+	public static void chunkUnloaded(LevelChunk chunk) {
+		int bx = chunk.getPos().getMinBlockX(), bz = chunk.getPos().getMinBlockZ();
+		ChunkGhostData.of(chunk).masks.keySet().forEach(k -> MaskStore.remove(BlockPos.asLong(bx + (k & 15), ChunkGhostData.keyY(k), bz + (k >> 4 & 15))));
+	}
+
 	public static String stats() {
-		return String.format("ghost terrain: %d sections voxelized (%.1f ms avg), %d applied, %d blocks set, %d partial shapes, %d dirty, %d ready, %d waiting for chunks",
-			sectionsVoxelized, sectionsVoxelized == 0 ? 0 : voxelNanos / 1e6 / sectionsVoxelized, sectionsApplied, blocksSet, MaskStore.size(), dirty.size(),
+		return String.format("ghost terrain: %d sections voxelized (%.1f ms avg), %d skipped (stamp), %d applied, %d blocks set, %d partial shapes, %d dirty, %d ready, %d waiting for chunks",
+			sectionsVoxelized, sectionsVoxelized == 0 ? 0 : voxelNanos / 1e6 / sectionsVoxelized, sectionsSkipped, sectionsApplied, blocksSet, MaskStore.size(), dirty.size(),
 			ready.size(), waitingForChunk.size());
 	}
 }

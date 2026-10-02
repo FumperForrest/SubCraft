@@ -29,6 +29,12 @@ public abstract class LevelRendererMixin {
 		Matrix4f frustumMatrix, Matrix4f projectionMatrix, CallbackInfo ci
 	) {
 		if (SubClient.hostDrawsWorld()) {
+			// The skipped pass also prepares the entity renderer: screens that draw entities (the
+			// survival inventory's player model) need its camera.
+			Minecraft minecraft = Minecraft.getInstance();
+			if (minecraft.level != null) {
+				minecraft.getEntityRenderDispatcher().prepare(minecraft.level, camera, minecraft.crosshairPickEntity);
+			}
 			RenderSystem.clearColor(0.0F, 0.0F, 0.0F, 0.0F);
 			RenderSystem.clear(16640, Minecraft.ON_OSX); // GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT
 			ci.cancel();

@@ -257,12 +257,63 @@ namespace SubCraft.World
 			{
 				return false;
 			}
+			SendBiomes(view, sx, sy, sz);
 			sent[key] = signature;
 			SectionsSent++;
 			TrianglesSent += count;
 			BytesSent += bytes;
 			Collisions = used;
 			return true;
+		}
+
+		private readonly List<string> biomeNames = new List<string>();
+		private readonly byte[] biomeCells = new byte[Proto.BiomeCells];
+
+		/// <summary>
+		/// kColBiomes: Subnautica's biome (the 2D biome map plus cave overrides) at the centre of each
+		/// 4x4x4 cell of the section, Minecraft's biome resolution.
+		/// </summary>
+		private void SendBiomes(LinkView view, int sx, int sy, int sz)
+		{
+			var world = LargeWorld.main;
+			if (world == null)
+			{
+				return;
+			}
+			biomeNames.Clear();
+			for (int i = 0; i < Proto.BiomeCells; i++)
+			{
+				int qx = i & 3, qz = (i >> 2) & 3, qy = i >> 4;
+				// MC cell centre -> Unity (z mirrored).
+				var u = new Vector3(sx * 16 + qx * 4 + 2, sy * 16 + qy * 4 + 2, -(sz * 16 + qz * 4 + 2));
+				string name = world.GetBiome(u);
+				if (string.IsNullOrEmpty(name))
+				{
+					biomeCells[i] = Proto.BiomeUnknown;
+					continue;
+				}
+				int idx = biomeNames.IndexOf(name);
+				if (idx < 0)
+				{
+					idx = biomeNames.Count;
+					biomeNames.Add(name);
+				}
+				biomeCells[i] = (byte)Math.Min(idx, 254);
+			}
+			var ms = new MemoryStream();
+			using (var w = new BinaryWriter(ms))
+			{
+				w.Write(sx); w.Write(sy); w.Write(sz);
+				w.Write((byte)Math.Min(biomeNames.Count, 254)); w.Write((byte)0); w.Write((byte)0); w.Write((byte)0);
+				w.Write(biomeCells);
+				for (int i = 0; i < biomeNames.Count && i < 254; i++)
+				{
+					w.Write(System.Text.Encoding.UTF8.GetBytes(biomeNames[i]));
+					w.Write((byte)0);
+				}
+			}
+			var payload = ms.ToArray();
+			view.TryWriteCollision(Proto.ColBiomes, payload, payload.Length);
 		}
 
 		/// <summary>

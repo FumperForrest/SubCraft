@@ -155,6 +155,9 @@ class ProtoLayoutTest {
 		assertEquals(Proto.COL_TRI_BYTES, size("ColTri"));
 		assertEquals(Proto.COL_DRY_HEADER_BYTES, size("ColDryHeader"));
 		assertEquals(Proto.DRY_BOX_BYTES, size("DryBox"));
+		assertEquals(Proto.COL_BIOMES_BYTES, size("ColBiomes"));
+		assertEquals(12L, field("ColBiomes", "nameCount"));
+		assertEquals(Proto.BIOME_CELLS, constant("kBiomeCells"));
 		assertEquals(24L, field("DryBox", "id"));
 		assertEquals(36L, field("ColTri", "flags"));
 		assertEquals(Proto.TRI_MATERIAL_SHIFT, constant("kTriMaterialShift"));

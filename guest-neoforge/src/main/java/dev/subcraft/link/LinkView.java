@@ -34,6 +34,10 @@ public final class LinkView {
 
 	// ---- primitive access ----
 
+	public int getByte(long off) {
+		return this.buf.get((int) off) & 0xFF;
+	}
+
 	public int getInt(long off) {
 		return this.buf.getInt((int) off);
 	}

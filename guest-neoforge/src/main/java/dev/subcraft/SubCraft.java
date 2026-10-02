@@ -28,6 +28,17 @@ public final class SubCraft {
 
 	public SubCraft(IEventBus modBus) {
 		SubBlocks.register(modBus);
+		dev.subcraft.world.ghost.ChunkGhostData.register(modBus);
+		NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.level.ChunkEvent.Load e) -> {
+			if (e.getChunk() instanceof net.minecraft.world.level.chunk.LevelChunk c && !e.getLevel().isClientSide() && c.getLevel() != null && SubWorld.is(c.getLevel())) {
+				dev.subcraft.world.ghost.GhostTerrain.chunkLoaded(c);
+			}
+		});
+		NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.level.ChunkEvent.Unload e) -> {
+			if (e.getChunk() instanceof net.minecraft.world.level.chunk.LevelChunk c && !e.getLevel().isClientSide() && c.getLevel() != null && SubWorld.is(c.getLevel())) {
+				dev.subcraft.world.ghost.GhostTerrain.chunkUnloaded(c);
+			}
+		});
 		NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post e) -> CollisionConsumer.serverTick(e.getServer().overworld()));
 		NeoForge.EVENT_BUS.addListener((ServerStartedEvent e) -> configureWorld(e.getServer().overworld()));
 		NeoForge.EVENT_BUS.addListener((PlayerTickEvent.Post e) -> holdBreath(e.getEntity()));

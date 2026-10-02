@@ -14,11 +14,17 @@ import dev.subcraft.world.tri.TriStore;
  * this needs no closed mesh. Columns without any crossing in the section take their state from
  * the nearest known section above (its lowest crossing), else below (its highest crossing),
  * else they are open water.
+ *
+ * Host-built geometry (structure triangles: wrecks, the lifepod, habitats) is hollow: closed hulls
+ * without inner faces would fill solid, so structures become a shell, the sub-voxels their
+ * triangles pass through.
  */
 public final class Voxelizer {
 	public static final int RES = 8;               // sub-voxels per block edge
 	public static final int COLS = 16 * RES;       // sub-voxel columns per section edge
 	public static final byte EMPTY = 0, FULL = 1, PARTIAL = 2;
+	/** Set in a block's material byte when its surface is host-built (ColTri kTriStructure). */
+	public static final int STRUCTURE_BIT = 0x80;
 	/** How far (in sections) to look up or down for a column with no crossing in its own section. */
 	private static final int REACH = 6;
 
@@ -39,6 +45,8 @@ public final class Voxelizer {
 		public boolean unresolved;
 		/** Some columns took their state from a neighbouring section: redo when one of those changes. */
 		public boolean usedNeighbours;
+		/** Patch stamp of the triangles this was built from (ChunkGhostData). */
+		public long stamp;
 		public int full, partial;
 
 		Result(int sx, int sy, int sz) {
@@ -114,6 +122,9 @@ public final class Voxelizer {
 					}
 				}
 			}
+		}
+		if (self != null) {
+			shell(r, self);
 		}
 		for (int i = 0; i < 4096; i++) {
 			int bits = 0;
@@ -202,8 +213,8 @@ public final class Voxelizer {
 				// Normal y (right-handed, CCW from outside): (b - a) x (c - a), y component.
 				float e1x = bx - ax, e1z = bz - az, e2x = qx - ax, e2z = qz - az;
 				float ny = e1z * e2x - e1x * e2z;
-				if (Math.abs(ny) < 1e-9f) {
-					continue; // vertical: no vertical line crosses it
+				if (Math.abs(ny) < 1e-9f || (flags[t] & 1) != 0) {
+					continue; // vertical (no vertical line crosses it), or a structure (shell only)
 				}
 				float minX = Math.min(ax, Math.min(bx, qx)) - ox, maxX = Math.max(ax, Math.max(bx, qx)) - ox;
 				float minZ = Math.min(az, Math.min(bz, qz)) - oz, maxZ = Math.max(az, Math.max(bz, qz)) - oz;
@@ -232,7 +243,8 @@ public final class Voxelizer {
 							int at = c.start[col] + fill[col]++;
 							c.y[at] = y;
 							c.up[at] = ny > 0;
-							c.material[at] = (byte) (flags[t] >>> 8);
+							// Material (bits 8-15, < 128) plus the structure flag (kTriStructure = bit 0).
+							c.material[at] = (byte) ((flags[t] >>> 8 & 0x7F) | ((flags[t] & 1) != 0 ? STRUCTURE_BIT : 0));
 						}
 					}
 				}
@@ -267,6 +279,41 @@ public final class Voxelizer {
 			}
 		}
 		return c;
+	}
+
+	/** Marks the sub-voxels each structure triangle passes through (samples at a third of a sub-voxel). */
+	private static void shell(Result r, TriStore.Section s) {
+		float[] v = s.v();
+		int[] flags = s.flags();
+		float ox = r.sx * 16, oy = r.sy * 16, oz = r.sz * 16;
+		float step = 1f / (RES * 3);
+		for (int t = 0; t < flags.length; t++) {
+			if ((flags[t] & 1) == 0) {
+				continue;
+			}
+			byte mat = (byte) ((flags[t] >>> 8 & 0x7F) | STRUCTURE_BIT);
+			int o = t * 9;
+			float ax = v[o], ay = v[o + 1], az = v[o + 2];
+			float ux = v[o + 3] - ax, uy = v[o + 4] - ay, uz = v[o + 5] - az;
+			float wx = v[o + 6] - ax, wy = v[o + 7] - ay, wz = v[o + 8] - az;
+			int nu = Math.max(1, (int) Math.ceil(Math.sqrt(ux * ux + uy * uy + uz * uz) / step));
+			int nw = Math.max(1, (int) Math.ceil(Math.sqrt(wx * wx + wy * wy + wz * wz) / step));
+			for (int i = 0; i <= nu; i++) {
+				float a = (float) i / nu;
+				for (int j = 0; j <= nw; j++) {
+					float b = (float) j / nw;
+					if (a + b > 1f) {
+						break;
+					}
+					int cx = (int) Math.floor((ax + a * ux + b * wx - ox) * RES);
+					int cy = (int) Math.floor((ay + a * uy + b * wy - oy) * RES);
+					int cz = (int) Math.floor((az + a * uz + b * wz - oz) * RES);
+					if (cx >= 0 && cx < COLS && cy >= 0 && cy < COLS && cz >= 0 && cz < COLS) {
+						set(r, cx, cy, cz, mat);
+					}
+				}
+			}
+		}
 	}
 
 	/** Point in triangle in the xz plane, edges inclusive (a line through a shared edge sees both: harmless, same y). */

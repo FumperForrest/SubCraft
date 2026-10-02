@@ -1,4 +1,26 @@
 {
   "block.subcraft.terrain": "Subnautica Terrain",
-  "generator.subcraft.subnautica": "SubCraft (Subnautica)"
+  "generator.subcraft.subnautica": "SubCraft (Subnautica)",
+  "block.subcraft.structure": "Subnautica Structure",
+  "biome.subcraft.ocean": "Ocean",
+  "biome.subcraft.safe_shallows": "Safe Shallows",
+  "biome.subcraft.kelp_forest": "Kelp Forest",
+  "biome.subcraft.grassy_plateaus": "Grassy Plateaus",
+  "biome.subcraft.mushroom_forest": "Mushroom Forest",
+  "biome.subcraft.jellyshroom_caves": "Jellyshroom Caves",
+  "biome.subcraft.sparse_reef": "Sparse Reef",
+  "biome.subcraft.grand_reef": "Grand Reef",
+  "biome.subcraft.blood_kelp": "Blood Kelp",
+  "biome.subcraft.mountains": "Mountains",
+  "biome.subcraft.dunes": "Dunes",
+  "biome.subcraft.crash_zone": "Crash Zone",
+  "biome.subcraft.aurora": "Aurora",
+  "biome.subcraft.underwater_islands": "Underwater Islands",
+  "biome.subcraft.bulb_zone": "Bulb Zone",
+  "biome.subcraft.sea_treader_path": "Sea Treader Path",
+  "biome.subcraft.lost_river": "Lost River",
+  "biome.subcraft.lava_zone": "Lava Zone",
+  "biome.subcraft.floating_island": "Floating Island",
+  "biome.subcraft.crater_edge": "Crater Edge",
+  "biome.subcraft.precursor": "Precursor"
 }

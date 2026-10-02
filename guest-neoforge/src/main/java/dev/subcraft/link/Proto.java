@@ -9,7 +9,7 @@ public final class Proto {
 	}
 
 	public static final int MAGIC = 0x43425553; // "SUBC"
-	public static final int VERSION = 14;
+	public static final int VERSION = 15;
 	public static final String LINK_FILE_NAME = "link.bin";
 	public static final long HEARTBEAT_TIMEOUT_NS = 2_000_000_000L;
 
@@ -190,6 +190,10 @@ public final class Proto {
 	public static final int COL_REGION = 2;
 	public static final int COL_TRIS = 3;
 	public static final int COL_DRY = 4;
+	public static final int COL_BIOMES = 5;
+	public static final int COL_BIOMES_BYTES = 16;
+	public static final int BIOME_CELLS = 64;
+	public static final int BIOME_UNKNOWN = 255;
 	public static final int COL_DRY_HEADER_BYTES = 8;
 	public static final int DRY_BOX_BYTES = 32;
 	public static final int COL_TRI_BYTES = 40;

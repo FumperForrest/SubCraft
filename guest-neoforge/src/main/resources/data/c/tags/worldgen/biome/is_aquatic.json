@@ -1,0 +1,26 @@
+{
+  "replace": false,
+  "values": [
+    "subcraft:ocean",
+    "subcraft:safe_shallows",
+    "subcraft:kelp_forest",
+    "subcraft:grassy_plateaus",
+    "subcraft:mushroom_forest",
+    "subcraft:jellyshroom_caves",
+    "subcraft:sparse_reef",
+    "subcraft:grand_reef",
+    "subcraft:blood_kelp",
+    "subcraft:mountains",
+    "subcraft:dunes",
+    "subcraft:crash_zone",
+    "subcraft:aurora",
+    "subcraft:underwater_islands",
+    "subcraft:bulb_zone",
+    "subcraft:sea_treader_path",
+    "subcraft:lost_river",
+    "subcraft:lava_zone",
+    "subcraft:floating_island",
+    "subcraft:crater_edge",
+    "subcraft:precursor"
+  ]
+}

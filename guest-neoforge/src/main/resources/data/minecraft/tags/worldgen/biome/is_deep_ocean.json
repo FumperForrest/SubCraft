@@ -1,0 +1,15 @@
+{
+  "replace": false,
+  "values": [
+    "subcraft:grand_reef",
+    "subcraft:blood_kelp",
+    "subcraft:mountains",
+    "subcraft:dunes",
+    "subcraft:crash_zone",
+    "subcraft:sea_treader_path",
+    "subcraft:lost_river",
+    "subcraft:lava_zone",
+    "subcraft:crater_edge",
+    "subcraft:precursor"
+  ]
+}

@@ -28,6 +28,20 @@ public final class SubBlocks {
 			.isViewBlocking((state, level, pos) -> false)
 	));
 
+	/** Host-built geometry (wrecks, the lifepod, habitats): like terrain, removed when the host removes it. */
+	public static final DeferredBlock<TerrainBlock> STRUCTURE = BLOCKS.register("structure", () -> new TerrainBlock(
+		BlockBehaviour.Properties.of()
+			.mapColor(MapColor.METAL)
+			.strength(-1.0F, 3_600_000.0F)
+			.noLootTable()
+			.sound(SoundType.METAL)
+			.pushReaction(PushReaction.BLOCK)
+			.isValidSpawn((state, level, pos, type) -> false)
+			.dynamicShape()
+			.isSuffocating((state, level, pos) -> false)
+			.isViewBlocking((state, level, pos) -> false)
+	));
+
 	private SubBlocks() {
 	}
 
