@@ -33,7 +33,7 @@ blocks in 25-35 s with no stop except flying level into a rising seabed (real co
   Subnautica's load, before any MarmosetUBER template existed. LiveWorld now drains only in game,
   sections with a missing material are rebuilt every 2 s, and a missing glow variant falls back
   to the plain one.
-- The survival-inventory crash fix and the dark shaded wall: Sean asked whether the black walls
+- The dark shaded wall: Sean asked whether the black walls
   were night. The shot was at noon; the shaded side of cobblestone is dark, the sky block is
   applied (checked `_SH*`, `_SpecCubeIBL`, `_Outdoors` equal to native kelp next to it), same as
   the approved 0c look.
