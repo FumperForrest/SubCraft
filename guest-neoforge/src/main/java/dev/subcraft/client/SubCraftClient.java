@@ -17,7 +17,10 @@ public final class SubCraftClient {
 			SubCraft.LOG.warn("SubCraft: another SubCraft Minecraft already holds the running lock");
 		}
 		NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post e) -> SubClient.clientTick(Minecraft.getInstance()));
-		NeoForge.EVENT_BUS.addListener((RenderFrameEvent.Post e) -> SubClient.afterRender());
+		NeoForge.EVENT_BUS.addListener((RenderFrameEvent.Post e) -> {
+			SubClient.afterRender();
+			SectionStreamer.frame(net.minecraft.client.Minecraft.getInstance());
+		});
 		SubCraft.LOG.info("SubCraft client ready; link file {}", Platform.linkFile());
 	}
 }

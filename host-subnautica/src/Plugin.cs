@@ -32,6 +32,7 @@ namespace SubCraft
 			host.hideFlags = HideFlags.HideAndDontSave;
 			host.AddComponent<LinkDriver>();
 			host.AddComponent<Hud.OverlayView>();
+			host.AddComponent<Render.LiveWorld>();
 			host.AddComponent<Dev.DevHarness>();
 			Log.LogInfo($"SubCraft {Version} loaded; link file {Link.Platform.LinkFile()}");
 		}

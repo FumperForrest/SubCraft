@@ -9,7 +9,7 @@ public final class Proto {
 	}
 
 	public static final int MAGIC = 0x43425553; // "SUBC"
-	public static final int VERSION = 15;
+	public static final int VERSION = 16;
 	public static final String LINK_FILE_NAME = "link.bin";
 	public static final long HEARTBEAT_TIMEOUT_NS = 2_000_000_000L;
 
@@ -219,6 +219,9 @@ public final class Proto {
 	public static final int REN_SCENE = 6;
 	public static final int REN_ATLAS_REGION = 7;
 	public static final int REN_LIGHTS = 8;
+	public static final int REN_COLLIDERS = 9;
+	public static final int REN_COLLIDERS_BYTES = 16;
+	public static final int REN_BOX_BYTES = 24;
 	public static final int REN_MAT_OPAQUE = 0, REN_MAT_CUTOUT = 1, REN_MAT_TRANSLUCENT = 2, REN_MAT_EMISSIVE = 3, REN_MAT_ADDITIVE = 4;
 	public static final int REN_VERTEX_BYTES = 32;
 	public static final int REN_BATCH_BYTES = 16;

@@ -115,6 +115,8 @@ namespace SubCraft.Tests
 			Assert.Equal(Proto.ColDryHeaderBytes, Size("ColDryHeader"));
 			Assert.Equal(Proto.DryBoxBytes, Size("DryBox"));
 			Assert.Equal(Proto.ColBiomesBytes, Size("ColBiomes"));
+			Assert.Equal(Proto.RenCollidersBytes, Size("RenColliders"));
+			Assert.Equal(Proto.RenBoxBytes, Size("RenBox"));
 			Assert.Equal(12, F("ColBiomes", "nameCount"));
 			Assert.Equal(24, F("DryBox", "id"));
 			Assert.Equal(36, F("ColTri", "flags"));

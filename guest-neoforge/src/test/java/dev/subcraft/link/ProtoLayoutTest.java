@@ -156,6 +156,8 @@ class ProtoLayoutTest {
 		assertEquals(Proto.COL_DRY_HEADER_BYTES, size("ColDryHeader"));
 		assertEquals(Proto.DRY_BOX_BYTES, size("DryBox"));
 		assertEquals(Proto.COL_BIOMES_BYTES, size("ColBiomes"));
+		assertEquals(Proto.REN_COLLIDERS_BYTES, size("RenColliders"));
+		assertEquals(Proto.REN_BOX_BYTES, size("RenBox"));
 		assertEquals(12L, field("ColBiomes", "nameCount"));
 		assertEquals(Proto.BIOME_CELLS, constant("kBiomeCells"));
 		assertEquals(24L, field("DryBox", "id"));

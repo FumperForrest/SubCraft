@@ -440,6 +440,12 @@ public final class LinkView {
 
 	// ---- render ring (produce) ----
 
+	/** Bytes the render ring can take right now (ignoring wrap padding). */
+	public long renderFree() {
+		long base = OFF_RENDER_RING;
+		return RR_DATA_BYTES - (getLong(base + RR_HEAD) - getLongAcquire(base + RR_TAIL));
+	}
+
 	/**
 	 * Writes one render message ({@code header} then {@code body}) if it fits now. Single producer.
 	 * The caller retries (or drops per-frame data) when this returns false.

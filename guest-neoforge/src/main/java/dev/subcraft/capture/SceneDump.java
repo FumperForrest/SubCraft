@@ -208,44 +208,8 @@ public final class SceneDump {
 		}
 	}
 
-	/** RenLight: block in section, emission level, colour from the block's own sprite, kind. */
 	private static long light(ClientLevel level, BlockRenderDispatcher blocks, TextureGrabber.Pixels atlas, BlockPos pos, BlockState state) {
-		int emission = state.getLightEmission(level, pos);
-		TextureAtlasSprite sprite = blocks.getBlockModel(state).getParticleIcon(level.getModelData(pos));
-		int rgb = brightColour(atlas, sprite);
-		int kind = state.is(BlockTags.FIRE) || state.is(BlockTags.CAMPFIRES) || state.is(BlockTags.CANDLES) || state.getBlock() instanceof BaseTorchBlock
-			? Proto.LIGHT_FLAME
-			: state.getFluidState().is(FluidTags.LAVA) || state.getBlock() instanceof MagmaBlock ? Proto.LIGHT_LAVA : Proto.LIGHT_STEADY;
-		long b0 = (pos.getX() & 15) | (pos.getY() & 15) << 8 | (pos.getZ() & 15) << 16 | (long) emission << 24;
-		long colour = (rgb & 0xFFFFFFL) | (long) kind << 24;
-		return b0 | colour << 32;
-	}
-
-	/** Average colour of the brightest third of a sprite's opaque pixels: a flame's colour, not its stick. */
-	private static int brightColour(TextureGrabber.Pixels atlas, TextureAtlasSprite sprite) {
-		int x0 = (int) (sprite.getU0() * atlas.width()), x1 = (int) (sprite.getU1() * atlas.width());
-		int y0 = (int) (sprite.getV0() * atlas.height()), y1 = (int) (sprite.getV1() * atlas.height());
-		List<int[]> px = new ArrayList<>();
-		for (int y = y0; y < y1; y++) {
-			for (int x = x0; x < x1; x++) {
-				int argb = atlas.argbAt(x, y);
-				if ((argb >>> 24) > 128) {
-					px.add(new int[] {argb >> 16 & 0xFF, argb >> 8 & 0xFF, argb & 0xFF});
-				}
-			}
-		}
-		if (px.isEmpty()) {
-			return 0xFFFFFF;
-		}
-		px.sort((a, b) -> Integer.compare(b[0] + b[1] + b[2], a[0] + a[1] + a[2]));
-		int n = Math.max(1, px.size() / 3);
-		long r = 0, g = 0, b = 0;
-		for (int i = 0; i < n; i++) {
-			r += px.get(i)[0];
-			g += px.get(i)[1];
-			b += px.get(i)[2];
-		}
-		return (int) (r / n) | (int) (g / n) << 8 | (int) (b / n) << 16; // RGB8, r in the low byte
+		return dev.subcraft.capture.SectionCapture.light(level, blocks, atlas, pos, state);
 	}
 
 	private static byte[] atlasMessage(TextureGrabber.Pixels p) {

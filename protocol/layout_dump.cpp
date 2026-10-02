@@ -163,6 +163,14 @@ int main()
 	F(DryBox, id); F(DryBox, flags);
 	endStruct();
 
+	S(RenColliders);
+	F(RenColliders, sx); F(RenColliders, sy); F(RenColliders, sz); F(RenColliders, count);
+	endStruct();
+
+	S(RenBox);
+	F(RenBox, minX); F(RenBox, maxZ);
+	endStruct();
+
 	S(ColTri);
 	F(ColTri, v); F(ColTri, flags);
 	endStruct();

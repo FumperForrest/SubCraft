@@ -477,6 +477,11 @@ namespace SubCraft.World
 			{
 				return false;
 			}
+			// Minecraft's own blocks (LiveWorld) must not come back as host terrain.
+			if (c.GetComponentInParent<Render.McGeometry>() != null)
+			{
+				return false;
+			}
 			return c.GetComponentInParent<global::Player>() == null && c.GetComponentInParent<Creature>() == null
 				&& c.GetComponentInParent<Pickupable>() == null && c.GetComponentInParent<Vehicle>() == null;
 		}

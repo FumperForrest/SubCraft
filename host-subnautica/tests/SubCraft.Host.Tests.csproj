@@ -11,6 +11,7 @@
     <Compile Include="../src/Link/HostLink.cs" />
     <Compile Include="../src/Render/DumpReader.cs" />
     <Compile Include="../src/Render/AlbedoBake.cs" />
+    <Compile Include="../src/Render/BakeCache.cs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />

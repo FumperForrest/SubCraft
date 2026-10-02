@@ -41,6 +41,12 @@ public abstract class LevelRendererMixin {
 		}
 	}
 
+	/** Every section Minecraft would recompile goes to the host instead (SectionStreamer). */
+	@Inject(method = "setSectionDirty(IIIZ)V", at = @At("HEAD"))
+	private void subcraft$sectionDirty(int sx, int sy, int sz, boolean important, CallbackInfo ci) {
+		dev.subcraft.client.SectionStreamer.markDirty(sx, sy, sz);
+	}
+
 	/**
 	 * "Loading terrain" waits until the player's section is compiled, which never happens while
 	 * the world pass is skipped.

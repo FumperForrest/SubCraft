@@ -26,7 +26,7 @@
 namespace subcraft::proto
 {
 	inline constexpr std::uint32_t kMagic = 0x43425553;  // "SUBC"
-	inline constexpr std::uint32_t kVersion = 15;
+	inline constexpr std::uint32_t kVersion = 16;
 
 	// Default file locations: macOS $TMPDIR/subcraft/link.bin, Windows %LOCALAPPDATA%\SubCraft\link.bin.
 	// Both sides accept an override (Java -Dsubcraft.link=<path>, host config, env SUBCRAFT_LINK).
@@ -438,6 +438,9 @@ namespace subcraft::proto
 		kRenAtlasRegion = 7,  // RenAtlasRegion + RGBA8 pixels: an animated sprite's current frame
 		kRenLights = 8,       // RenLights + RenLight[count]: a section's light-emitting blocks (sent
 		                      // after its kRenSection; 0 = none)
+		kRenColliders = 9,    // RenColliders + RenBox[count] (v16): a section's block collision boxes
+		                      // (Minecraft VoxelShapes, merged), so the host's creatures and vehicles
+		                      // collide with Minecraft blocks; 0 = none. Sent with its kRenSection.
 	};
 
 	// Material classes, from render-state shards (never RenderType names).
@@ -509,6 +512,21 @@ namespace subcraft::proto
 		std::uint32_t count;
 	};
 	static_assert(sizeof(RenLights) == 16);
+
+	struct RenColliders
+	{
+		std::int32_t  sx, sy, sz;  // section coords
+		std::uint32_t count;
+	};
+	static_assert(sizeof(RenColliders) == 16);
+
+	// An axis-aligned box in MC coords relative to the section origin.
+	struct RenBox
+	{
+		float minX, minY, minZ;
+		float maxX, maxY, maxZ;
+	};
+	static_assert(sizeof(RenBox) == 24);
 
 	enum LightKind : std::uint8_t
 	{

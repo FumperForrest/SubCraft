@@ -38,6 +38,15 @@ namespace SubCraft.Dev
 						["terrainMeshesCaptured"] = World.TerrainMeshCapture.Captured,
 						["terrainMeshesHeld"] = World.TerrainMeshCapture.Count,
 					},
+					["mcWorld"] = Render.LiveWorld.Instance == null ? null : new JObject
+					{
+						["sections"] = Render.LiveWorld.Instance.SectionCount,
+						["lights"] = Render.LiveWorld.Instance.LightCount,
+						["boxes"] = Render.LiveWorld.Instance.BoxCount,
+						["messages"] = Render.LiveWorld.Instance.Messages,
+						["pages"] = Render.LiveWorld.Instance.Pages,
+						["cells"] = Render.LiveWorld.Instance.Cells,
+					},
 					["mcFeetToSurface"] = driver.HaveMc ? (JToken)SurfaceGap(driver.Mc.X, driver.Mc.Y, driver.Mc.Z) : null,
 					["mc"] = driver.HaveMc ? new JObject
 					{

@@ -213,6 +213,54 @@ namespace SubCraft.Dev
 					case "matinfo":
 						msg = Write("matinfo.json", Render.MaterialFactory.Describe().ToString());
 						break;
+					case "push":
+						// The nearest rigidbody whose name contains "match" (30 m) gets this velocity; reports where it is.
+						{
+							string match = ((string)cmd["match"] ?? "").ToLowerInvariant();
+							Rigidbody best = null;
+							float bestD = 30f * 30f;
+							var from = MainCamera.camera.transform.position;
+							int wantId = cmd["id"] != null ? (int)cmd["id"] : 0;
+							foreach (var rb in FindObjectsOfType<Rigidbody>())
+							{
+								if (wantId != 0)
+								{
+									if (rb.GetInstanceID() == wantId) best = rb;
+									continue;
+								}
+								if (rb.name.ToLowerInvariant().Contains(match) && (rb.position - from).sqrMagnitude < bestD)
+								{
+									best = rb;
+									bestD = (rb.position - from).sqrMagnitude;
+								}
+							}
+							if (best == null)
+							{
+								ok = false;
+								msg = "nothing matches";
+								break;
+							}
+							if (cmd["x"] != null)
+							{
+								best.position = new Vector3((float)cmd["x"], (float)cmd["y"], (float)cmd["z"]);
+								best.transform.position = best.position;
+							}
+							if (cmd["yaw"] != null)
+							{
+								best.rotation = Quaternion.Euler(0f, (float)cmd["yaw"], 0f);
+								best.transform.rotation = best.rotation;
+								best.angularVelocity = Vector3.zero;
+							}
+							if (cmd["vx"] != null)
+							{
+								best.isKinematic = false;
+								best.velocity = new Vector3((float)cmd["vx"], (float)cmd["vy"], (float)cmd["vz"]);
+							}
+							var lights = best.GetComponentInChildren<ToggleLights>();
+							msg = $"{best.name} id {best.GetInstanceID()} at {best.position} forward {best.transform.forward} velocity {best.velocity} kinematic {best.isKinematic}"
+								+ (lights != null ? $" lights {lights.lightsActive}" : "");
+						}
+						break;
 					case "biomescan":
 						// Biome names on a grid around (x, z) at height y, step metres apart (Unity coords).
 						{

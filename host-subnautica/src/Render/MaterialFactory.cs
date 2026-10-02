@@ -127,6 +127,12 @@ namespace SubCraft.Render
 				must.Add("MARMO_EMISSION");
 				template = Template(must.ToArray(), mustNot.ToArray());
 			}
+			if (template == null && emitter)
+			{
+				// No glowing variant loaded here: draw the block without its glow rather than not at all.
+				Plugin.Log.LogWarning($"SubCraft: no MarmosetUBER template with {string.Join(" ", must)}; drawing without glow");
+				return Create(materialClass, false, texture);
+			}
 			if (template == null)
 			{
 				Plugin.Log.LogWarning($"SubCraft: no MarmosetUBER template with {string.Join(" ", must)}");

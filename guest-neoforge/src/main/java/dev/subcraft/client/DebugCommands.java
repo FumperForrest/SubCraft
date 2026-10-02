@@ -66,6 +66,9 @@ public final class DebugCommands {
 			case "tris" -> {
 				return dev.subcraft.world.tri.TriDebug.report(minecraft.player.getX(), minecraft.player.getY(), minecraft.player.getZ());
 			}
+			case "sections" -> {
+				return SectionStreamer.stats();
+			}
 			case "pos" -> {
 				return minecraft.player == null ? "no player" : minecraft.player.position().toString();
 			}

@@ -22,7 +22,7 @@ namespace SubCraft.Render
 			public int Cells;
 		}
 
-		private struct Key : IEquatable<Key>
+		internal struct Key : IEquatable<Key>
 		{
 			public int X0, Y0, X1, Y1;
 			public uint C0, C1, C2, C3;
@@ -108,8 +108,25 @@ namespace SubCraft.Render
 			return r;
 		}
 
+		/// <summary>The cell a quad (6 vertices from <paramref name="b"/>, capture order) needs.</summary>
+		internal static Key KeyFor(IList<DumpReader.Vertex> verts, int b, int atlasW, int atlasH)
+		{
+			DumpReader.Vertex v0 = verts[b], v1 = verts[b + 1], v2 = verts[b + 2], v3 = verts[b + 5];
+			float u0 = Math.Min(Math.Min(v0.U, v1.U), Math.Min(v2.U, v3.U)), u1 = Math.Max(Math.Max(v0.U, v1.U), Math.Max(v2.U, v3.U));
+			float w0 = Math.Min(Math.Min(v0.V, v1.V), Math.Min(v2.V, v3.V)), w1 = Math.Max(Math.Max(v0.V, v1.V), Math.Max(v2.V, v3.V));
+			var key = new Key
+			{
+				X0 = (int)Math.Floor(u0 * atlasW + 1e-3), X1 = (int)Math.Ceiling(u1 * atlasW - 1e-3),
+				Y0 = (int)Math.Floor(w0 * atlasH + 1e-3), Y1 = (int)Math.Ceiling(w1 * atlasH - 1e-3),
+				C0 = Quantize(v0.Color), C1 = Quantize(v1.Color), C2 = Quantize(v2.Color), C3 = Quantize(v3.Color),
+			};
+			if (key.X1 <= key.X0) key.X1 = key.X0 + 1;
+			if (key.Y1 <= key.Y0) key.Y1 = key.Y0 + 1;
+			return key;
+		}
+
 		/// <summary>Copies the sprite area, multiplying each texel by the quad's colour at that texel.</summary>
-		private static void FillCell(Key k, (int x, int y) o, IList<DumpReader.Vertex> verts, int quad, int atlasW, int atlasH, byte[] atlas, byte[] page, int pageW)
+		internal static void FillCell(Key k, (int x, int y) o, IList<DumpReader.Vertex> verts, int quad, int atlasW, int atlasH, byte[] atlas, byte[] page, int pageW)
 		{
 			int b = quad * 6;
 			DumpReader.Vertex q0 = verts[b], q1 = verts[b + 1], q3 = verts[b + 5];
@@ -144,7 +161,7 @@ namespace SubCraft.Render
 		}
 
 		/// <summary>Colours to 6 bits per channel: invisible in the result, many more shared cells.</summary>
-		private static uint Quantize(uint c) => (c & 0x00FCFCFC) | 0x00030303;
+		internal static uint Quantize(uint c) => (c & 0x00FCFCFC) | 0x00030303;
 
 		private static double Clamp01(double v) => v < 0 ? 0 : v > 1 ? 1 : v;
 
