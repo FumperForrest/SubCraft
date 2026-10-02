@@ -202,12 +202,45 @@ cells), `harvestprobe {sx,sy,sz}` (one section's harvest step by step), `trichec
 the player, nearest triangle, a fall probe through the collider); state dump `link.collision` and
 `link.mcFeetToSurface`.
 
+## Phase 1: ghost terrain, breath, dry volumes, input (verified in game)
+
+- **Voxelizer** (`world/ghost/Voxelizer`, pure Java, tested): 128x128 sub-voxel columns per
+  section; triangle crossings per column (CSR arrays, sorted by y); a sub-voxel is solid when the
+  nearest crossing above faces up, or with none above, the nearest below faces down. Columns
+  without crossings take the lowest crossing of the nearest known section above (or highest
+  below), up to 6 sections; sections that borrowed are redone when a neighbour arrives.
+  Verified: the host's terrain winding is outward after the mirror (seabed normal +y).
+- **GhostTerrain**: worker thread voxelizes, server thread writes (40k block checks per tick),
+  never force-loads a chunk (waits for it), only replaces our terrain, air and water. Block states:
+  `partial`, `material`, `waterlogged`; `dynamicShape()`; never suffocating or view-blocking (the
+  voxels can overshoot the exact surface by a sub-voxel). Players ignore terrain blocks where
+  triangles are known.
+- **Materials**: `MaterialDatabase.GetTerrainMaterial` always returns null (empty table in
+  resources.assets). Block type -> `LargeWorldStreamer.streamerV2.blockTypes[type].name`
+  (`Sand02`, `Coral15`, `Rock02`, `SS_SandToRock`, `Sand01ToRock02_steep`) -> sand, coral, rock...;
+  blends: steep variant = second part. Non-terrain colliders: `VFXSurface` on the object.
+- **Breath**: `Player.GetOxygenAvailable/Capacity` -> HostState -> `setAirSupply` each player tick.
+  Subnautica uses no oxygen in Creative (`GameModeOption.NoOxygen`); harness `gamemode survival`.
+  `Survival.freezeStats` is set every frame while puppeted (`Player.UnfreezeStats` clears it).
+- **Dry volumes**: `EscapePod.main` within 64 m -> union of its solid colliders' bounds -> kColDry
+  (sent when the 5 cm-quantized set changes). Guest: water with its centre inside -> air;
+  restored when no box covers it. Subnautica decides "underwater" from state (`escapePod`,
+  `currentSub`, water planes), not geometry; Phase 5 needs per-room volumes for bases.
+- **Input**: `IGameInput.GetButtonState` / `GetButtonHeldTime` prefixes (legacy, Input System,
+  Steam). Interact target = `Player.guiHand.GetActiveTarget()`. Minecraft screens:
+  `InputHandlerStack.Push(IInputHandler)` like the PDA; `HandleInput` returning false pops it.
+  Cursor: Unity pixels (bottom-left) -> overlay pixels (top-left) -> guest scales to window points.
+- **Diver**: `Player/body/...` (diveSuit geometry; equipped tools hang off its hand bones),
+  `camPivot/.../SpawnPlayerMask` (first-person mask), `camPivot/camRoot/player_head`:
+  `Renderer.forceRenderingOff` while puppeted, restored on release. Harness `playerrenderers`.
+- **Overlay**: ScreenSpaceOverlay canvas, sorting order 50, RawImage of the overlay texture.
+  Minecraft full-screen effects are cancelled (alpha blend ONE, ZERO wipes the overlay's alpha).
+
 ## Open
 
 - AlbedoBake memory at world scale (Phase 2): measure cells per section; animated sprites (water,
   lava, fire) need the bake redone per frame or a separate path.
 - Translucent geometry (stained glass, water from mods): the WBOIT variants, untested so far.
 - Whether the WaterscapeVolume pass needs anything from our renderers beyond depth.
-- Collision: ghost-terrain voxelization (shell + solid fill from triangle orientation), moving
-  structures (Cyclops/Seamoth as kinematic triangle sets), harvest churn while terrain settles,
-  material per triangle (footstep sounds) from Subnautica's surface types.
+- Collision: moving structures (Cyclops/Seamoth as kinematic triangle sets), harvest churn while
+  terrain settles, masks persisted per chunk, biomes, `subcraft:structure` blocks.

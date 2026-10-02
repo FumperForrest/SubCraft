@@ -3,13 +3,14 @@
 Things only you can judge (feel, taste) or decide. Everything here was already run by Claude
 unless marked **unverified**.
 
-## Phase 1 — exact collision: please try it first
+## Phase 1 — the world as blocks; walk and swim: please try it first
 
-What it does: Minecraft's player collides with Subnautica's exact collision surface (the same
-triangles the diver bumps into), not with blocks. Swimming along a rock face or the seabed should
-glide along it, in both games at once.
+What it does: Minecraft's player moves through Subnautica's world on Minecraft physics. It
+collides with Subnautica's exact collision surface. Mobs stand on "ghost terrain" blocks
+voxelized from the same surface. The lifepod is dry, the air bar is Subnautica's oxygen, and the
+diver is gone (you see Minecraft's hand and HUD). Keys act in one game only.
 
-**Steps** (close other big apps first)
+**Steps** (close other big apps first; both games together swap heavily on 8 GB)
 
 ```sh
 cd ~/Development/Modding/Subnauticraft
@@ -18,16 +19,40 @@ tools/sn_dev.sh start
 python3 tools/sn_cmd.py --scenario tools/scenarios/load_dev_slot.jsonl
 ```
 
-Then click into Subnautica and play: sink onto the seabed (Minecraft players sink in water), walk
-up and down slopes, swim along rock faces and under arches.
+The dev game is Creative, and the Minecraft dev world starts in Creative too. For the real feel, run
+`python3 tools/mc_cmd.py "/gamemode survival"`, and for oxygen
+`python3 tools/sn_cmd.py '{"cmd":"gamemode","mode":"survival"}'` (not saved).
 
-**Expected:** you stand still on slopes (no creeping), walk up gentle slopes, slide along steep
-faces, never sink into the ground. At the edge of the ~80 m area Subnautica has loaded you stop
-until it catches up (normally never noticeable).
+Then click into Subnautica and play:
 
-**Send back:** how it feels (snagging on edges, jitter of the camera, places you went through or
-got stuck), and for any problem the output of `python3 tools/mc_cmd.py "subcraft tris"` taken
-right there, plus `tools/sn_dev.sh log 80`.
+1. **Lifepod:** you stand on its floor in air (not swimming). Leave through the hatch: the left
+   click on the hatch is Subnautica's (any Subnautica prompt under the crosshair takes the click).
+2. **Swim** toward the Kelp Forest, about 125 m north-east of the lifepod. Ctrl+W
+   sprint-swims, Space rises, and Minecraft players sink when idle. Along rock faces and the seabed
+   you should glide, never sink in, and never snag.
+3. **Air:** underwater the bubbles drop with Subnautica's O2 dial (Subnautica Survival only). At 0
+   Subnautica's own suffocation happens. Minecraft never damages you for drowning.
+4. **Footsteps:** walk on the sand of the Safe Shallows, then on rock: Minecraft's sand, then stone,
+   step sounds.
+5. **Keys:** 1-9 and the wheel change only Minecraft's hotbar. Left click doesn't use Subnautica
+   tools (the diver has none visible). **E** opens Minecraft's inventory: the mouse cursor appears,
+   you can click and drag items, Esc closes it. Chat (**T**) takes typing. **Tab** opens the PDA,
+   and Minecraft's GUI hides while it's open.
+6. **Mob:** `python3 tools/mc_cmd.py "/summon cod ~ ~ ~"` (or a zombie): it stays out of the rock.
+
+**Expected rough edges:**
+- Minecraft's hearts and hunger still show above the hotbar (unified HUD dials: Phase 4).
+- The hand is lit by Minecraft (darker at depth) until Unity draws it (Phase 3).
+- Swimming nose-first into a rock face stops you, as in Minecraft.
+
+**Send back:** how swimming and walking feel (snags, jitter, places you went through or got stuck),
+whether clicking in Minecraft's inventory lands on the right slot at your window size, and for any
+problem: `python3 tools/mc_cmd.py "subcraft tris"` taken right there, `tools/sn_dev.sh log 80`,
+`guest-neoforge/run/logs/latest.log`.
+
+**Unverified by Claude** (needs real mouse/keyboard or ears): cursor clicks in Minecraft screens,
+typing in chat, Subnautica not reacting to number keys and clicks (the harness injects input past
+Subnautica), how footsteps sound.
 
 ## Phase 0c look — approved by Sean (2026-10-01)
 

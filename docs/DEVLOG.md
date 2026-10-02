@@ -2,6 +2,70 @@
 
 Newest first. One entry per session (MISSION.md rule 11).
 
+## 2026-10-01 — Session 5: Phase 1 — ghost terrain, breath, dry lifepod, one-game input
+
+**Done**
+- **Ghost terrain from the triangles** (guest `world/ghost`): each kColTris section is voxelized on
+  a worker thread (8x8x8 sub-voxels per block). Inside/outside comes from triangle orientation
+  along vertical lines (nearest crossing above faces up = under a floor). Columns with no
+  crossing borrow from the nearest known section above/below. Blocks become `subcraft:terrain`
+  (full, or partial with a per-position mask shape in `MaskStore`), waterlogged below sea level,
+  never replacing a player's block. 4.6-5.9 ms per section; 3261 sections and 580k blocks during a
+  200 m swim. 8 new unit tests.
+- **Surface materials:** Subnautica's `MaterialDatabase` table ships empty (resources.assets holds
+  only the CSV header; Subnautica's own footsteps just play "land" on terrain). The voxel block
+  type's name decides instead (Sand02, Coral07, Rock02, `Sand01ToRock02_steep` by slope) -> block
+  property `material` -> Minecraft sound type.
+- **Protocol v14:** HostState carries oxygen/capacity and underwater/inside flags; `kColDry`
+  carries dry boxes (the lifepod's hull; habitats and subs come in Phase 5). The lifepod's
+  colliders are now harvested (quantized signature, it bobs).
+- **Breath:** Minecraft's air = Subnautica's O2 fraction. Minecraft drowning can't happen (air is
+  reset every tick); running out is Subnautica's suffocation. Subnautica's food/water frozen while
+  Minecraft drives.
+- **Input, one key one game:** `InputRouter` patches every `IGameInput.GetButtonState` (the
+  static `GameInput` wrappers are small enough for Mono to inline). While Minecraft drives,
+  Subnautica sees only PDA, pause, UI and look, plus left click when the crosshair is on a
+  Subnautica interactable (that click isn't sent to Minecraft). `McScreenInput`: an open
+  Minecraft screen sits on Subnautica's input stack like the PDA; cursor free, its position and
+  typed text go to Minecraft, Esc closes the screen.
+- **The diver is gone:** body, arms, held tools and the first-person scuba mask stop rendering
+  while Minecraft drives (PDA kept). Subnautica's quickslot bar is hidden. Minecraft's GUI is on its
+  own uGUI canvas, hidden while the PDA or pause menu is up.
+- **Unknown terrain is inert:** spawn placement fails and non-player entities don't tick in
+  sections the host hasn't described. Natural spawning stays off by default (taste call for Sean).
+
+**Found on the way**
+- Minecraft's hand vanished underwater: `ScreenEffectRenderer.renderWater` blends with alpha
+  factors (ONE, ZERO) and left the whole overlay at alpha 0.1. Full-screen effects are skipped
+  while the host draws the world.
+- `FindObjectOfType` doesn't see our hidden (`HideAndDontSave`) host object; statics instead.
+- `mc_dev.sh start | tail` never returns: the nohup'd Gradle keeps the pipe open (redirect to a
+  file instead).
+
+**Verified in game (both games, dev slot)**
+- Voxels vs Subnautica: seabed at y -28.32, block -29 partial, -30 full, -28 water. A summoned
+  cod and zombie rest on the real surface (cod 0.1 m above it, within one sub-voxel).
+- Lifepod: Minecraft's player stands on its floor in air (56 water blocks dried).
+- Oxygen (Subnautica Survival): 39/45 s -> air 260/300 ... 0 -> air 0, Minecraft health stays 20;
+  Subnautica suffocates and respawns in the lifepod, Minecraft follows with full air.
+- Swim test, survival, sprint-swim from the lifepod: Kelp Forest reached after ~30 s, ~180 m in
+  50 s, then stopped by a rock face hit nearly head-on (10 degrees off its normal). Landing on Safe
+  Shallows seabed: the block under the feet has `material=sand`.
+- Minecraft's creative inventory opens over Subnautica (E), closes with Esc through the link.
+- Screenshots: no diver arms, tool or mask; Minecraft hand visible underwater.
+
+**Unverified:** real-mouse clicks in Minecraft screens, chat typing, Subnautica ignoring real
+number keys and clicks (harness input bypasses Subnautica), footstep sounds by ear. All in
+TESTING.md.
+
+**Memory:** both games most of the session, swap 4.4-5.1 GB used of 6; frame rate 21-97 while
+streaming terrain. Each Subnautica restart takes ~2 minutes.
+
+**Still open in Phase 1** (MISSION.md bullets not yet done): one Minecraft biome per Subnautica
+biome; `subcraft:structure` as its own block (triangles already carry the structure flag); masks
+persisted in a chunk attachment (after a restart partial blocks collide as full until re-streamed);
+patch stamps per chunk.
+
 ## 2026-10-01 — Session 4: Phase 1 begins — exact collision
 
 **Sean's direction:** collision must be "ultra fine": swimming along a terrain face in Subnautica
