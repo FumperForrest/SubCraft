@@ -62,6 +62,7 @@ namespace SubCraft
 				McLinked = alive;
 				Plugin.Log.LogInfo($"SubCraft: Minecraft link {(alive ? "up" : "down")} (mc pid {view.McPid})");
 				Audio.SoundBridge.Reset();
+				Combat.GrabController.Reset();
 				if (alive)
 				{
 					Harvester.Reset(view);
@@ -79,7 +80,11 @@ namespace SubCraft
 			view.DrainEvents(events);
 			foreach (var ev in events)
 			{
-				if (ev.Type == Proto.EvHitCreature)
+				if (ev.Type == Proto.EvGrab)
+				{
+					Combat.GrabController.Event(ev);
+				}
+				else if (ev.Type == Proto.EvHitCreature)
 				{
 					Combat.CreatureLink.Hit(ev);
 				}

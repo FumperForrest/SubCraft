@@ -86,6 +86,7 @@ public final class SectionStreamer {
 			SubCraft.LOG.info("SubCraft: block atlas sent to the host ({}x{})", atlas.width(), atlas.height());
 		}
 		dev.subcraft.capture.AtlasAnimator.frame(view, atlas);
+		dev.subcraft.compat.SubLevels.frame(minecraft, view, urgent::add);
 		SectionPos here = SectionPos.of(minecraft.player.blockPosition());
 		if (here.asLong() != center) {
 			center = here.asLong();
@@ -119,7 +120,7 @@ public final class SectionStreamer {
 	}
 
 	private static boolean inRange(SectionPos here, long k) {
-		return Math.abs(SectionPos.x(k) - here.x()) <= RADIUS_H && Math.abs(SectionPos.z(k) - here.z()) <= RADIUS_H && Math.abs(SectionPos.y(k) - here.y()) <= RADIUS_V;
+		return dev.subcraft.compat.SubLevels.allows(k) || Math.abs(SectionPos.x(k) - here.x()) <= RADIUS_H && Math.abs(SectionPos.z(k) - here.z()) <= RADIUS_H && Math.abs(SectionPos.y(k) - here.y()) <= RADIUS_V;
 	}
 
 	/** New centre: sections in range are swept nearest first; the host drops those out of range. */

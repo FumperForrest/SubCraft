@@ -116,10 +116,10 @@ public final class DebugCommands {
 				return dev.subcraft.world.tri.TriDebug.report(minecraft.player.getX(), minecraft.player.getY(), minecraft.player.getZ());
 			}
 			case "sections" -> {
-				return SectionStreamer.stats() + "\n" + dev.subcraft.capture.DynamicCapture.stats() + "\n" + dev.subcraft.capture.VboCapture.stats();
+				return SectionStreamer.stats() + "\n" + dev.subcraft.capture.DynamicCapture.stats() + "\n" + dev.subcraft.capture.VboCapture.stats() + "\n" + dev.subcraft.compat.SubLevels.stats();
 			}
 			case "creatures" -> {
-				return dev.subcraft.combat.Proxies.stats() + ", " + dev.subcraft.combat.MobTable.stats();
+				return dev.subcraft.combat.Proxies.stats() + ", " + dev.subcraft.combat.MobTable.stats() + ", " + dev.subcraft.compat.StaffGrab.stats();
 			}
 			case "ghostaudit" -> {
 				return dev.subcraft.world.ghost.GhostAudit.run(minecraft.level, minecraft.player.blockPosition(), args.length > 1 ? Integer.parseInt(args[1]) : 24);
@@ -131,6 +131,17 @@ public final class DebugCommands {
 			}
 			case "whysolid" -> {
 				return dev.subcraft.world.ghost.GhostAudit.whySolid(Integer.parseInt(args[1]), Integer.parseInt(args[2]), Integer.parseInt(args[3]));
+			}
+			case "mtskey" -> {
+				// What Immersive Vehicles' input layer answers for a key held on the virtual keyboard.
+				int key = Integer.parseInt(args[1]);
+				Object input = Class.forName("minecrafttransportsimulator.mcinterface.InterfaceManager").getField("inputInterface").get(null);
+				var m = input.getClass().getMethod("isKeyPressed", int.class);
+				boolean before = (boolean) m.invoke(input, key);
+				InputBridge.setKey(key, true);
+				boolean held = (boolean) m.invoke(input, key);
+				InputBridge.setKey(key, false);
+				return "isKeyPressed(" + key + "): released " + before + ", held " + held + " (" + input.getClass().getName() + ")";
 			}
 			case "column" -> {
 				return dev.subcraft.world.ghost.GhostAudit.column(Integer.parseInt(args[1]), Integer.parseInt(args[2]));

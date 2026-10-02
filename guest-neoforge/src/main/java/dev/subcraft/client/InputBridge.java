@@ -25,6 +25,13 @@ public final class InputBridge {
 		return button >= 0 && button < BUTTONS.length && BUTTONS[button];
 	}
 
+	/** Debug: hold or release a key on the virtual keyboard. */
+	public static void setKey(int key, boolean down) {
+		if (key >= 0 && key < KEYS.length) {
+			KEYS[key] = down;
+		}
+	}
+
 	public static boolean isKeyDown(int key) {
 		return key >= 0 && key < KEYS.length && KEYS[key];
 	}

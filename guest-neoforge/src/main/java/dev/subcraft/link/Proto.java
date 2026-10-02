@@ -9,7 +9,7 @@ public final class Proto {
 	}
 
 	public static final int MAGIC = 0x43425553; // "SUBC"
-	public static final int VERSION = 24;
+	public static final int VERSION = 25;
 	public static final String LINK_FILE_NAME = "link.bin";
 	public static final long HEARTBEAT_TIMEOUT_NS = 2_000_000_000L;
 
@@ -184,6 +184,7 @@ public final class Proto {
 	public static final int MOB_HOSTILE = 1;
 	public static final int CREATURE_DEAD = 1 << 1;
 	public static final int CREATURE_INVULNERABLE = 1 << 2;
+	public static final int CREATURE_OBJECT = 1 << 3;
 
 	// ---- Event ring (relative to OFF_EVENT_RING) ----
 	public static final int EVENT_RING_ENTRIES = 512;
@@ -198,6 +199,8 @@ public final class Proto {
 	public static final int EV_SOUND_PLAY = 5;
 	public static final int EV_SOUND_UPDATE = 6;
 	public static final int EV_SOUND_STOP = 7;
+	public static final int EV_GRAB = 8;
+	public static final int GRAB_HOLD = 0, GRAB_RELEASE = 1, GRAB_LOCK = 2;
 	public static final int SOUND_RELATIVE = 1 << 24;
 	public static final int SOUND_LOOP = 1 << 25;
 	public static final int SOUND_UI = 1 << 26;
@@ -243,6 +246,8 @@ public final class Proto {
 	public static final int REN_LIGHTS = 8;
 	public static final int REN_COLLIDERS = 9;
 	public static final int REN_SOUND = 11;
+	public static final int REN_SUB_LEVEL = 12;
+	public static final int REN_SUB_LEVEL_BYTES = 136;
 	public static final int REN_SOUND_BYTES = 16;
 	public static final int REN_HAND = 10;
 	public static final int REN_COLLIDERS_BYTES = 16;

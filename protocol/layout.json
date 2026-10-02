@@ -1,8 +1,8 @@
 {
-  "version": 24,
+  "version": 25,
   "constants": {
     "kMagic": 1128420691,
-    "kVersion": 24,
+    "kVersion": 25,
     "kHeartbeatTimeoutNs": 2000000000,
     "kOffHeader": 0,
     "kOffHostState": 256,
@@ -68,6 +68,7 @@
     "ColBiomes": {"size": 16, "fields": {"sx": 0, "sy": 4, "sz": 8, "nameCount": 12}},
     "DryBox": {"size": 32, "fields": {"minX": 0, "minY": 4, "minZ": 8, "maxX": 12, "maxY": 16, "maxZ": 20, "id": 24, "flags": 28}},
     "RenColliders": {"size": 16, "fields": {"sx": 0, "sy": 4, "sz": 8, "count": 12}},
+    "RenSubLevel": {"size": 136, "fields": {"id": 0, "minSx": 8, "maxSz": 28, "posX": 32, "rotX": 56, "pivotX": 88, "scaleX": 112, "scaleZ": 128}},
     "RenSound": {"size": 16, "fields": {"id": 0, "bytes": 4}},
     "RenBox": {"size": 24, "fields": {"minX": 0, "maxZ": 20}},
     "ColTri": {"size": 40, "fields": {"v": 0, "flags": 36}},

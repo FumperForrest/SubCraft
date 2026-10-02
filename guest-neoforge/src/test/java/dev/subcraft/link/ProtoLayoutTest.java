@@ -165,6 +165,7 @@ class ProtoLayoutTest {
 		assertEquals(Proto.REN_COLLIDERS_BYTES, size("RenColliders"));
 		assertEquals(Proto.REN_BOX_BYTES, size("RenBox"));
 		assertEquals(Proto.REN_SOUND_BYTES, size("RenSound"));
+		assertEquals(Proto.REN_SUB_LEVEL_BYTES, size("RenSubLevel"));
 		assertEquals(12L, field("ColBiomes", "nameCount"));
 		assertEquals(Proto.BIOME_CELLS, constant("kBiomeCells"));
 		assertEquals(24L, field("DryBox", "id"));

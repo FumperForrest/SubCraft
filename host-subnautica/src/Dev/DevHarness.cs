@@ -144,6 +144,13 @@ namespace SubCraft.Dev
 					case "key":
 						InputCapture.Inject(LinkDriver.Instance.Link.View, (int)cmd["glfw"], (bool?)cmd["down"] ?? true);
 						break;
+					case "cursor":
+						// Minecraft's cursor, in overlay pixels from the top left (as McScreenInput sends it).
+						LinkDriver.Instance.Link.View.PushInput(Proto.InCursor, 0, (int)cmd["x"], (int)cmd["y"]);
+						break;
+					case "pausemenu":
+						if ((bool?)cmd["open"] ?? true) IngameMenu.main.Open(); else IngameMenu.main.Close();
+						break;
 					case "mcmenu":
 						Hud.McSettingsButton.Open();
 						break;

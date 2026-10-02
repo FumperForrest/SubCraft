@@ -123,6 +123,7 @@ namespace SubCraft.Tests
 			Assert.Equal(Proto.RenCollidersBytes, Size("RenColliders"));
 			Assert.Equal(Proto.RenBoxBytes, Size("RenBox"));
 			Assert.Equal(Proto.RenSoundBytes, Size("RenSound"));
+			Assert.Equal(Proto.RenSubLevelBytes, Size("RenSubLevel"));
 			Assert.Equal(12, F("ColBiomes", "nameCount"));
 			Assert.Equal(24, F("DryBox", "id"));
 			Assert.Equal(36, F("ColTri", "flags"));

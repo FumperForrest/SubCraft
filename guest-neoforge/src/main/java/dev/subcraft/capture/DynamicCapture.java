@@ -152,6 +152,40 @@ public final class DynamicCapture {
 				}
 			}
 		}
+		// Block entities on ships (Sable plots, far away): drawn at the ship's pose, the one the host
+		// places the ship's blocks at.
+		for (var ship : dev.subcraft.compat.SubLevels.ships) {
+			int[] r = ship.range();
+			for (int cx = r[0]; cx <= r[3]; cx++) {
+				for (int cz = r[2]; cz <= r[5]; cz++) {
+					var chunk = level.getChunkSource().getChunk(cx, cz, false);
+					if (chunk == null) {
+						continue;
+					}
+					for (BlockEntity be : chunk.getBlockEntities().values()) {
+						if (backingOff(be.getType().toString())) {
+							continue;
+						}
+						var p = be.getBlockPos();
+						pose.pushPose();
+						pose.translate(ship.px() - origin.x, ship.py() - origin.y, ship.pz() - origin.z);
+						pose.mulPose(new org.joml.Quaternionf((float) ship.qx(), (float) ship.qy(), (float) ship.qz(), (float) ship.qw()));
+						pose.scale((float) ship.sx(), (float) ship.sy(), (float) ship.sz());
+						pose.translate(p.getX() - ship.rx(), p.getY() - ship.ry(), p.getZ() - ship.rz());
+						try {
+							// The renderer itself: the dispatcher culls by distance, and the plot is far away.
+							var renderer = beDispatcher.getRenderer(be);
+							if (renderer != null) {
+								renderer.render(be, partial, pose, entities, FULL_BRIGHT, net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY);
+							}
+						} catch (RuntimeException ex) {
+							warnOnce(be.getType().toString(), ex);
+						}
+						pose.popPose();
+					}
+				}
+			}
+		}
 		StageEvents.fire(minecraft, camera, partial, minecraft.levelRenderer.getTicks());
 		VboCapture.end();
 		for (var e : entities.buffers.entrySet()) {
@@ -216,9 +250,16 @@ public final class DynamicCapture {
 				gr.subcraft$bobView(handPose, partial);
 			}
 			VboCapture.begin(handSource, "hand"); // held items some mods draw from their own vertex buffers
+			// Minecraft's hand projection (GameRenderer.renderItemInHand): items that remember where they
+			// were drawn on screen (the physics staff's beam) need the one the hand really uses.
+			var worldProjection = new org.joml.Matrix4f(com.mojang.blaze3d.systems.RenderSystem.getProjectionMatrix());
+			var sorting = com.mojang.blaze3d.systems.RenderSystem.getVertexSorting();
+			com.mojang.blaze3d.systems.RenderSystem.setProjectionMatrix(
+				minecraft.gameRenderer.getProjectionMatrix(gr.subcraft$getFov(camera, partial, false)), com.mojang.blaze3d.vertex.VertexSorting.DISTANCE_TO_ORIGIN);
 			try {
 				minecraft.gameRenderer.itemInHandRenderer.renderHandsWithItems(partial, handPose, handSource, minecraft.player, FULL_BRIGHT);
 			} finally {
+				com.mojang.blaze3d.systems.RenderSystem.setProjectionMatrix(worldProjection, sorting);
 				VboCapture.end();
 			}
 			for (var e : handSource.buffers.entrySet()) {

@@ -178,6 +178,11 @@ int main()
 	F(RenColliders, sx); F(RenColliders, sy); F(RenColliders, sz); F(RenColliders, count);
 	endStruct();
 
+	S(RenSubLevel);
+	F(RenSubLevel, id); F(RenSubLevel, minSx); F(RenSubLevel, maxSz); F(RenSubLevel, posX); F(RenSubLevel, rotX); F(RenSubLevel, pivotX);
+	F(RenSubLevel, scaleX); F(RenSubLevel, scaleZ);
+	endStruct();
+
 	S(RenSound);
 	F(RenSound, id); F(RenSound, bytes);
 	endStruct();

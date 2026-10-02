@@ -7,7 +7,7 @@ namespace SubCraft.Link
 	public static class Proto
 	{
 		public const uint Magic = 0x43425553; // "SUBC"
-		public const uint Version = 24;
+		public const uint Version = 25;
 		public const string LinkFileName = "link.bin";
 		public const ulong HeartbeatTimeoutNs = 2_000_000_000UL;
 
@@ -81,7 +81,7 @@ namespace SubCraft.Link
 		public const long CrecId = 0, CrecFlags = 4, CrecX = 8, CrecY = 12, CrecZ = 16, CrecYaw = 20, CrecWidth = 24, CrecHeight = 28,
 			CrecHealthFrac = 32, CrecName = 40;
 		public const int CreatureNameBytes = 24;
-		public const uint CreatureHostile = 1, CreatureDead = 1 << 1, CreatureInvulnerable = 1 << 2;
+		public const uint CreatureHostile = 1, CreatureDead = 1 << 1, CreatureInvulnerable = 1 << 2, CreatureObject = 1 << 3;
 
 		// ---- Mob table (v22) ----
 		public const int MaxMobs = 96;
@@ -94,7 +94,8 @@ namespace SubCraft.Link
 		public const int EventRingEntries = 512;
 		public const long ErHead = 0x00, ErTail = 0x40, ErData = 0x80;
 		public const int EventBytes = 32;
-		public const uint EvHitCreature = 1, EvPlayerDied = 2, EvExplosion = 3, EvDebugResult = 4, EvSoundPlay = 5, EvSoundUpdate = 6, EvSoundStop = 7;
+		public const uint EvHitCreature = 1, EvPlayerDied = 2, EvExplosion = 3, EvDebugResult = 4, EvSoundPlay = 5, EvSoundUpdate = 6, EvSoundStop = 7, EvGrab = 8;
+		public const uint GrabHold = 0, GrabRelease = 1, GrabLock = 2;
 		public const uint SoundRelative = 1u << 24, SoundLoop = 1u << 25, SoundUi = 1u << 26;
 
 		// ---- Collision ring (relative to OffCollisionRing) ----
@@ -114,8 +115,8 @@ namespace SubCraft.Link
 		public const long RrHead = 0x00, RrTail = 0x40, RrData = 0x80;
 		public const long RrDataBytes = RenderRingBytes - RrData;
 		public const uint DumpMagic = 0x4D444353; // "SCDM"
-		public const uint RenPad = 0, RenAtlas = 1, RenSection = 2, RenClearAll = 3, RenTexture = 4, RenScene = 6, RenAtlasRegion = 7, RenLights = 8, RenColliders = 9, RenHand = 10, RenSound = 11;
-		public const int RenCollidersBytes = 16, RenBoxBytes = 24, RenSoundBytes = 16;
+		public const uint RenPad = 0, RenAtlas = 1, RenSection = 2, RenClearAll = 3, RenTexture = 4, RenScene = 6, RenAtlasRegion = 7, RenLights = 8, RenColliders = 9, RenHand = 10, RenSound = 11, RenSubLevel = 12;
+		public const int RenCollidersBytes = 16, RenBoxBytes = 24, RenSoundBytes = 16, RenSubLevelBytes = 136;
 		public const uint RenDoubleSided = 0x100;
 		public const int RenVertexBytes = 32, RenBatchBytes = 16;
 		public const int RenMatOpaque = 0, RenMatCutout = 1, RenMatTranslucent = 2, RenMatEmissive = 3, RenMatAdditive = 4;

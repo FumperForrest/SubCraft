@@ -46,6 +46,7 @@ namespace SubCraft
 			DontDestroyOnLoad(host);
 			host.hideFlags = HideFlags.HideAndDontSave;
 			host.AddComponent<LinkDriver>();
+			host.AddComponent<Combat.GrabController>();
 			host.AddComponent<Hud.OverlayView>();
 			host.AddComponent<Render.LiveWorld>();
 			host.AddComponent<Dev.DevHarness>();

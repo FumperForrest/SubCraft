@@ -21,7 +21,7 @@ import zlib
 
 # ---- protocol (protocol/subcraft_protocol.h; tools/check_layout.sh keeps that header honest) ----
 MAGIC = 0x43425553
-VERSION = 24
+VERSION = 25
 OFF_HOST = 0x100
 OFF_MC = 0x200
 OFF_OVL = 0x300

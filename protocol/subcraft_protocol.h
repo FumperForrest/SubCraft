@@ -26,7 +26,7 @@
 namespace subcraft::proto
 {
 	inline constexpr std::uint32_t kMagic = 0x43425553;  // "SUBC"
-	inline constexpr std::uint32_t kVersion = 24;
+	inline constexpr std::uint32_t kVersion = 25;
 
 	// Default file locations: macOS $TMPDIR/subcraft/link.bin, Windows %LOCALAPPDATA%\SubCraft\link.bin.
 	// Both sides accept an override (Java -Dsubcraft.link=<path>, host config, env SUBCRAFT_LINK).
@@ -263,6 +263,7 @@ namespace subcraft::proto
 		kCreatureHostile = 1u << 0,
 		kCreatureDead = 1u << 1,
 		kCreatureInvulnerable = 1u << 2,
+		kCreatureObject = 1u << 3,  // not a creature: a vehicle, an item, a loose physics object (v25)
 	};
 
 	struct CreatureRecord
@@ -340,6 +341,17 @@ namespace subcraft::proto
 		kEvSoundPlay = 5,
 		kEvSoundUpdate = 6,  // same fields, for a moving or changing sound already playing
 		kEvSoundStop = 7,    // id = sound instance; 0 = every sound
+		// v25: a Minecraft tool holds a host object (Create: Aeronautics' physics staff): id = creature
+		// table id; a/b/c = where its grabbed point should be (MC coords); d = grab offset from the
+		// object's centre along the look (unused yet); flags = GrabFlags.
+		kEvGrab = 8,
+	};
+
+	enum GrabFlags : std::uint32_t
+	{
+		kGrabHold = 0,     // pull toward a/b/c (sent every tick while held)
+		kGrabRelease = 1,  // let go, keeping its momentum
+		kGrabLock = 2,     // freeze in place (staff punch); again to unfreeze
 	};
 
 	enum SoundFlags : std::uint32_t
@@ -501,6 +513,10 @@ namespace subcraft::proto
 		kRenHand = 10,        // like kRenScene (v17), but positions are in Minecraft's view space (camera at
 		                      // the origin, x right, y up, looking down -z): the first-person hand and
 		                      // held item, drawn by the host attached to its camera. Origin fields are 0.
+		kRenSubLevel = 12,    // RenSubLevel (v25): a moving block region (Sable sub-level: Aeronautics ships,
+		                      // physics-assembled builds). Its blocks are ordinary kRenSection sections in its
+		                      // plot (far away in the world); the host draws the plot's sections at the pose,
+		                      // sent every frame. flags bit 0: gone.
 		kRenSound = 11,       // RenSound + the sound file (Ogg Vorbis) (v20): sent once per file, before
 		                      // the first kEvSoundPlay that uses its id
 		kRenColliders = 9,    // RenColliders + RenBox[count] (v16): a section's block collision boxes
@@ -587,6 +603,19 @@ namespace subcraft::proto
 	static_assert(sizeof(RenColliders) == 16);
 
 	// An axis-aligned box in MC coords relative to the section origin.
+	struct RenSubLevel
+	{
+		std::uint32_t id;
+		std::uint32_t flags;          // bit 0: removed
+		std::int32_t  minSx, minSy, minSz;  // the plot's sections (inclusive)
+		std::int32_t  maxSx, maxSy, maxSz;
+		double        posX, posY, posZ;     // pose: world = rot * ((p - rotationPoint) * scale) + pos, MC coords
+		double        rotX, rotY, rotZ, rotW;
+		double        pivotX, pivotY, pivotZ;
+		double        scaleX, scaleY, scaleZ;
+	};
+	static_assert(sizeof(RenSubLevel) == 136);
+
 	struct RenSound
 	{
 		std::uint32_t id;     // 1+, referenced by kEvSoundPlay

@@ -20,9 +20,9 @@ namespace SubCraft.Combat
 		private const float Radius = 40f;
 		private const float Period = 0.1f;
 
-		private static readonly Dictionary<uint, Creature> byId = new Dictionary<uint, Creature>();
+		private static readonly Dictionary<uint, GameObject> byId = new Dictionary<uint, GameObject>();
 		private static readonly List<LinkView.CreatureRecord> records = new List<LinkView.CreatureRecord>();
-		private static readonly HashSet<Creature> seen = new HashSet<Creature>();
+		private static readonly HashSet<GameObject> seen = new HashSet<GameObject>();
 		private static readonly List<Collider> scratch = new List<Collider>();
 		private static readonly Collider[] overlap = new Collider[2048];
 		private static float next;
@@ -45,24 +45,35 @@ namespace SubCraft.Combat
 				int n = Physics.OverlapSphereNonAlloc(player.transform.position, Radius, overlap, ~0, QueryTriggerInteraction.Ignore);
 				for (int i = 0; i < n && records.Count < Proto.MaxCreatures; i++)
 				{
-					var creature = overlap[i].GetComponentInParent<Creature>();
-					if (creature == null || !seen.Add(creature))
+					// Creatures, and objects a Minecraft tool may move: vehicles and loose physics items.
+					var c = overlap[i];
+					var creature = c.GetComponentInParent<Creature>();
+					GameObject root = creature != null ? creature.gameObject : null;
+					bool isObject = false;
+					if (root == null)
+					{
+						var vehicle = c.GetComponentInParent<Vehicle>();
+						var item = vehicle == null ? c.GetComponentInParent<Pickupable>() : null;
+						root = vehicle != null ? vehicle.gameObject : item != null && !item.attached && item.GetComponent<Rigidbody>() != null ? item.gameObject : null;
+						isObject = root != null;
+					}
+					if (root == null || root == player.gameObject || !seen.Add(root))
 					{
 						continue;
 					}
-					var live = creature.liveMixin;
-					if (live == null || !live.IsAlive() || !Box(creature, out Bounds b))
+					var live = root.GetComponent<LiveMixin>();
+					if ((live == null ? !isObject : !live.IsAlive()) || !Box(root, out Bounds b))
 					{
 						continue;
 					}
-					uint id = (uint)creature.GetInstanceID();
-					byId[id] = creature;
-					uint flags = 0;
-					if (creature.GetComponent<AggressiveWhenSeeTarget>() != null)
+					uint id = (uint)root.GetInstanceID();
+					byId[id] = root;
+					uint flags = isObject ? Proto.CreatureObject : 0;
+					if (root.GetComponent<AggressiveWhenSeeTarget>() != null)
 					{
 						flags |= Proto.CreatureHostile;
 					}
-					if (live.invincible)
+					if (live != null && live.invincible)
 					{
 						flags |= Proto.CreatureInvulnerable;
 					}
@@ -74,22 +85,25 @@ namespace SubCraft.Combat
 						X = b.center.x,
 						Y = b.min.y,
 						Z = -b.center.z,
-						Yaw = SubCraft.Link.Coords.UnityYawToMc(creature.transform.eulerAngles.y),
+						Yaw = SubCraft.Link.Coords.UnityYawToMc(root.transform.eulerAngles.y),
 						// Minecraft boxes are square: the larger horizontal extent.
 						Width = Mathf.Max(b.size.x, b.size.z),
 						Height = b.size.y,
-						HealthFrac = live.GetHealthFraction(),
-						Name = CraftData.GetTechType(creature.gameObject).AsString(),
+						HealthFrac = live != null ? live.GetHealthFraction() : 1f,
+						Name = CraftData.GetTechType(root).AsString(),
 					});
 				}
 			}
 			view.WriteCreatures(records);
 		}
 
+		/// <summary>The object behind a creature-table id (still near the player), or null.</summary>
+		public static GameObject Find(uint id) => byId.TryGetValue(id, out var go) ? go : null;
+
 		/// <summary>Harness: the creatures in the table and their health.</summary>
 		public static string Describe()
 		{
-			var sb = new System.Text.StringBuilder($"{records.Count} creatures, hits {Hits}, hurts {Hurts}, mob stand-ins {MobStandIns.Count}, mob bites {MobStandIns.Bites}\n");
+			var sb = new System.Text.StringBuilder($"{records.Count} creatures, hits {Hits}, hurts {Hurts}, mob stand-ins {MobStandIns.Count}, mob bites {MobStandIns.Bites}, grab events {GrabController.Events}, held {GrabController.Held}\n");
 			foreach (var r in records)
 			{
 				string hostile = (r.Flags & Proto.CreatureHostile) != 0 ? " hostile" : "";
@@ -99,9 +113,9 @@ namespace SubCraft.Combat
 		}
 
 		/// <summary>The creature's solid colliders' world bounds.</summary>
-		private static bool Box(Creature creature, out Bounds bounds)
+		private static bool Box(GameObject root, out Bounds bounds)
 		{
-			creature.GetComponentsInChildren(false, scratch);
+			root.GetComponentsInChildren(false, scratch);
 			bool any = false;
 			bounds = default;
 			foreach (var c in scratch)
@@ -126,13 +140,17 @@ namespace SubCraft.Combat
 		/// <summary>kEvHitCreature: id, a = MC damage, b/c = knockback direction x/z (MC), d = strength.</summary>
 		public static void Hit(in LinkView.McEvent ev)
 		{
-			if (!byId.TryGetValue(ev.Id, out var creature) || creature == null || creature.liveMixin == null)
+			if (!byId.TryGetValue(ev.Id, out var creature) || creature == null)
 			{
 				return;
 			}
 			var player = global::Player.main;
 			float damage = ev.A * Plugin.DamageToSubnautica.Value;
-			creature.liveMixin.TakeDamage(damage, creature.transform.position, DamageType.Normal, player != null ? player.gameObject : null);
+			var live = creature.GetComponent<LiveMixin>();
+			if (live != null)
+			{
+				live.TakeDamage(damage, creature.transform.position, DamageType.Normal, player != null ? player.gameObject : null);
+			}
 			var rb = creature.GetComponent<Rigidbody>();
 			if (rb != null && !rb.isKinematic && ev.D > 0f)
 			{

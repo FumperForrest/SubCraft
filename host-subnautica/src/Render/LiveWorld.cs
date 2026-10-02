@@ -37,6 +37,97 @@ namespace SubCraft.Render
 
 		private readonly Dictionary<long, Section> sections = new Dictionary<long, Section>();
 
+		/// <summary>
+		/// A moving block region (kRenSubLevel: Sable sub-levels, Aeronautics ships). Its plot's sections
+		/// hang under this node at their offset from the pose's rotation point, so mesh, lights and block
+		/// colliders all move with it (vehicles and creatures bump into a ship).
+		/// </summary>
+		private sealed class SubLevelNode
+		{
+			public GameObject Go;
+			public int MinSx, MinSy, MinSz, MaxSx, MaxSy, MaxSz;
+			public double PivotX, PivotY, PivotZ;
+			public bool Contains(int sx, int sy, int sz) => sx >= MinSx && sx <= MaxSx && sy >= MinSy && sy <= MaxSy && sz >= MinSz && sz <= MaxSz;
+		}
+
+		private readonly Dictionary<uint, SubLevelNode> subLevels = new Dictionary<uint, SubLevelNode>();
+		public int SubLevelCount => subLevels.Count;
+
+		private void SubLevel(byte* p)
+		{
+			uint id = *(uint*)p, flags = *(uint*)(p + 4);
+			if ((flags & 1) != 0)
+			{
+				if (subLevels.TryGetValue(id, out var gone))
+				{
+					// Sections go back to world placement (the streamer removes them as it sees fit).
+					foreach (var kv in sections)
+					{
+						if (kv.Value.Go != null && kv.Value.Go.transform.parent == gone.Go.transform)
+						{
+							Unparent(kv.Key, kv.Value);
+						}
+					}
+					Destroy(gone.Go);
+					subLevels.Remove(id);
+				}
+				return;
+			}
+			int* r = (int*)(p + 8);
+			double* d = (double*)(p + 32);
+			if (!subLevels.TryGetValue(id, out var n))
+			{
+				if (root == null)
+				{
+					root = new GameObject("SubCraft Minecraft world");
+					DontDestroyOnLoad(root);
+				}
+				n = new SubLevelNode { Go = new GameObject($"SubCraft sub-level {id:x8}") };
+				n.Go.transform.SetParent(root.transform, false);
+				subLevels[id] = n;
+				Plugin.Log.LogInfo($"SubCraft: Minecraft sub-level {id:x8}, plot sections ({r[0]},{r[1]},{r[2]})..({r[3]},{r[4]},{r[5]})");
+			}
+			n.MinSx = r[0]; n.MinSy = r[1]; n.MinSz = r[2]; n.MaxSx = r[3]; n.MaxSy = r[4]; n.MaxSz = r[5];
+			bool pivotMoved = n.PivotX != d[7] || n.PivotY != d[8] || n.PivotZ != d[9];
+			n.PivotX = d[7]; n.PivotY = d[8]; n.PivotZ = d[9];
+			// MC -> Unity: z mirrored; a rotation (x, y, z, w) mirrored across z is (-x, -y, z, w).
+			var t = n.Go.transform;
+			t.position = new Vector3((float)d[0], (float)d[1], (float)-d[2]);
+			t.rotation = new Quaternion((float)-d[3], (float)-d[4], (float)d[5], (float)d[6]);
+			t.localScale = new Vector3((float)d[10], (float)d[11], (float)d[12]);
+			for (int sx = n.MinSx; sx <= n.MaxSx; sx++)
+			{
+				for (int sy = n.MinSy; sy <= n.MaxSy; sy++)
+				{
+					for (int sz = n.MinSz; sz <= n.MaxSz; sz++)
+					{
+						long k = Key(sx, sy, sz);
+						if (sections.TryGetValue(k, out var s) && s.Go != null && (pivotMoved || s.Go.transform.parent != t))
+						{
+							Attach(n, sx, sy, sz, s);
+						}
+					}
+				}
+			}
+		}
+
+		/// <summary>Section origin relative to the rotation point, in doubles (plots lie millions of blocks out).</summary>
+		private static void Attach(SubLevelNode n, int sx, int sy, int sz, Section s)
+		{
+			s.Go.transform.SetParent(n.Go.transform, false);
+			s.Go.transform.localPosition = new Vector3((float)(sx * 16.0 - n.PivotX), (float)(sy * 16.0 - n.PivotY), (float)(-(sz * 16.0) + n.PivotZ));
+			s.Go.transform.localRotation = Quaternion.identity;
+			s.Go.transform.localScale = Vector3.one;
+		}
+
+		private void Unparent(long k, Section s)
+		{
+			s.Go.transform.SetParent(root.transform, false);
+			s.Go.transform.localScale = Vector3.one;
+			s.Go.transform.localRotation = Quaternion.identity;
+			s.Go.transform.position = new Vector3(KeyX(k) * 16, KeyY(k) * 16, -KeyZ(k) * 16);
+		}
+
 		/// <summary>Minecraft textures by host id (0 = the block atlas): pixels, a bake cache and its pages.</summary>
 		private sealed class Tex
 		{
@@ -145,6 +236,9 @@ namespace SubCraft.Render
 			byte* p = view.Base + off;
 			switch (type)
 			{
+				case Proto.RenSubLevel:
+					SubLevel(p);
+					break;
 				case Proto.RenSound:
 					Audio.SoundBridge.Load(*(uint*)p, p + Proto.RenSoundBytes, *(int*)(p + 4));
 					break;
@@ -271,6 +365,9 @@ namespace SubCraft.Render
 		}
 
 		private static long Key(int sx, int sy, int sz) => ((long)(sx & 0x3FFFFF) << 42) | ((long)(sy & 0xFFFFF) << 22) | (long)(sz & 0x3FFFFF);
+		private static int KeyX(long k) => (int)(k >> 42) << 10 >> 10;
+		private static int KeyY(long k) => (int)(k >> 22 & 0xFFFFF) << 12 >> 12;
+		private static int KeyZ(long k) => (int)(k & 0x3FFFFF) << 10 >> 10;
 
 		private Section Get(int sx, int sy, int sz, bool create)
 		{
@@ -283,6 +380,14 @@ namespace SubCraft.Render
 			// Section origin in Unity: MC (x, y, z) -> (x, y, -z).
 			s.Go.transform.position = new Vector3(sx * 16, sy * 16, -sz * 16);
 			sections[k] = s;
+			foreach (var n in subLevels.Values)
+			{
+				if (n.Contains(sx, sy, sz))
+				{
+					Attach(n, sx, sy, sz, s);
+					break;
+				}
+			}
 			return s;
 		}
 
@@ -673,6 +778,11 @@ namespace SubCraft.Render
 				Destroy(s.Go);
 			}
 			sections.Clear();
+			foreach (var n in subLevels.Values)
+			{
+				Destroy(n.Go);
+			}
+			subLevels.Clear();
 			if (dynamicScene != null && dynamicScene.Renderer != null) dynamicScene.Renderer.enabled = false;
 			if (hand != null && hand.Renderer != null) hand.Renderer.enabled = false;
 			BoxCount = 0;
