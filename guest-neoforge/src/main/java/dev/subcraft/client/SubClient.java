@@ -142,6 +142,7 @@ public final class SubClient {
 
 	private static void onLinkChanged(Minecraft minecraft) {
 		SoundBridge.reset();
+		dev.subcraft.compat.FlywheelCompat.linked(minecraft, linked);
 		if (linked) {
 			tookOver = true;
 			applyLinkedOptions(minecraft);

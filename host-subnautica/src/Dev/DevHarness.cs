@@ -144,6 +144,10 @@ namespace SubCraft.Dev
 					case "key":
 						InputCapture.Inject(LinkDriver.Instance.Link.View, (int)cmd["glfw"], (bool?)cmd["down"] ?? true);
 						break;
+					case "mouse":
+						// A Minecraft mouse button (GLFW: 0 left/attack, 1 right/use), as if clicked.
+						LinkDriver.Instance.Link.View.PushInput(Proto.InMouseButton, (ushort)((int?)cmd["button"] ?? 1), ((bool?)cmd["down"] ?? true) ? 1 : 0, 0, 0);
+						break;
 					case "gamemode":
 						// Dev slot only matters: survival / freedom / creative (oxygen tests need survival).
 						var gm = (string)cmd["mode"] ?? "survival";

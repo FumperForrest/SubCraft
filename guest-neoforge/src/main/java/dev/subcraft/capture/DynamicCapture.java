@@ -104,6 +104,7 @@ public final class DynamicCapture {
 
 		// Entities.
 		Source entities = new Source();
+		VboCapture.begin(entities, "world"); // raw vertex-buffer draws from the renderers below land here too
 		var dispatcher = minecraft.getEntityRenderDispatcher();
 		PoseStack pose = new PoseStack();
 		boolean firstPerson = minecraft.options.getCameraType().isFirstPerson();
@@ -111,7 +112,7 @@ public final class DynamicCapture {
 			if (e == camera.getEntity() && firstPerson && !camera.isDetached()) {
 				continue; // the hand is captured on its own
 			}
-			if (e.distanceToSqr(origin) > RANGE * RANGE) {
+			if (e.distanceToSqr(origin) > RANGE * RANGE || backingOff(e.getType().toString())) {
 				continue;
 			}
 			double x = net.minecraft.util.Mth.lerp(partial, e.xOld, e.getX()) - origin.x;
@@ -137,7 +138,7 @@ public final class DynamicCapture {
 				}
 				for (BlockEntity be : chunk.getBlockEntities().values()) {
 					var p = be.getBlockPos();
-					if (p.distToCenterSqr(origin) > RANGE * RANGE) {
+					if (p.distToCenterSqr(origin) > RANGE * RANGE || backingOff(be.getType().toString())) {
 						continue;
 					}
 					pose.pushPose();
@@ -151,6 +152,7 @@ public final class DynamicCapture {
 				}
 			}
 		}
+		VboCapture.end();
 		for (var e : entities.buffers.entrySet()) {
 			RenderClassifier.Info info = RenderClassifier.classify(e.getKey());
 			int tex = info.texture().map(rl -> texture(view, rl)).orElse(-1);
@@ -212,7 +214,12 @@ public final class DynamicCapture {
 			if (minecraft.options.bobView().get()) {
 				gr.subcraft$bobView(handPose, partial);
 			}
-			minecraft.gameRenderer.itemInHandRenderer.renderHandsWithItems(partial, handPose, handSource, minecraft.player, FULL_BRIGHT);
+			VboCapture.begin(handSource, "hand"); // held items some mods draw from their own vertex buffers
+			try {
+				minecraft.gameRenderer.itemInHandRenderer.renderHandsWithItems(partial, handPose, handSource, minecraft.player, FULL_BRIGHT);
+			} finally {
+				VboCapture.end();
+			}
 			for (var e : handSource.buffers.entrySet()) {
 				RenderClassifier.Info info = RenderClassifier.classify(e.getKey());
 				int tex = info.texture().map(rl -> texture(view, rl)).orElse(-1);
@@ -295,9 +302,27 @@ public final class DynamicCapture {
 
 	private static final java.util.Set<String> warned = new java.util.HashSet<>();
 
+	private static final java.util.Map<String, Long> backoffUntil = new java.util.HashMap<>();
+
+	/** A renderer that failed recently is skipped for a while: each failure builds a crash report (slow). */
+	private static boolean backingOff(String what) {
+		Long until = backoffUntil.get(what);
+		return until != null && System.currentTimeMillis() < until;
+	}
+
 	private static void warnOnce(String what, RuntimeException ex) {
+		backoffUntil.put(what, System.currentTimeMillis() + 10_000);
 		if (warned.add(what)) {
-			SubCraft.LOG.warn("SubCraft: capturing {} failed: {}", what, ex.toString());
+			Throwable root = ex;
+			while (root.getCause() != null && root.getCause() != root) {
+				root = root.getCause();
+			}
+			StringBuilder where = new StringBuilder();
+			StackTraceElement[] st = root.getStackTrace();
+			for (int i = 0; i < Math.min(12, st.length); i++) {
+				where.append("\n    at ").append(st[i]);
+			}
+			SubCraft.LOG.warn("SubCraft: capturing {} failed: {} (cause: {}){}", what, ex.toString(), root, where);
 		}
 	}
 

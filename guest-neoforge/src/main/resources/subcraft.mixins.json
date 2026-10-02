@@ -20,7 +20,10 @@
     "client.MouseHandlerInvoker",
     "client.ParticleEngineAccessor",
     "client.ScreenEffectRendererMixin",
+    "client.RenderStateShardMixin",
     "client.SoundEngineMixin",
+    "client.TextureManagerAccessor",
+    "client.VertexBufferMixin",
     "client.TextureStateShardInvoker",
     "client.WorldOpenFlowsMixin"
   ],

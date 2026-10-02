@@ -30,7 +30,13 @@ switch ($Action) {
 		Write-Host "timed out waiting for the client"; exit 1
 	}
 	"stop" {
-		# Gradle's wrapper JVM and the Minecraft JVM both have to go; Minecraft first so it saves.
+		# Stop-Process can't ask a JVM to shut down cleanly on Windows: save the world first through
+		# the command box (a hard kill loses everything since the last autosave: placed vehicles...).
+		if (Get-Running) {
+			$env:MSYS_NO_PATHCONV = "1"
+			python "$PSScriptRoot\mc_cmd.py" "subcraft save" | Select-Object -Last 1
+		}
+		# Gradle's wrapper JVM and the Minecraft JVM both have to go.
 		foreach ($p in Get-Running) { Stop-Process -Id $p.ProcessId -Force -ErrorAction SilentlyContinue }
 		Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -like "*GradleWrapperMain*runClient*" } |
 			ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }

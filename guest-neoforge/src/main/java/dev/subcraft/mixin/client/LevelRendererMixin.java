@@ -20,8 +20,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * While linked, the host draws the world: Minecraft's own world pass is skipped and the frame is
  * cleared to transparent, so the main target holds only what is drawn on top (hand, GUI).
  * Phase 2 replaces the skip with geometry capture.
+ *
+ * Priority 1500 (applied after mods at the default 1000): other mods' HEAD hooks on renderLevel
+ * run before the skip, so the ones that grab the frame's matrices there (Immersive Vehicles) still
+ * have them when their renderers run inside the capture.
  */
-@Mixin(LevelRenderer.class)
+@Mixin(value = LevelRenderer.class, priority = 1500)
 public abstract class LevelRendererMixin {
 	@Inject(method = "renderLevel", at = @At("HEAD"), cancellable = true)
 	private void subcraft$skipWorld(

@@ -52,6 +52,55 @@ public final class DebugCommands {
 		}
 	}
 
+	/**
+	 * "subcraft field <class> <a.b.c()>": a static field of any loaded class (any mod's), then
+	 * fields or no-argument methods along the path, by reflection. For compat debugging.
+	 */
+	private static String field(String[] args) throws Exception {
+		Class<?> cls = Class.forName(args[1], false, Thread.currentThread().getContextClassLoader());
+		Object at = null;
+		Class<?> type = cls;
+		for (String step : args[2].split("\\.")) {
+			if (step.endsWith("()")) {
+				var m = findMethod(type, step.substring(0, step.length() - 2));
+				m.setAccessible(true);
+				at = m.invoke(at);
+			} else {
+				var f = findField(type, step);
+				f.setAccessible(true);
+				at = f.get(at);
+			}
+			if (at == null) {
+				return step + " is null";
+			}
+			type = at.getClass();
+		}
+		String text = at instanceof java.util.Collection<?> c ? c.getClass().getSimpleName() + " size " + c.size()
+			: at instanceof java.util.Map<?, ?> m ? m.getClass().getSimpleName() + " size " + m.size() : String.valueOf(at);
+		return text.length() > 900 ? text.substring(0, 900) + "..." : text;
+	}
+
+	private static java.lang.reflect.Field findField(Class<?> type, String name) throws NoSuchFieldException {
+		for (Class<?> c = type; c != null; c = c.getSuperclass()) {
+			try {
+				return c.getDeclaredField(name);
+			} catch (NoSuchFieldException ignored) {
+			}
+		}
+		throw new NoSuchFieldException(name + " in " + type.getName());
+	}
+
+	private static java.lang.reflect.Method findMethod(Class<?> type, String name) throws NoSuchMethodException {
+		for (Class<?> c = type; c != null; c = c.getSuperclass()) {
+			for (var m : c.getDeclaredMethods()) {
+				if (m.getName().equals(name) && m.getParameterCount() == 0) {
+					return m;
+				}
+			}
+		}
+		throw new NoSuchMethodException(name + "() in " + type.getName());
+	}
+
 	private static String subcraft(Minecraft minecraft, String[] args) throws Exception {
 		switch (args[0]) {
 			case "dump" -> {
@@ -67,10 +116,27 @@ public final class DebugCommands {
 				return dev.subcraft.world.tri.TriDebug.report(minecraft.player.getX(), minecraft.player.getY(), minecraft.player.getZ());
 			}
 			case "sections" -> {
-				return SectionStreamer.stats() + "\n" + dev.subcraft.capture.DynamicCapture.stats();
+				return SectionStreamer.stats() + "\n" + dev.subcraft.capture.DynamicCapture.stats() + "\n" + dev.subcraft.capture.VboCapture.stats();
 			}
 			case "creatures" -> {
 				return dev.subcraft.combat.Proxies.stats() + ", " + dev.subcraft.combat.MobTable.stats();
+			}
+			case "rawdebug" -> {
+				dev.subcraft.capture.VboCapture.debugDraws = args.length > 1 ? Integer.parseInt(args[1]) : 4;
+				dev.subcraft.capture.VboCapture.debugPass = args.length > 2 ? args[2] : "world";
+				return "logging the next raw draws";
+			}
+			case "save" -> {
+				// The whole world, now (tools/mc_dev stop calls this before it kills the JVM).
+				var server = minecraft.getSingleplayerServer();
+				if (server == null) {
+					return "no integrated server";
+				}
+				server.submit(() -> server.saveEverything(false, true, true)).join();
+				return "saved";
+			}
+			case "field" -> {
+				return field(args);
 			}
 			case "sounds" -> {
 				return SoundBridge.stats();
