@@ -120,6 +120,7 @@ namespace SubCraft
 			Combat.MobStandIns.Frame(view, McLinked && inGame);
 			PlayerPuppet.Frame(this);
 			Audio.SoundBridge.Frame();
+			Hud.SurvivalDials.Frame();
 			Diag();
 		}
 

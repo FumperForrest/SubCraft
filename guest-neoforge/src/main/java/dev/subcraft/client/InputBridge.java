@@ -35,7 +35,18 @@ public final class InputBridge {
 	 */
 	private static void hurt(Minecraft minecraft, int kind, float amount, int attacker) {
 		var server = minecraft.getSingleplayerServer();
-		if (server == null || minecraft.player == null || amount <= 0) {
+		if (server == null || minecraft.player == null || amount == 0) {
+			return;
+		}
+		if (amount < 0) {
+			// A heal from the host (first aid kit, ...).
+			var healed = minecraft.player.getUUID();
+			server.execute(() -> {
+				var sp = server.getPlayerList().getPlayer(healed);
+				if (sp != null) {
+					sp.heal(-amount);
+				}
+			});
 			return;
 		}
 		var uuid = minecraft.player.getUUID();

@@ -23,7 +23,8 @@ function Get-PrefNames { if (Test-Path $KEY) { (Get-Item $KEY).GetValueNames() }
 function Find-Pref($base) { Get-PrefNames | Where-Object { $_ -like "$base`_h*" } | Select-Object -First 1 }
 
 function Save-Prefs {
-	if (Test-Path $BACKUP) { return }
+	# A backup without values (taken before Unity ever saved them) doesn't count.
+	if ((Test-Path $BACKUP) -and ((Get-Content $BACKUP -Raw) -match "Screenmanager")) { return }
 	New-Item -ItemType Directory -Force $BACKUPDIR | Out-Null
 	$saved = @{}
 	foreach ($b in $PREFS) { $n = Find-Pref $b; if ($n) { $saved[$b] = @{ name = $n; value = (Get-ItemProperty $KEY).$n } } }
@@ -42,7 +43,9 @@ function Restore-Prefs {
 }
 
 function Set-Pref($base, $value) {
-	New-Item -Path $KEY -Force | Out-Null
+	# Never New-Item -Force here: on an existing registry key it recreates it empty (all of
+	# Subnautica's settings gone).
+	if (-not (Test-Path $KEY)) { Write-Host "no Subnautica settings yet (run it once normally); skipping $base"; return }
 	$n = Find-Pref $base
 	if (-not $n) { Write-Host "no '$base' pref yet (run Subnautica once so Unity writes it); skipping"; return }
 	Set-ItemProperty $KEY -Name $n -Value $value -Type DWord

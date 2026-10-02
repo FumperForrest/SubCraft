@@ -222,7 +222,8 @@ namespace subcraft::proto
 		kInCursor = 4,       // a, b = absolute cursor position in overlay pixels
 		kInText = 5,         // a = unicode code point
 		kInReleaseAll = 6,   // release every held key/button (input focus left MC)
-		kInHurt = 7,         // host hurt the player: code = HurtKind, a = host damage * 100, b = attacker id, c = HurtFlags
+		kInHurt = 7,         // host hurt the player: code = HurtKind, a = MC damage * 100 (negative: heal, e.g.
+		                     // a first aid kit), b = attacker id, c = HurtFlags
 		kInOpenMenu = 8,     // open Minecraft's pause/options menu
 		kInLook = 9,         // relative look: a, b = mouse dx, dy * 1000 (used only when MC owns the look)
 		kInHurtMob = 10,     // a host creature hurt a Minecraft mob (v22): code = HurtKind, a = MC damage * 100,

@@ -195,6 +195,24 @@ namespace SubCraft.Combat
 		}
 	}
 
+	/// <summary>Subnautica heals its player (first aid kit, ...): Minecraft's player gets it.</summary>
+	[HarmonyPatch(typeof(LiveMixin), nameof(LiveMixin.AddHealth))]
+	internal static class PlayerHealPatch
+	{
+		private static bool Prefix(LiveMixin __instance, float healthBack, ref float __result)
+		{
+			var player = global::Player.main;
+			var driver = LinkDriver.Instance;
+			if (player == null || __instance.gameObject != player.gameObject || !Hud.SurvivalDials.Active || driver?.Link == null)
+			{
+				return true;
+			}
+			driver.Link.View.PushInput(Proto.InHurt, Proto.HurtOther, -Mathf.RoundToInt(healthBack * Plugin.DamageToMinecraft.Value * 100f), 0, 0);
+			__result = healthBack;
+			return false;
+		}
+	}
+
 	[HarmonyPatch(typeof(LiveMixin), nameof(LiveMixin.TakeDamage))]
 	internal static class PlayerDamagePatch
 	{

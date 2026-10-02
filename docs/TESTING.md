@@ -3,6 +3,21 @@
 Things only you can judge (feel, taste) or decide. Everything here was already run by Claude
 unless marked **unverified**.
 
+## Play it (Windows)
+
+From PowerShell in the repo root:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\mc_dev.ps1 start      # hidden Minecraft (waits until ready)
+powershell -ExecutionPolicy Bypass -File tools\sn_restart.ps1        # build + deploy the plugin, start Subnautica, load the dev game
+```
+
+Then click into the Subnautica window and play. Minecraft's keys work (WASD, Space, Shift, Ctrl,
+E inventory, F5 camera, 1-9 hotbar, Q drop); Tab is Subnautica's PDA, Esc Subnautica's pause.
+When done: `tools\sn_dev.ps1 stop` (puts your Subnautica window settings back) and
+`tools\mc_dev.ps1 stop`. The dev game is `slot0004` (`DevSlot` in
+`BepInEx\config\dev.subcraft.host.cfg`); your own saves are never touched.
+
 ## Phase 4 — combat: please try it first
 
 What it does: hit Subnautica's creatures with Minecraft's weapons (sword, axe, bow, crits, sweeps):
@@ -80,12 +95,13 @@ Everything below was set up on the Windows PC; run commands from PowerShell in t
   `~\Documents\Development\Modding\SubCraft-save-backups\subnautica-prefs-original.json` and `stop`
   restores them. Unity only writes those values once the game has run and exited normally, so
   launch Subnautica normally once first.
-- Saves live in `Subnautica\SNAppData\SavedGames` (Steam Cloud put your slot0000/slot0001 there).
-  The dev slot is `slot0002`, as on the Mac. Back the folder up before save-related work.
+- Saves live in `Subnautica\SNAppData\SavedGames` (Steam Cloud put your slot0000-0003 there; they
+  were backed up to `~\Documents\Development\Modding\SubCraft-save-backups\win-*`). The dev slot
+  on this PC is `slot0004` (created by the harness). Back the folder up before save-related work.
 - **Seamoth, please re-try:** board it, fly around, look around, get out. The camera should stay on
   the seat and turn with the Seamoth, and on leaving you should be the Minecraft player at once.
-- Not yet verified on Windows: Minecraft and Subnautica running together, rendering on the
-  RX 480 (the Mac used OpenGL 4.1 under Rosetta), and the hand capture from Phase 3.
+- Verified on Windows: both games linked (after the clock fix), Phase 0a, movement, blocks, the
+  Phase 3 hand, sound, combat. Not checked: performance with many Minecraft blocks on the RX 480.
 
 ---
 
@@ -196,9 +212,18 @@ Subnautica), how footsteps sound.
 
 ## Decisions waiting for you
 
-None right now. (Licence: MIT, decided 2026-10-01.)
+- **The water dial:** Minecraft has no thirst, so it's hidden, but its empty ring stays (it's part
+  of the dial backplate). Keep it hidden, or show another Minecraft stat there (armour, which is
+  hidden now too)?
+
+(Licence: MIT, decided 2026-10-01.)
 
 ## Things Claude changed on your machine
+
+On the Windows PC (2026-10-02): installed Subnautica (Steam), BepInEx 5.4.23.5 into the game folder,
+LLVM (winget), ilspycmd (dotnet tool); created `%LOCALAPPDATA%\SubCraft` (the link file); added
+the dev save `slot0004`; Subnautica's window settings are changed by `sn_dev.ps1 start` and put
+back by `stop`. On the Mac, earlier:
 
 - Your Subnautica saves were copied to `~/Development/Modding/SubCraft-save-backups/` before any
   plugin code ran; `slot0000`/`slot0001` have stayed byte-identical. SubCraft's dev game is

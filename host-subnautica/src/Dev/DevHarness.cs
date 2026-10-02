@@ -317,6 +317,11 @@ namespace SubCraft.Dev
 						bool died = hurtLive.TakeDamage((float?)cmd["damage"] ?? 20f, global::Player.main.transform.position);
 						msg = $"Subnautica health {hurtLive.health} died {died} hurts sent {Combat.CreatureLink.Hurts}";
 						break;
+					case "heal":
+						// As a first aid kit would.
+						var healLive = global::Player.main.liveMixin;
+						msg = $"healed {healLive.AddHealth((float?)cmd["amount"] ?? 50f)}";
+						break;
 					case "creatures":
 						msg = Combat.CreatureLink.Describe();
 						break;

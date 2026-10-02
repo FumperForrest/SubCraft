@@ -99,6 +99,15 @@ Newest first. One entry per session (MISSION.md rule 11).
   skipped by the collision harvester. Verified: two zombies (drowned) and five biters: 4 bites on
   the zombies arrived in Minecraft, the zombies landed 5 hits on creatures.
 
+- **Polish: health.** Subnautica's player LiveMixin.health now mirrors Minecraft's (x5, never
+  below 1), so the dial's own low-health pulse and its punch (`onHealDamage`) follow Minecraft;
+  `LiveMixin.AddHealth` on the player (first aid kit) goes to Minecraft as a negative `kInHurt`
+  (heal). Verified: 40 Subnautica damage -> -8 MC; a 25 heal -> +5 MC.
+- **Polish: the water dial's ring** is part of the shared backplate (BarsPanel/BackgroundQuad;
+  BackgroundDouble is the two-dial plate), so hiding the dial leaves it: Sean's choice.
+- **Fixed in sn_dev.ps1:** `New-Item -Force` on the existing registry key recreated it empty, wiping
+  Subnautica's registry settings on every dev start; the backup is retaken if it has no values.
+
 **Phase 4 result: done** (pending Sean's play-test): time, unified HUD, sound mix, character
 camera, combat both ways, mobs vs creatures.
 
