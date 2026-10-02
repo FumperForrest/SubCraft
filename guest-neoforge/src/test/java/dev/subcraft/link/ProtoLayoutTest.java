@@ -112,7 +112,7 @@ class ProtoLayoutTest {
 			Map.entry("z", Proto.MS_Z), Map.entry("yaw", Proto.MS_YAW), Map.entry("pitch", Proto.MS_PITCH),
 			Map.entry("eyeHeight", Proto.MS_EYE_HEIGHT), Map.entry("sensitivity", Proto.MS_SENSITIVITY),
 			Map.entry("teleportAck", Proto.MS_TELEPORT_ACK), Map.entry("guiScale", Proto.MS_GUI_SCALE),
-			Map.entry("frameCounter", Proto.MS_FRAME_COUNTER), Map.entry("fovDeg", Proto.MS_FOV), Map.entry("bobPhase", Proto.MS_BOB_PHASE), Map.entry("handFovDeg", Proto.MS_HAND_FOV),
+			Map.entry("frameCounter", Proto.MS_FRAME_COUNTER), Map.entry("fovDeg", Proto.MS_FOV), Map.entry("bobPhase", Proto.MS_BOB_PHASE), Map.entry("handFovDeg", Proto.MS_HAND_FOV), Map.entry("hurtTiltDeg", Proto.MS_HURT_TILT), Map.entry("hurtDirDeg", Proto.MS_HURT_DIR), Map.entry("deathRollDeg", Proto.MS_DEATH_ROLL),
 			Map.entry("bobAmount", Proto.MS_BOB_AMOUNT), Map.entry("eyeX", Proto.MS_EYE_X), Map.entry("eyeY", Proto.MS_EYE_Y),
 			Map.entry("eyeZ", Proto.MS_EYE_Z), Map.entry("tickNs", Proto.MS_TICK_NS), Map.entry("prevX", Proto.MS_PREV_X),
 			Map.entry("prevY", Proto.MS_PREV_Y), Map.entry("prevZ", Proto.MS_PREV_Z), Map.entry("curX", Proto.MS_CUR_X),

@@ -7,7 +7,7 @@ namespace SubCraft.Link
 	public static class Proto
 	{
 		public const uint Magic = 0x43425553; // "SUBC"
-		public const uint Version = 20;
+		public const uint Version = 21;
 		public const string LinkFileName = "link.bin";
 		public const ulong HeartbeatTimeoutNs = 2_000_000_000UL;
 
@@ -46,11 +46,11 @@ namespace SubCraft.Link
 		// ---- McState (relative to OffMcState) ----
 		public const long MsSeq = 0x00, MsFlags = 0x04, MsX = 0x08, MsY = 0x10, MsZ = 0x18, MsYaw = 0x20, MsPitch = 0x24, MsEyeHeight = 0x28,
 			MsSensitivity = 0x2C, MsTeleportAck = 0x30, MsGuiScale = 0x34, MsFrameCounter = 0x38, MsFov = 0x40, MsBobPhase = 0x44,
-			MsBobAmount = 0x48, MsHandFov = 0x4C, MsEyeX = 0x50, MsEyeY = 0x58, MsEyeZ = 0x60, MsTickNs = 0x68, MsPrevX = 0x70, MsPrevY = 0x78, MsPrevZ = 0x80,
+			MsBobAmount = 0x48, MsHandFov = 0x4C, MsHurtTilt = 0xE0, MsHurtDir = 0xE4, MsDeathRoll = 0xE8, MsEyeX = 0x50, MsEyeY = 0x58, MsEyeZ = 0x60, MsTickNs = 0x68, MsPrevX = 0x70, MsPrevY = 0x78, MsPrevZ = 0x80,
 			MsCurX = 0x88, MsCurY = 0x90, MsCurZ = 0x98, MsTickEyeO = 0xA0, MsTickEye = 0xA4, MsWalkDistO = 0xA8, MsWalkDist = 0xAC,
 			MsBobO = 0xB0, MsBob = 0xB4, MsTickMs = 0xB8, MsCameraMode = 0xC0, MsCameraDistance = 0xC4, MsHealth = 0xC8, MsMaxHealth = 0xCC,
 			MsFood = 0xD0, MsSaturation = 0xD4, MsAir = 0xD8, MsMaxAir = 0xDC;
-		public const int McStateBytes = 0xE0;
+		public const int McStateBytes = 0xF0;
 		public const uint McInWorld = 1, McScreenOpen = 1 << 1, McOnGround = 1 << 2, McSneaking = 1 << 3, McSprinting = 1 << 4, McDead = 1 << 5,
 			McSwimming = 1 << 6, McFlying = 1 << 7, McInWater = 1 << 8, McEyeInWater = 1 << 9;
 
@@ -80,6 +80,7 @@ namespace SubCraft.Link
 		public const long CrecId = 0, CrecFlags = 4, CrecX = 8, CrecY = 12, CrecZ = 16, CrecYaw = 20, CrecWidth = 24, CrecHeight = 28,
 			CrecHealthFrac = 32, CrecName = 40;
 		public const int CreatureNameBytes = 24;
+		public const uint CreatureHostile = 1, CreatureDead = 1 << 1, CreatureInvulnerable = 1 << 2;
 
 		// ---- Event ring (relative to OffEventRing) ----
 		public const int EventRingEntries = 512;

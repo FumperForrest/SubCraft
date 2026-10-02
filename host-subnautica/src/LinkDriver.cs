@@ -79,7 +79,11 @@ namespace SubCraft
 			view.DrainEvents(events);
 			foreach (var ev in events)
 			{
-				if (ev.Type == Proto.EvSoundPlay || ev.Type == Proto.EvSoundUpdate || ev.Type == Proto.EvSoundStop)
+				if (ev.Type == Proto.EvHitCreature)
+				{
+					Combat.CreatureLink.Hit(ev);
+				}
+				else if (ev.Type == Proto.EvSoundPlay || ev.Type == Proto.EvSoundUpdate || ev.Type == Proto.EvSoundStop)
 				{
 					Audio.SoundBridge.Event(ev);
 				}
@@ -112,6 +116,7 @@ namespace SubCraft
 				Dry.Frame(view, Harvester.Epoch, global::Player.main.transform.position);
 			}
 			World.LifepodAnchor.Frame(McLinked && inGame);
+			Combat.CreatureLink.Frame(view, McLinked && inGame);
 			PlayerPuppet.Frame(this);
 			Audio.SoundBridge.Frame();
 			Diag();

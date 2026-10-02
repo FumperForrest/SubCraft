@@ -28,6 +28,7 @@ public final class SubCraft {
 
 	public SubCraft(IEventBus modBus) {
 		SubBlocks.register(modBus);
+		dev.subcraft.combat.SubEntities.register(modBus);
 		dev.subcraft.world.ghost.ChunkGhostData.register(modBus);
 		NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.level.ChunkEvent.Load e) -> {
 			if (e.getChunk() instanceof net.minecraft.world.level.chunk.LevelChunk c && !e.getLevel().isClientSide() && c.getLevel() != null && SubWorld.is(c.getLevel())) {
@@ -41,9 +42,11 @@ public final class SubCraft {
 		});
 		NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post e) -> CollisionConsumer.serverTick(e.getServer().overworld()));
 		NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post e) -> followHostTime(e.getServer().overworld()));
+		NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post e) -> dev.subcraft.combat.Proxies.serverTick(e.getServer().overworld()));
 		NeoForge.EVENT_BUS.addListener((ServerStartedEvent e) -> configureWorld(e.getServer().overworld()));
 		NeoForge.EVENT_BUS.addListener((PlayerTickEvent.Post e) -> holdBreath(e.getEntity()));
 		NeoForge.EVENT_BUS.addListener(SubCraft::spawnOnlyOnKnownTerrain);
+		NeoForge.EVENT_BUS.addListener(SubCraft::logPlayerDamage);
 		NeoForge.EVENT_BUS.addListener(SubCraft::freezeOnUnknownTerrain);
 	}
 
@@ -96,6 +99,15 @@ public final class SubCraft {
 		}
 	}
 
+	/** Every hurt of the player in the SubCraft world, with its source: health loss always needs explaining. */
+	private static void logPlayerDamage(net.neoforged.neoforge.event.entity.living.LivingDamageEvent.Post e) {
+		if (e.getEntity() instanceof ServerPlayer p && SubWorld.is(p.level())) {
+			var src = e.getSource();
+			LOG.info("SubCraft: player took {} damage ({} by {}), health {}", e.getNewDamage(), src.getMsgId(),
+				src.getEntity() != null ? src.getEntity().getType().toShortString() : "-", p.getHealth());
+		}
+	}
+
 	/**
 	 * Unpatched space is inert (MISSION.md 3.1): no mob spawns where the host hasn't described the
 	 * terrain yet, or mobs would appear in "open water" that turns out to be rock.
@@ -110,7 +122,8 @@ public final class SubCraft {
 	/** Mobs in space the host hasn't described stand still (no ticking) until it has. */
 	private static void freezeOnUnknownTerrain(EntityTickEvent.Pre e) {
 		var entity = e.getEntity();
-		if (entity instanceof Player || entity.level().isClientSide() || !SubWorld.is(entity.level()) || !SubLink.active()) {
+		if (entity instanceof Player || entity instanceof dev.subcraft.combat.CreatureProxy || entity.level().isClientSide()
+			|| !SubWorld.is(entity.level()) || !SubLink.active()) {
 			return;
 		}
 		var pos = entity.blockPosition();

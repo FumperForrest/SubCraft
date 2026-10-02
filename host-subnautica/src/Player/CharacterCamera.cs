@@ -109,6 +109,13 @@ namespace SubCraft.Player
 			Quaternion bobRot = Quaternion.AngleAxis(pitch, Vector3.right) * Quaternion.AngleAxis(-roll, Vector3.forward);
 			pos += rot * (bobRot * new Vector3(-tx, -ty, 0f));
 			rot *= bobRot;
+			// Hurt tilt and death roll (GameRenderer.bobHurt, applied before the bobbing): H =
+			// Rz(death) Ry(-dir) Rz(tilt) Ry(dir) in view space -> S H^-1 S, a pure rotation.
+			if (mc.HurtTilt != 0f || mc.DeathRoll != 0f)
+			{
+				rot *= Quaternion.AngleAxis(mc.HurtDir, Vector3.up) * Quaternion.AngleAxis(-mc.HurtTilt, Vector3.forward)
+					* Quaternion.AngleAxis(-mc.HurtDir, Vector3.up) * Quaternion.AngleAxis(-mc.DeathRoll, Vector3.forward);
+			}
 			cameraTf.SetPositionAndRotation(pos, rot);
 			overridden = true;
 

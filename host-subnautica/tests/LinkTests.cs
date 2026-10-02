@@ -85,7 +85,7 @@ namespace SubCraft.Tests
 				["seq"] = Proto.MsSeq, ["flags"] = Proto.MsFlags, ["x"] = Proto.MsX, ["y"] = Proto.MsY, ["z"] = Proto.MsZ, ["yaw"] = Proto.MsYaw,
 				["pitch"] = Proto.MsPitch, ["eyeHeight"] = Proto.MsEyeHeight, ["sensitivity"] = Proto.MsSensitivity,
 				["teleportAck"] = Proto.MsTeleportAck, ["guiScale"] = Proto.MsGuiScale, ["frameCounter"] = Proto.MsFrameCounter,
-				["fovDeg"] = Proto.MsFov, ["bobPhase"] = Proto.MsBobPhase, ["bobAmount"] = Proto.MsBobAmount, ["handFovDeg"] = Proto.MsHandFov, ["eyeX"] = Proto.MsEyeX,
+				["fovDeg"] = Proto.MsFov, ["bobPhase"] = Proto.MsBobPhase, ["bobAmount"] = Proto.MsBobAmount, ["handFovDeg"] = Proto.MsHandFov, ["hurtTiltDeg"] = Proto.MsHurtTilt, ["hurtDirDeg"] = Proto.MsHurtDir, ["deathRollDeg"] = Proto.MsDeathRoll, ["eyeX"] = Proto.MsEyeX,
 				["eyeY"] = Proto.MsEyeY, ["eyeZ"] = Proto.MsEyeZ, ["tickNs"] = Proto.MsTickNs, ["prevX"] = Proto.MsPrevX, ["prevY"] = Proto.MsPrevY,
 				["prevZ"] = Proto.MsPrevZ, ["curX"] = Proto.MsCurX, ["curY"] = Proto.MsCurY, ["curZ"] = Proto.MsCurZ, ["tickEyeO"] = Proto.MsTickEyeO,
 				["tickEye"] = Proto.MsTickEye, ["walkDistO"] = Proto.MsWalkDistO, ["walkDist"] = Proto.MsWalkDist, ["bobO"] = Proto.MsBobO,

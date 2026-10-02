@@ -3,6 +3,18 @@
 Things only you can judge (feel, taste) or decide. Everything here was already run by Claude
 unless marked **unverified**.
 
+## Phase 4 — combat: please try it first
+
+What it does: hit Subnautica's creatures with Minecraft's weapons (sword, axe, bow, crits, sweeps):
+they take the damage (x5) and get knocked back. Creatures that bite you hurt your Minecraft
+character (x0.2, after Subnautica's suits): knockback, hurt tilt, the health dial drops. Running
+out of oxygen kills both at once. Minecraft mobs (zombies turn into drowned underwater) fight you too.
+
+**Try:** a sword in the safe shallows against peepers, a stalker or a sand shark; a bow; get bitten.
+**Expected rough edges:** creatures don't attack Minecraft mobs yet, and Minecraft mobs don't go
+after creatures by themselves; the health dial doesn't pulse at low health yet.
+**Send back:** whether hits feel right (damage, knockback), anything you can't hit.
+
 ## Phase 4 — sound, a mix: please listen first
 
 What it does: Subnautica keeps all of its own sound (ambience, music, creatures, vehicles).

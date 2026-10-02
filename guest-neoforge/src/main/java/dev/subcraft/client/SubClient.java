@@ -339,6 +339,7 @@ public final class SubClient {
 			mc.fov = (float) ((GameRendererInvoker) minecraft.gameRenderer).subcraft$getFov(camera, partial, true);
 			// GameRenderer.renderItemInHand projects the hand with getFov(.., false): 70 plus fluid effects.
 			mc.handFov = (float) ((GameRendererInvoker) minecraft.gameRenderer).subcraft$getFov(camera, partial, false);
+			hurtTilt(minecraft, player, camera.getPartialTickTime());
 			mc.cameraMode = minecraft.options.getCameraType().ordinal();
 			mc.cameraDistance = camera.isDetached() ? (float) camera.getPosition().distanceTo(player.getEyePosition(partial)) : 0.0F;
 			boolean bob = minecraft.options.bobView().get();
@@ -363,6 +364,29 @@ public final class SubClient {
 		view.writeMcState(mc);
 		OverlayExporter.capture(minecraft, view);
 		diagnostics(minecraft);
+	}
+
+	/** GameRenderer.bobHurt's angles (the host applies the rotation to its camera). */
+	private static void hurtTilt(Minecraft minecraft, LocalPlayer player, float partial) {
+		mc.hurtTilt = 0.0F;
+		mc.hurtDir = 0.0F;
+		mc.deathRoll = 0.0F;
+		if (player.isDeadOrDying()) {
+			float f = Math.min(player.deathTime + partial, 20.0F);
+			mc.deathRoll = 40.0F - 8000.0F / (f + 200.0F);
+		}
+		float t = player.hurtTime - partial;
+		if (t < 0.0F || player.hurtDuration <= 0) {
+			return;
+		}
+		var last = player.getLastDamageSource();
+		if (last != null && last.is(net.neoforged.neoforge.common.Tags.DamageTypes.NO_FLINCH)) {
+			return;
+		}
+		t /= player.hurtDuration;
+		t = net.minecraft.util.Mth.sin(t * t * t * t * (float) Math.PI);
+		mc.hurtDir = player.getHurtDir();
+		mc.hurtTilt = (float) (-t * 14.0 * minecraft.options.damageTiltStrength().get());
 	}
 
 	private static void diagnostics(Minecraft minecraft) {

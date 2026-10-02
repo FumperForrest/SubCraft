@@ -29,6 +29,28 @@ public final class InputBridge {
 		view.drainInput((type, code, a, b, c) -> dispatch(minecraft, type, code, a, b, c));
 	}
 
+	/**
+	 * The host's creature (or environment) hurt the player: Minecraft owns health, so the server
+	 * player takes it, from the creature's proxy when there is one (knockback, hurt direction).
+	 */
+	private static void hurt(Minecraft minecraft, int kind, float amount, int attacker) {
+		var server = minecraft.getSingleplayerServer();
+		if (server == null || minecraft.player == null || amount <= 0) {
+			return;
+		}
+		var uuid = minecraft.player.getUUID();
+		server.execute(() -> {
+			var sp = server.getPlayerList().getPlayer(uuid);
+			if (sp == null) {
+				return;
+			}
+			var sources = sp.level().damageSources();
+			var proxy = attacker != 0 ? dev.subcraft.combat.Proxies.proxy(attacker) : null;
+			var source = proxy != null ? sources.mobAttack(proxy) : sources.generic();
+			sp.hurt(source, amount);
+		});
+	}
+
 	private static void dispatch(Minecraft minecraft, int type, int code, int a, int b, int c) {
 		long handle = minecraft.getWindow().getWindow();
 		MouseHandlerInvoker mouse = (MouseHandlerInvoker) minecraft.mouseHandler;
@@ -69,6 +91,7 @@ public final class InputBridge {
 				}
 			}
 			case Proto.IN_RELEASE_ALL -> releaseAll(minecraft);
+			case Proto.IN_HURT -> hurt(minecraft, code, a / 100.0F, b);
 			case Proto.IN_OPEN_MENU -> {
 				if (minecraft.screen == null && minecraft.player != null) {
 					releaseAll(minecraft);

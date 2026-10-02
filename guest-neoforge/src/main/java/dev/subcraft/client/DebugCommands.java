@@ -69,6 +69,9 @@ public final class DebugCommands {
 			case "sections" -> {
 				return SectionStreamer.stats() + "\n" + dev.subcraft.capture.DynamicCapture.stats();
 			}
+			case "creatures" -> {
+				return dev.subcraft.combat.Proxies.stats();
+			}
 			case "sounds" -> {
 				return SoundBridge.stats();
 			}

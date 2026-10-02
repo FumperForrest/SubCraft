@@ -311,6 +311,15 @@ namespace SubCraft.Dev
 					case "fmod":
 						msg = Audio.SoundBridge.ListBuses() + $"played {Audio.SoundBridge.Played} failed {Audio.SoundBridge.Failed} files {Audio.SoundBridge.FileCount}";
 						break;
+					case "hurtplayer":
+						// As a creature's bite would: through the player's LiveMixin.
+						var hurtLive = global::Player.main.liveMixin;
+						bool died = hurtLive.TakeDamage((float?)cmd["damage"] ?? 20f, global::Player.main.transform.position);
+						msg = $"Subnautica health {hurtLive.health} died {died} hurts sent {Combat.CreatureLink.Hurts}";
+						break;
+					case "creatures":
+						msg = Combat.CreatureLink.Describe();
+						break;
 					case "intopod":
 						// Inside the lifepod, the way the game spawns the player there.
 						EscapePod.main.RespawnPlayer();

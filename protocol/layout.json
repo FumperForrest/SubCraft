@@ -1,8 +1,8 @@
 {
-  "version": 20,
+  "version": 21,
   "constants": {
     "kMagic": 1128420691,
-    "kVersion": 20,
+    "kVersion": 21,
     "kHeartbeatTimeoutNs": 2000000000,
     "kOffHeader": 0,
     "kOffHostState": 256,
@@ -50,7 +50,7 @@
   "structs": {
     "Header": {"size": 32, "fields": {"magic": 0, "version": 4, "hostPid": 8, "mcPid": 12, "hostHeartbeatNs": 16, "mcHeartbeatNs": 24}},
     "HostState": {"size": 96, "fields": {"seq": 0, "flags": 4, "worldId": 8, "collisionEpoch": 12, "posX": 16, "posY": 24, "posZ": 32, "yaw": 40, "pitch": 44, "teleportSeq": 48, "viewportW": 52, "viewportH": 56, "dayFraction": 60, "oxygen": 64, "oxygenCapacity": 68}},
-    "McState": {"size": 224, "fields": {"seq": 0, "flags": 4, "x": 8, "y": 16, "z": 24, "yaw": 32, "pitch": 36, "eyeHeight": 40, "sensitivity": 44, "teleportAck": 48, "guiScale": 52, "frameCounter": 56, "fovDeg": 64, "bobPhase": 68, "bobAmount": 72, "handFovDeg": 76, "eyeX": 80, "eyeY": 88, "eyeZ": 96, "tickNs": 104, "prevX": 112, "prevY": 120, "prevZ": 128, "curX": 136, "curY": 144, "curZ": 152, "tickEyeO": 160, "tickEye": 164, "walkDistO": 168, "walkDist": 172, "bobO": 176, "bob": 180, "tickMs": 184, "cameraMode": 192, "cameraDistance": 196, "health": 200, "maxHealth": 204, "food": 208, "saturation": 212, "air": 216, "maxAir": 220}},
+    "McState": {"size": 240, "fields": {"seq": 0, "flags": 4, "x": 8, "y": 16, "z": 24, "yaw": 32, "pitch": 36, "eyeHeight": 40, "sensitivity": 44, "teleportAck": 48, "guiScale": 52, "frameCounter": 56, "fovDeg": 64, "bobPhase": 68, "bobAmount": 72, "handFovDeg": 76, "hurtTiltDeg": 224, "hurtDirDeg": 228, "deathRollDeg": 232, "eyeX": 80, "eyeY": 88, "eyeZ": 96, "tickNs": 104, "prevX": 112, "prevY": 120, "prevZ": 128, "curX": 136, "curY": 144, "curZ": 152, "tickEyeO": 160, "tickEye": 164, "walkDistO": 168, "walkDist": 172, "bobO": 176, "bob": 180, "tickMs": 184, "cameraMode": 192, "cameraDistance": 196, "health": 200, "maxHealth": 204, "food": 208, "saturation": 212, "air": 216, "maxAir": 220}},
     "OverlayCtl": {"size": 16, "fields": {"state": 0, "framesPublished": 8}},
     "OverlaySlotHdr": {"size": 64, "fields": {"width": 0, "height": 4, "flags": 8, "frameId": 16}},
     "CommandBox": {"size": 2048, "fields": {"seq": 0, "ack": 4, "status": 8, "textLen": 12, "text": 16, "reply": 1024}},

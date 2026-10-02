@@ -9,7 +9,7 @@ public final class Proto {
 	}
 
 	public static final int MAGIC = 0x43425553; // "SUBC"
-	public static final int VERSION = 20;
+	public static final int VERSION = 21;
 	public static final String LINK_FILE_NAME = "link.bin";
 	public static final long HEARTBEAT_TIMEOUT_NS = 2_000_000_000L;
 
@@ -85,6 +85,9 @@ public final class Proto {
 	public static final long MS_BOB_PHASE = 0x44;
 	public static final long MS_BOB_AMOUNT = 0x48;
 	public static final long MS_HAND_FOV = 0x4C;
+	public static final long MS_HURT_TILT = 0xE0;
+	public static final long MS_HURT_DIR = 0xE4;
+	public static final long MS_DEATH_ROLL = 0xE8;
 	public static final long MS_EYE_X = 0x50;
 	public static final long MS_EYE_Y = 0x58;
 	public static final long MS_EYE_Z = 0x60;
@@ -110,7 +113,7 @@ public final class Proto {
 	public static final long MS_SATURATION = 0xD4;
 	public static final long MS_AIR = 0xD8;
 	public static final long MS_MAX_AIR = 0xDC;
-	public static final int MC_STATE_BYTES = 0xE0;
+	public static final int MC_STATE_BYTES = 0xF0;
 
 	public static final int MC_IN_WORLD = 1;
 	public static final int MC_SCREEN_OPEN = 1 << 1;

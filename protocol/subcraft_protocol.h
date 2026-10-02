@@ -26,7 +26,7 @@
 namespace subcraft::proto
 {
 	inline constexpr std::uint32_t kMagic = 0x43425553;  // "SUBC"
-	inline constexpr std::uint32_t kVersion = 20;
+	inline constexpr std::uint32_t kVersion = 21;
 
 	// Default file locations: macOS $TMPDIR/subcraft/link.bin, Windows %LOCALAPPDATA%\SubCraft\link.bin.
 	// Both sides accept an override (Java -Dsubcraft.link=<path>, host config, env SUBCRAFT_LINK).
@@ -149,8 +149,15 @@ namespace subcraft::proto
 		std::uint32_t food;        // 0-20
 		float         saturation;
 		std::uint32_t air, maxAir;  // ticks
+
+		// v21: GameRenderer.bobHurt, applied before view bobbing: roll deathRollDeg about the view
+		// axis, then hurtTiltDeg about it turned by hurtDirDeg (Ry(-dir) Rz(tilt) Ry(dir)).
+		float         hurtTiltDeg;
+		float         hurtDirDeg;
+		float         deathRollDeg;
+		std::uint32_t hurtPad;
 	};
-	static_assert(sizeof(McState) == 0xE0);
+	static_assert(sizeof(McState) == 0xF0);
 	static_assert(sizeof(McState) <= 0x100);
 
 	// ---- overlay triple buffer @0x300 --------------------------------------------------------

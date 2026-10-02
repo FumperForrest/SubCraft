@@ -1,0 +1,215 @@
+using System.Collections.Generic;
+using HarmonyLib;
+using SubCraft.Link;
+using UnityEngine;
+
+namespace SubCraft.Combat
+{
+	/// <summary>
+	/// Combat between Minecraft's player and Subnautica's creatures (MISSION.md Phase 4).
+	/// - Creatures near the player go to Minecraft in the creature table; Minecraft mirrors each as
+	///   an invisible proxy with the creature's box, so swords, crits, arrows and sweeps hit it with
+	///   Minecraft's own rules. A hit comes back as kEvHitCreature: Subnautica's LiveMixin takes the
+	///   damage (x DamageToSubnautica) and the creature's Rigidbody the knockback.
+	/// - Minecraft owns the player's health: whatever Subnautica would do to its player (bites,
+	///   suffocation, heat) is cancelled here and sent as kInHurt (x DamageToMinecraft), after
+	///   Subnautica's own reductions (suits, armour) so they still count.
+	/// </summary>
+	public static class CreatureLink
+	{
+		private const float Radius = 40f;
+		private const float Period = 0.1f;
+
+		private static readonly Dictionary<uint, Creature> byId = new Dictionary<uint, Creature>();
+		private static readonly List<LinkView.CreatureRecord> records = new List<LinkView.CreatureRecord>();
+		private static readonly HashSet<Creature> seen = new HashSet<Creature>();
+		private static readonly List<Collider> scratch = new List<Collider>();
+		private static readonly Collider[] overlap = new Collider[2048];
+		private static float next;
+		public static int Count => records.Count;
+		public static int Hits, Hurts;
+
+		public static void Frame(LinkView view, bool active)
+		{
+			if (Time.unscaledTime < next)
+			{
+				return;
+			}
+			next = Time.unscaledTime + Period;
+			records.Clear();
+			byId.Clear();
+			seen.Clear();
+			var player = global::Player.main;
+			if (active && player != null)
+			{
+				int n = Physics.OverlapSphereNonAlloc(player.transform.position, Radius, overlap, ~0, QueryTriggerInteraction.Ignore);
+				for (int i = 0; i < n && records.Count < Proto.MaxCreatures; i++)
+				{
+					var creature = overlap[i].GetComponentInParent<Creature>();
+					if (creature == null || !seen.Add(creature))
+					{
+						continue;
+					}
+					var live = creature.liveMixin;
+					if (live == null || !live.IsAlive() || !Box(creature, out Bounds b))
+					{
+						continue;
+					}
+					uint id = (uint)creature.GetInstanceID();
+					byId[id] = creature;
+					uint flags = 0;
+					if (creature.GetComponent<AggressiveWhenSeeTarget>() != null)
+					{
+						flags |= Proto.CreatureHostile;
+					}
+					if (live.invincible)
+					{
+						flags |= Proto.CreatureInvulnerable;
+					}
+					records.Add(new LinkView.CreatureRecord
+					{
+						Id = id,
+						Flags = flags,
+						// Bottom centre of the box, MC coords (z mirrored).
+						X = b.center.x,
+						Y = b.min.y,
+						Z = -b.center.z,
+						Yaw = SubCraft.Link.Coords.UnityYawToMc(creature.transform.eulerAngles.y),
+						// Minecraft boxes are square: the larger horizontal extent.
+						Width = Mathf.Max(b.size.x, b.size.z),
+						Height = b.size.y,
+						HealthFrac = live.GetHealthFraction(),
+						Name = CraftData.GetTechType(creature.gameObject).AsString(),
+					});
+				}
+			}
+			view.WriteCreatures(records);
+		}
+
+		/// <summary>Harness: the creatures in the table and their health.</summary>
+		public static string Describe()
+		{
+			var sb = new System.Text.StringBuilder($"{records.Count} creatures, hits {Hits}, hurts {Hurts}\n");
+			foreach (var r in records)
+			{
+				string hostile = (r.Flags & Proto.CreatureHostile) != 0 ? " hostile" : "";
+				sb.Append($"{r.Id} {r.Name} at ({r.X:F1}, {r.Y:F1}, {r.Z:F1}) box {r.Width:F1}x{r.Height:F1} health {r.HealthFrac:F2}{hostile}\n");
+			}
+			return sb.ToString();
+		}
+
+		/// <summary>The creature's solid colliders' world bounds.</summary>
+		private static bool Box(Creature creature, out Bounds bounds)
+		{
+			creature.GetComponentsInChildren(false, scratch);
+			bool any = false;
+			bounds = default;
+			foreach (var c in scratch)
+			{
+				if (c.isTrigger || !c.enabled)
+				{
+					continue;
+				}
+				if (!any)
+				{
+					bounds = c.bounds;
+					any = true;
+				}
+				else
+				{
+					bounds.Encapsulate(c.bounds);
+				}
+			}
+			return any;
+		}
+
+		/// <summary>kEvHitCreature: id, a = MC damage, b/c = knockback direction x/z (MC), d = strength.</summary>
+		public static void Hit(in LinkView.McEvent ev)
+		{
+			if (!byId.TryGetValue(ev.Id, out var creature) || creature == null || creature.liveMixin == null)
+			{
+				return;
+			}
+			var player = global::Player.main;
+			float damage = ev.A * Plugin.DamageToSubnautica.Value;
+			creature.liveMixin.TakeDamage(damage, creature.transform.position, DamageType.Normal, player != null ? player.gameObject : null);
+			var rb = creature.GetComponent<Rigidbody>();
+			if (rb != null && !rb.isKinematic && ev.D > 0f)
+			{
+				// Minecraft's knockback is a velocity change of about strength blocks/tick * 20... scaled
+				// down to Subnautica's water: a shove, not a launch.
+				var dir = new Vector3(ev.B, 0.1f, -ev.C).normalized;
+				rb.AddForce(dir * ev.D * 8f, ForceMode.VelocityChange);
+			}
+			Hits++;
+		}
+
+		/// <summary>Sends Subnautica's damage to the player to Minecraft instead.</summary>
+		internal static bool PlayerHurt(LiveMixin live, float originalDamage, DamageType type, GameObject dealer)
+		{
+			var driver = LinkDriver.Instance;
+			if (driver == null || !driver.McLinked || !driver.HaveMc || !driver.Mc.Has(Proto.McInWorld) || driver.Link == null)
+			{
+				return false;
+			}
+			float damage = DamageSystem.CalculateDamage(originalDamage, type, live.gameObject, dealer);
+			if (damage <= 0f)
+			{
+				return true;
+			}
+			float mc = damage * Plugin.DamageToMinecraft.Value;
+			ushort kind = type == DamageType.Normal || type == DamageType.Puncture ? Proto.HurtMelee
+				: type == DamageType.Collide ? Proto.HurtOther : Proto.HurtOther;
+			uint attacker = 0;
+			var creature = dealer != null ? dealer.GetComponentInParent<Creature>() : null;
+			if (creature != null)
+			{
+				attacker = (uint)creature.GetInstanceID();
+			}
+			bool grabbed = global::Player.main != null && global::Player.main.cinematicModeActive;
+			driver.Link.View.PushInput(Proto.InHurt, kind, Mathf.RoundToInt(mc * 100f), unchecked((int)attacker), grabbed ? (int)Proto.HurtGrab : 0);
+			Hurts++;
+			return true;
+		}
+	}
+
+	/// <summary>
+	/// One death (MISSION.md 3.4): Subnautica kills its player without TakeDamage (suffocation, the
+	/// Cyclops exploding, the console). The Minecraft player dies with it; Subnautica's own death
+	/// and respawn run as usual and the teleport handshake brings Minecraft to the respawn point.
+	/// </summary>
+	[HarmonyPatch(typeof(LiveMixin), nameof(LiveMixin.Kill))]
+	internal static class PlayerKillPatch
+	{
+		private static void Prefix(LiveMixin __instance)
+		{
+			var player = global::Player.main;
+			var driver = LinkDriver.Instance;
+			if (player == null || __instance.gameObject != player.gameObject || driver == null || !driver.McLinked || driver.Link == null)
+			{
+				return;
+			}
+			// More than any armour lets through: Minecraft's death, Minecraft's death screen skipped.
+			driver.Link.View.PushInput(Proto.InHurt, Proto.HurtOther, 1000 * 100, 0, 0);
+			Plugin.Log.LogInfo("SubCraft: Subnautica killed its player; Minecraft's dies with it");
+		}
+	}
+
+	[HarmonyPatch(typeof(LiveMixin), nameof(LiveMixin.TakeDamage))]
+	internal static class PlayerDamagePatch
+	{
+		private static bool Prefix(LiveMixin __instance, float originalDamage, DamageType type, GameObject dealer, ref bool __result)
+		{
+			if (global::Player.main == null || __instance.gameObject != global::Player.main.gameObject)
+			{
+				return true;
+			}
+			if (!CreatureLink.PlayerHurt(__instance, originalDamage, type, dealer))
+			{
+				return true;
+			}
+			__result = false; // Minecraft decides whether the player dies
+			return false;
+		}
+	}
+}

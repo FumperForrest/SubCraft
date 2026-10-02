@@ -19,6 +19,8 @@ namespace SubCraft
 		internal static ConfigEntry<bool> HideDiver;
 		internal static ConfigEntry<bool> UnifiedHud;
 		internal static ConfigEntry<string> SoundBus;
+		internal static ConfigEntry<float> DamageToMinecraft;
+		internal static ConfigEntry<float> DamageToSubnautica;
 
 		private void Awake()
 		{
@@ -31,6 +33,10 @@ namespace SubCraft
 				"Subnautica's dials show Minecraft's health and hunger (Minecraft's hearts, hunger, armour and air bars hidden). False: Minecraft's own bars.");
 			SoundBus = Config.Bind("Sound", "Bus", "bus:/master/SFX_for_pause/PDA_pause/all/SFX",
 				"Subnautica FMOD bus Minecraft's sounds play on (so Subnautica's underwater muffling and volume apply). The harness command 'fmod' lists the buses.");
+			DamageToMinecraft = Config.Bind("Combat", "DamageToMinecraft", 0.2f,
+				"Subnautica damage to the player x this = Minecraft damage (Subnautica health 100, Minecraft 20).");
+			DamageToSubnautica = Config.Bind("Combat", "DamageToSubnautica", 5f,
+				"Minecraft damage to a creature x this = Subnautica damage.");
 			HideDiver = Config.Bind("Player", "HideDiver", true, "Hide Subnautica's diver (body, arms, tools, mask) while Minecraft drives the player.");
 			new Harmony(Guid).PatchAll(typeof(Plugin).Assembly);
 			var host = new GameObject("SubCraft");

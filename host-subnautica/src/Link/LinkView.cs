@@ -87,6 +87,46 @@ namespace SubCraft.Link
 		}
 
 		/// <summary>Single writer (the Unity main thread). Advances seq by 2 per call.</summary>
+		// ---- creature table (seqlock write) ----
+
+		public struct CreatureRecord
+		{
+			public uint Id, Flags;
+			public float X, Y, Z, Yaw, Width, Height, HealthFrac;
+			public string Name;
+		}
+
+		public void WriteCreatures(System.Collections.Generic.List<CreatureRecord> list)
+		{
+			long o = Proto.OffCreatureTable;
+			int seq = I32(o + Proto.CtSeq);
+			I32Release(o + Proto.CtSeq, seq + 1);
+			Thread.MemoryBarrier();
+			int count = Math.Min(list.Count, Proto.MaxCreatures);
+			for (int i = 0; i < count; i++)
+			{
+				long r = o + Proto.CtRecords + (long)i * Proto.CreatureRecordBytes;
+				var c = list[i];
+				Put(r + Proto.CrecId, c.Id);
+				Put(r + Proto.CrecFlags, c.Flags);
+				Put(r + Proto.CrecX, c.X);
+				Put(r + Proto.CrecY, c.Y);
+				Put(r + Proto.CrecZ, c.Z);
+				Put(r + Proto.CrecYaw, c.Yaw);
+				Put(r + Proto.CrecWidth, c.Width);
+				Put(r + Proto.CrecHeight, c.Height);
+				Put(r + Proto.CrecHealthFrac, c.HealthFrac);
+				var name = System.Text.Encoding.UTF8.GetBytes(c.Name ?? "");
+				int n = Math.Min(name.Length, Proto.CreatureNameBytes - 1);
+				for (int k = 0; k < Proto.CreatureNameBytes; k++)
+				{
+					*(b + r + Proto.CrecName + k) = k < n ? name[k] : (byte)0;
+				}
+			}
+			Put(o + Proto.CtCount, count);
+			I32Release(o + Proto.CtSeq, seq + 2);
+		}
+
 		public void WriteHostState(in HostState s)
 		{
 			long o = Proto.OffHostState;
@@ -119,7 +159,7 @@ namespace SubCraft.Link
 			public float Yaw, Pitch, EyeHeight, Sensitivity;
 			public uint TeleportAck, GuiScale;
 			public long FrameCounter;
-			public float Fov, BobPhase, BobAmount, HandFov;
+			public float Fov, BobPhase, BobAmount, HandFov, HurtTilt, HurtDir, DeathRoll;
 			public double EyeX, EyeY, EyeZ;
 			public long TickNs;
 			public double PrevX, PrevY, PrevZ, CurX, CurY, CurZ;
@@ -165,6 +205,9 @@ namespace SubCraft.Link
 				s.BobPhase = F32(o + Proto.MsBobPhase);
 				s.BobAmount = F32(o + Proto.MsBobAmount);
 				s.HandFov = F32(o + Proto.MsHandFov);
+				s.HurtTilt = F32(o + Proto.MsHurtTilt);
+				s.HurtDir = F32(o + Proto.MsHurtDir);
+				s.DeathRoll = F32(o + Proto.MsDeathRoll);
 				s.EyeX = F64(o + Proto.MsEyeX);
 				s.EyeY = F64(o + Proto.MsEyeY);
 				s.EyeZ = F64(o + Proto.MsEyeZ);

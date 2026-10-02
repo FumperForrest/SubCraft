@@ -72,6 +72,23 @@ Newest first. One entry per session (MISSION.md rule 11).
   every 5 cm / 1 degree of motion and Minecraft re-voxelized them several times a second; while
   linked the pod is held still (`LifepodAnchor`: kinematic). Verified with harness `intopod`:
   inside, walking, stable for 10 s, 2 sections voxelized (first load only).
+- **Combat (protocol v21).** Host `Combat.CreatureLink` writes the creatures within 40 m (alive,
+  solid-collider bounds, hostile = AggressiveWhenSeeTarget) into the creature table every 0.1 s.
+  Guest `combat.Proxies` keeps one `CreatureProxy` per record (invisible LivingEntity, NoopRenderer,
+  no physics/gravity/save, box from the table on both sides, synced host id). `hurt()` sends
+  `kEvHitCreature` (damage, knockback away from the source, +0.5 when sprinting) instead of losing
+  health; only hits with a source entity or explosions count (the proxies were drowning in
+  Minecraft's water and that went to the fish). Host: `LiveMixin.TakeDamage(x5, dealer = player)`
+  + Rigidbody shove. The other way: a prefix on `LiveMixin.TakeDamage` for the player computes
+  Subnautica's damage (`DamageSystem.CalculateDamage`: suits count), cancels it and sends `kInHurt`
+  (x0.2, attacker id); Minecraft hurts the server player with `mobAttack(proxy)`, so knockback, hurt
+  direction and the hurt sound are Minecraft's. `LiveMixin.Kill` on the player (suffocation, Cyclops,
+  console) kills Minecraft's player too (one death). Hurt tilt and death roll: `McState`
+  hurtTiltDeg/hurtDirDeg/deathRollDeg, applied as `S H^-1 S` after the bob. Config `Combat.*`.
+  Guest logs every damage to the player with its source. Verified: `/damage ... by @p` on a
+  RabbitRay's proxy took it 0.70 -> 0.40 (6 x 5 = 30 of 100); a biter's bite arrived as "1.4 damage
+  (mob by creature_proxy)" (7 x 0.2); a Minecraft drowned (a zombie converted underwater) fought the
+  player. Harness: `creatures`, `hurtplayer`; Minecraft `subcraft creatures`.
 
 **Verified in game (Windows)**: `fake_host.py` six `[ok]`; both games linked (heartbeat 5–8 ms),
 W/Space, clicks, block placement, a zombie and the held block drawn; Seamoth boarded: kinematic
