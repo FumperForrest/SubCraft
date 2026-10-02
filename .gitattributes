@@ -1,0 +1,10 @@
+# The repo is edited on macOS and Windows: text is stored with LF.
+* text=auto
+# Shell scripts must stay LF even in a Windows checkout (bash chokes on CR).
+*.sh text eol=lf
+gradlew text eol=lf
+*.bat text eol=crlf
+*.ps1 text eol=crlf
+*.png binary
+*.jar binary
+*.scdump binary
