@@ -10,6 +10,9 @@ namespace SubCraft
 
 		public static bool InGame() => global::Player.main != null && uGUI.isMainLevel && !Loading();
 
+		/// <summary>Piloting a vehicle or a chair, or seated: Subnautica's locked modes own the player.</summary>
+		public static bool Piloting() => global::Player.main != null && global::Player.main.mode != global::Player.Mode.Normal;
+
 		public static bool MenuOpen()
 		{
 			var player = global::Player.main;

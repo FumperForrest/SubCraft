@@ -50,10 +50,11 @@ namespace SubCraft.Player
 			HostFeetMc = new Vector3(feetU.x, feetU.y, -feetU.z);
 
 			bool want = driver.McLinked && driver.HaveMc && HostState.InGame() && driver.Mc.Has(Proto.McInWorld)
-				&& driver.Mc.TeleportAck == driver.TeleportSeq && !player.cinematicModeActive && !player.IsPiloting();
+				&& driver.Mc.TeleportAck == driver.TeleportSeq && !player.cinematicModeActive && !HostState.Piloting();
 			if (!want)
 			{
 				Release(null);
+				FollowVehicle(driver);
 				return;
 			}
 
@@ -109,6 +110,27 @@ namespace SubCraft.Player
 			}
 		}
 
+		private static float lastFollow;
+
+		/// <summary>
+		/// While Subnautica's vehicle carries the player, keep Minecraft's player with it, so leaving
+		/// the vehicle finds Minecraft (and its chunks) already there and control comes straight back.
+		/// </summary>
+		private static void FollowVehicle(LinkDriver driver)
+		{
+			if (!HostState.Piloting() || !driver.McLinked || !driver.HaveMc || Time.unscaledTime - lastFollow < 0.5f
+				|| driver.Mc.TeleportAck != driver.TeleportSeq)
+			{
+				return;
+			}
+			lastFollow = Time.unscaledTime;
+			Vector3 mcFeet = new Vector3((float)driver.Mc.X, (float)driver.Mc.Y, (float)driver.Mc.Z);
+			if ((mcFeet - HostFeetMc).sqrMagnitude > 4f)
+			{
+				driver.RequestTeleport("following the vehicle");
+			}
+		}
+
 		private static float lastRescueCheck;
 		private static bool savedFreezeStats;
 
@@ -157,7 +179,13 @@ namespace SubCraft.Player
 			var player = global::Player.main;
 			if (player != null)
 			{
-				player.playerController.useRigidbody.isKinematic = savedKinematic;
+				// Only while Subnautica's own controller runs: entering a vehicle disables it, which
+				// makes the rigidbody kinematic (UnderwaterMotor.SetEnabled). Undoing that leaves a
+				// physics body parented to the moving vehicle, and the camera lags and spins.
+				if (player.playerController.enabled)
+				{
+					player.playerController.useRigidbody.isKinematic = savedKinematic;
+				}
 				var survival = player.GetComponent<Survival>();
 				if (survival != null)
 				{

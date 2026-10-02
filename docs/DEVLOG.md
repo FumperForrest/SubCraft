@@ -2,6 +2,35 @@
 
 Newest first. One entry per session (MISSION.md rule 11).
 
+## 2026-10-02 — Session 9: Windows bring-up, Seamoth fix
+
+**Done**
+- Windows PC set up: Subnautica (Steam) + BepInEx 5.4.23.5 win_x64, JDK 17 for Gradle, .NET 10,
+  ilspycmd, LLVM. `./gradlew build test` and the 41 host tests pass; the plugin builds and deploys
+  to `Steam\steamapps\common\Subnautica\BepInEx\plugins\SubCraft`.
+- PowerShell twins of the shell tools: `tools/mc_dev.ps1`, `sn_dev.ps1` (Unity screen prefs live in
+  `HKCU\Software\Unknown Worlds\Subnautica`, backed up to JSON), `sn_restart.ps1`,
+  `check_layout.ps1`. `sn_cmd.py` and `fake_host.py` use `%LOCALAPPDATA%\SubCraft` / `tasklist`.
+- **Clock bug (Windows only):** Unity's Mono `Stopwatch` is not the raw performance counter: the
+  host's "now" was ~36 h behind Java's `nanoTime`, so Minecraft never took the host link.
+  `Platform.MonoNanos` now P/Invokes `QueryPerformanceCounter` (overflow-safe scaling, as HotSpot).
+- **Seamoth (Sean's report):** boarding a vehicle disables `PlayerController`, whose motor makes
+  the player's rigidbody kinematic (`UnderwaterMotor.SetEnabled`); `PlayerPuppet.Release` then
+  restored the pre-takeover `isKinematic = false`, so a physics body hung off the moving vehicle:
+  camera lag and broken rotation. Release now restores it only while the controller is enabled.
+  While piloting (any `Player.Mode` but Normal) keys no longer go to Minecraft, and Minecraft's
+  player is teleported along with the vehicle (every 0.5 s when > 2 m off), so leaving the
+  vehicle hands control back at once instead of after a long teleport.
+- Harness: `pilot` (board the nearest vehicle), `eject`; the dump has `player.mode`.
+
+**Verified in game (Windows)**: `fake_host.py` six `[ok]`; both games linked (heartbeat 5–8 ms),
+W/Space, clicks, block placement, a zombie and the held block drawn; Seamoth boarded: kinematic
+stays true, camera on the seat, Minecraft follows; eject -> Minecraft drives again within 0.3 s.
+
+**Not verified:** flying the Seamoth around (no harness key path for vehicle input yet: Sean),
+rendering vs the Mac in detail, `check_layout.ps1` (no C++ standard library installed: MSVC or
+WinLibs needed).
+
 ## 2026-10-02 — Session 8: Phase 3 — everything dynamic (as far as this Mac can test)
 
 **Done**

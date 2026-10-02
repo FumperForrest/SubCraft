@@ -223,6 +223,9 @@ def flag_names(flags):
 
 def rss_mb(pid):
     try:
+        if os.name == "nt":
+            out = os.popen(f'tasklist /FI "PID eq {pid}" /FO CSV /NH').read().strip().split('","')
+            return int(out[-1].strip('"').replace(" K", "").replace(",", "").replace(".", "")) // 1024 if len(out) > 4 else None
         out = os.popen(f"ps -o rss= -p {pid}").read().strip()
         return int(out) // 1024 if out else None
     except (OSError, ValueError):

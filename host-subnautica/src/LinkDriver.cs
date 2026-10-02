@@ -92,7 +92,8 @@ namespace SubCraft
 			}
 			wasInGame = inGame;
 
-			InputCapture.Frame(view, McLinked && inGame && !HostState.MenuOpen());
+			// In a vehicle the keys fly the vehicle; Minecraft's player must not walk off on its own.
+			InputCapture.Frame(view, McLinked && inGame && !HostState.MenuOpen() && !HostState.Piloting());
 			McScreenInput.Frame(this);
 			if (McLinked && inGame && global::Player.main != null)
 			{

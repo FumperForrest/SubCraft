@@ -17,7 +17,7 @@ namespace SubCraft.Dev
 	///
 	/// Commands: wait {seconds} | screenshot {name} | dump {name} | recon {name} | console {text}
 	/// | teleport {x,y,z} (Unity) | look {yaw,pitch} (Unity degrees) | time {value 0..1}
-	/// | key {glfw, down} (to Minecraft) | newgame {mode} | load {slot} | save | skipintro
+	/// | key {glfw, down} (to Minecraft) | newgame {mode} | load {slot} | save | skipintro | pilot | eject
 	/// | waitingame {timeout} | quit
 	/// </summary>
 	public sealed class DevHarness : MonoBehaviour
@@ -285,6 +285,32 @@ namespace SubCraft.Dev
 						break;
 					case "playerrenderers":
 						msg = Write("playerrenderers.txt", PlayerRenderers());
+						break;
+					case "pilot":
+						// Board the nearest vehicle the way a click on its hatch does.
+						Vehicle nearest = null;
+						foreach (var v in FindObjectsOfType<Vehicle>())
+						{
+							if (nearest == null || (v.transform.position - global::Player.main.transform.position).sqrMagnitude
+								< (nearest.transform.position - global::Player.main.transform.position).sqrMagnitude)
+							{
+								nearest = v;
+							}
+						}
+						if (nearest == null)
+						{
+							ok = false;
+							msg = "no vehicle";
+						}
+						else
+						{
+							nearest.OnHandClick(global::Player.main.guiHand);
+							msg = $"{nearest.name} at {nearest.transform.position}";
+						}
+						break;
+					case "eject":
+						global::Player.main.TryEject();
+						msg = global::Player.main.mode.ToString();
 						break;
 					case "holster":
 						Inventory.main.quickSlots.DeselectImmediate();

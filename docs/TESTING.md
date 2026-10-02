@@ -3,6 +3,37 @@
 Things only you can judge (feel, taste) or decide. Everything here was already run by Claude
 unless marked **unverified**.
 
+## Windows setup (2026-10-02)
+
+Everything below was set up on the Windows PC; run commands from PowerShell in the repo root.
+
+- Subnautica (Steam, `C:\Program Files (x86)\Steam\steamapps\common\Subnautica`) with BepInEx
+  5.4.23.5 win_x64 unzipped into the game folder (`winhttp.dll` loads it, so no Steam launch
+  options). `SubCraft.dll` is deployed to `BepInEx\plugins\SubCraft`; delete that folder to play
+  plain Subnautica.
+- Gradle must run on JDK 17 (`JAVA_HOME` = `C:\Program Files\Eclipse Adoptium\jdk-17.0.17.10-hotspot`);
+  it downloads Java 21 itself for Minecraft. `tools\mc_dev.ps1` sets this for you.
+- Windows twins of the shell tools: `tools\mc_dev.ps1 start|stop|status`,
+  `tools\sn_dev.ps1 start|stop|status|log`, `tools\sn_restart.ps1 [scenario]`,
+  `tools\check_layout.ps1 [-Write]` (needs g++ from winget `BrechtSanders.WinLibs.POSIX.UCRT`).
+  The Python tools work as they are (`python tools\fake_host.py 60`).
+- If PowerShell refuses the scripts ("running scripts is disabled"), call them as
+  `powershell -ExecutionPolicy Bypass -File tools\mc_dev.ps1 start`.
+- The shared folder is `%LOCALAPPDATA%\SubCraft`.
+- `sn_dev.ps1` keeps Subnautica's screen prefs in the registry
+  (`HKCU\Software\Unknown Worlds\Subnautica`); the first `start` backs them up to
+  `~\Documents\Development\Modding\SubCraft-save-backups\subnautica-prefs-original.json` and `stop`
+  restores them. Unity only writes those values once the game has run and exited normally, so
+  launch Subnautica normally once first.
+- Saves live in `Subnautica\SNAppData\SavedGames` (Steam Cloud put your slot0000/slot0001 there).
+  The dev slot is `slot0002`, as on the Mac. Back the folder up before save-related work.
+- **Seamoth, please re-try:** board it, fly around, look around, get out. The camera should stay on
+  the seat and turn with the Seamoth, and on leaving you should be the Minecraft player at once.
+- Not yet verified on Windows: Minecraft and Subnautica running together, rendering on the
+  RX 480 (the Mac used OpenGL 4.1 under Rosetta), and the hand capture from Phase 3.
+
+---
+
 ## Phase 3 — mobs, items, particles and your hand drawn by Subnautica: please try it first
 
 What it does: everything that moves in Minecraft (mobs, dropped items, chests and other block

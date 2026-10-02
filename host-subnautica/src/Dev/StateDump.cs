@@ -76,6 +76,7 @@ namespace SubCraft.Dev
 					["feetMc"] = Vec(PlayerPuppet.HostFeetMc),
 					["collider"] = col != null ? new JObject { ["min"] = Vec(col.bounds.min), ["max"] = Vec(col.bounds.max), ["type"] = col.GetType().Name } : null,
 					["motorMode"] = player.motorMode.ToString(),
+					["mode"] = player.mode.ToString(),
 					["underwater"] = player.IsUnderwater(),
 					["inside"] = player.IsInside(),
 					["depth"] = Ocean.GetDepthOf(player.gameObject),

@@ -19,15 +19,35 @@ namespace SubCraft.Link
 		[DllImport("/usr/lib/libSystem.dylib")]
 		private static extern ulong clock_gettime_nsec_np(uint clockId);
 
+		// Unity's Mono does not base Stopwatch on the raw performance counter (measured: ~36 h off
+		// from Java's nanoTime on Windows), so read QueryPerformanceCounter itself.
+		[DllImport("kernel32.dll")]
+		private static extern bool QueryPerformanceCounter(out long count);
+
+		[DllImport("kernel32.dll")]
+		private static extern bool QueryPerformanceFrequency(out long frequency);
+
+		private static long qpcFrequency;
+
 		/// <summary>
 		/// Monotonic nanoseconds, comparable across processes: CLOCK_UPTIME_RAW on macOS (what
-		/// HotSpot's nanoTime reads there, also under Rosetta), QueryPerformanceCounter in ns on Windows.
+		/// HotSpot's nanoTime reads there, also under Rosetta), QueryPerformanceCounter in ns on Windows (read directly, see below).
 		/// </summary>
 		public static long MonoNanos()
 		{
 			if (Mac)
 			{
 				return (long)clock_gettime_nsec_np(ClockUptimeRaw);
+			}
+			if (Windows)
+			{
+				if (qpcFrequency == 0)
+				{
+					QueryPerformanceFrequency(out qpcFrequency);
+				}
+				QueryPerformanceCounter(out long count);
+				// count * 1e9 / frequency without overflowing a long (HotSpot scales the same way).
+				return (count / qpcFrequency) * 1_000_000_000L + (count % qpcFrequency) * 1_000_000_000L / qpcFrequency;
 			}
 			long ticks = Stopwatch.GetTimestamp();
 			return (long)(ticks * (1_000_000_000.0 / Stopwatch.Frequency));

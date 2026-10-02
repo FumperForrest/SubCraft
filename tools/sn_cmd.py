@@ -3,8 +3,8 @@
     python3 tools/sn_cmd.py '{"cmd":"dump"}' '{"cmd":"screenshot","name":"noon"}'
     python3 tools/sn_cmd.py --scenario tools/scenarios/phase0b_recon.jsonl
 
-Commands are appended to $TMPDIR/subcraft/cmd.jsonl; results come back in
-$TMPDIR/subcraft/out/results.jsonl (see host-subnautica/src/Dev/DevHarness.cs for the list).
+Commands are appended to <shared dir>/cmd.jsonl (macOS $TMPDIR/subcraft, Windows %LOCALAPPDATA%\SubCraft); results come back in
+<shared dir>/out/results.jsonl (see host-subnautica/src/Dev/DevHarness.cs for the list).
 Exit code 1 if any command failed or timed out.
 """
 
@@ -13,7 +13,12 @@ import os
 import sys
 import time
 
-DIR = os.environ.get("SUBCRAFT_DIR") or os.path.join(os.environ.get("TMPDIR", "/tmp"), "subcraft")
+if os.environ.get("SUBCRAFT_DIR"):
+    DIR = os.environ["SUBCRAFT_DIR"]
+elif os.name == "nt":
+    DIR = os.path.join(os.environ["LOCALAPPDATA"], "SubCraft")
+else:
+    DIR = os.path.join(os.environ.get("TMPDIR", "/tmp"), "subcraft")
 CMD = os.path.join(DIR, "cmd.jsonl")
 RESULTS = os.path.join(DIR, "out", "results.jsonl")
 
