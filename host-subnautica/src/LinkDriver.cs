@@ -109,6 +109,7 @@ namespace SubCraft
 			{
 				return;
 			}
+			Player.DiverHider.LateFrame();
 			HostState.Fill(ref host, TeleportSeq, PlayerPuppet.HostFeetMc);
 			Link.View.WriteHostState(host);
 		}

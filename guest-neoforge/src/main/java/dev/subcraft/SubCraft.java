@@ -14,7 +14,10 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
+import net.neoforged.neoforge.event.entity.living.MobSpawnEvent;
+import net.neoforged.neoforge.event.tick.EntityTickEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import dev.subcraft.world.tri.TriStore;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import org.slf4j.Logger;
 
@@ -28,6 +31,8 @@ public final class SubCraft {
 		NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post e) -> CollisionConsumer.serverTick(e.getServer().overworld()));
 		NeoForge.EVENT_BUS.addListener((ServerStartedEvent e) -> configureWorld(e.getServer().overworld()));
 		NeoForge.EVENT_BUS.addListener((PlayerTickEvent.Post e) -> holdBreath(e.getEntity()));
+		NeoForge.EVENT_BUS.addListener(SubCraft::spawnOnlyOnKnownTerrain);
+		NeoForge.EVENT_BUS.addListener(SubCraft::freezeOnUnknownTerrain);
 	}
 
 	private static final LinkView.HostState breathState = new LinkView.HostState();
@@ -53,6 +58,29 @@ public final class SubCraft {
 		}
 	}
 
+	/**
+	 * Unpatched space is inert (MISSION.md 3.1): no mob spawns where the host hasn't described the
+	 * terrain yet, or mobs would appear in "open water" that turns out to be rock.
+	 */
+	private static void spawnOnlyOnKnownTerrain(MobSpawnEvent.SpawnPlacementCheck e) {
+		var pos = e.getPos();
+		if (SubWorld.is(e.getLevel().getLevel()) && SubLink.active() && !TriStore.isKnown(pos.getX(), pos.getY(), pos.getZ())) {
+			e.setResult(MobSpawnEvent.SpawnPlacementCheck.Result.FAIL);
+		}
+	}
+
+	/** Mobs in space the host hasn't described stand still (no ticking) until it has. */
+	private static void freezeOnUnknownTerrain(EntityTickEvent.Pre e) {
+		var entity = e.getEntity();
+		if (entity instanceof Player || entity.level().isClientSide() || !SubWorld.is(entity.level()) || !SubLink.active()) {
+			return;
+		}
+		var pos = entity.blockPosition();
+		if (!TriStore.isEmpty() && !TriStore.isKnown(pos.getX(), pos.getY(), pos.getZ())) {
+			e.setCanceled(true);
+		}
+	}
+
 	/** The host owns time, weather and (for now) spawning in the SubCraft world. */
 	private static void configureWorld(ServerLevel level) {
 		if (!SubWorld.is(level)) {
@@ -62,7 +90,8 @@ public final class SubCraft {
 		GameRules rules = level.getGameRules();
 		rules.getRule(GameRules.RULE_DAYLIGHT).set(false, server);
 		rules.getRule(GameRules.RULE_WEATHER_CYCLE).set(false, server);
-		// Phase 0a: no mobs until terrain patching exists (unpatched chunks must be inert).
+		// Natural spawning stays off by default (vanilla ocean mobs in Subnautica is a taste call
+		// for Sean); /gamerule doMobSpawning true turns it on, and then only on known terrain.
 		rules.getRule(GameRules.RULE_DOMOBSPAWNING).set(false, server);
 		level.setWeatherParameters(1_000_000, 0, false, false);
 		LOG.info("SubCraft: SubCraft world configured");

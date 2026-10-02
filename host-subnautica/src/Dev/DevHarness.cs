@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using Newtonsoft.Json.Linq;
@@ -212,6 +213,31 @@ namespace SubCraft.Dev
 					case "matinfo":
 						msg = Write("matinfo.json", Render.MaterialFactory.Describe().ToString());
 						break;
+					case "biomescan":
+						// Biome names on a grid around (x, z) at height y, step metres apart (Unity coords).
+						{
+							float cx = (float)cmd["x"], cz = (float)cmd["z"], y = (float?)cmd["y"] ?? -20f, step = (float?)cmd["step"] ?? 25f;
+							int n = (int?)cmd["n"] ?? 6;
+							var sbScan = new StringBuilder();
+							for (int iz = n; iz >= -n; iz--)
+							{
+								for (int ix = -n; ix <= n; ix++)
+								{
+									var biome = LargeWorld.main != null ? LargeWorld.main.GetBiome(new Vector3(cx + ix * step, y, cz + iz * step)) : "?";
+									sbScan.Append((biome ?? "-").PadRight(16).Substring(0, 16)).Append(' ');
+								}
+								sbScan.Append($" z {cz + iz * step}\n");
+							}
+							msg = Write("biomescan.txt", sbScan.ToString());
+						}
+						break;
+					case "overlaypng":
+						var ov = Hud.OverlayView.Instance;
+						msg = ov != null && ov.Texture != null ? Write("overlay.png", ov.Texture.EncodeToPNG()) : "no overlay";
+						break;
+					case "playerrenderers":
+						msg = Write("playerrenderers.txt", PlayerRenderers());
+						break;
 					case "holster":
 						Inventory.main.quickSlots.DeselectImmediate();
 						break;
@@ -299,6 +325,30 @@ namespace SubCraft.Dev
 		private static readonly string[] MatProps = { "_Lightmap", "_LightmapStrength", "_EnableLightmap", "_Illum", "_EnableGlow", "_GlowStrength", "_SpecInt", "_Shininess", "_EnableCutOff", "_Cutoff", "_Color" };
 
 		/// <summary>rendinfo {match, max}: property block + material state of renderers whose path contains match.</summary>
+		/// <summary>Every renderer under the player and the camera, with its path (diver-hiding work).</summary>
+		private static string PlayerRenderers()
+		{
+			var sb = new System.Text.StringBuilder();
+			var roots = new List<Transform> { global::Player.main.transform };
+			if (MainCamera.camera != null && !MainCamera.camera.transform.IsChildOf(global::Player.main.transform))
+			{
+				roots.Add(MainCamera.camera.transform.root);
+			}
+			foreach (var root in roots)
+			{
+				foreach (var r in root.GetComponentsInChildren<Renderer>(true))
+				{
+					var path = r.name;
+					for (var t = r.transform.parent; t != null && t != root.parent; t = t.parent)
+					{
+						path = t.name + "/" + path;
+					}
+					sb.Append($"{(r.enabled && r.gameObject.activeInHierarchy ? "ON " : "off")} {r.GetType().Name} layer {r.gameObject.layer} {path} [{(r.sharedMaterial != null ? r.sharedMaterial.name : "-")}]\n");
+				}
+			}
+			return sb.ToString();
+		}
+
 		private static JObject RendInfo(string match, int max)
 		{
 			var o = new JObject();
@@ -494,6 +544,13 @@ namespace SubCraft.Dev
 		{
 			string path = Path.Combine(outDir, file);
 			File.WriteAllText(path, text);
+			return path;
+		}
+
+		private string Write(string file, byte[] bytes)
+		{
+			string path = Path.Combine(outDir, file);
+			File.WriteAllBytes(path, bytes);
 			return path;
 		}
 

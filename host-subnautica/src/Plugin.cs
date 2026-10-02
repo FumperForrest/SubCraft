@@ -16,6 +16,7 @@ namespace SubCraft
 		internal static ConfigEntry<bool> Diagnostics;
 		internal static ConfigEntry<string> DevSlot;
 		internal static ConfigEntry<bool> ShowOverlay;
+		internal static ConfigEntry<bool> HideDiver;
 
 		private void Awake()
 		{
@@ -24,6 +25,7 @@ namespace SubCraft
 			DevSlot = Config.Bind("Debug", "DevSlot", "",
 				"The only save slot the dev harness may save (MISSION.md rule 13). Set by the harness's newgame command.");
 			ShowOverlay = Config.Bind("Hud", "ShowMinecraftOverlay", true, "Draw Minecraft's GUI (hotbar, screens) on top of Subnautica.");
+			HideDiver = Config.Bind("Player", "HideDiver", true, "Hide Subnautica's diver (body, arms, tools, mask) while Minecraft drives the player.");
 			new Harmony(Guid).PatchAll(typeof(Plugin).Assembly);
 			var host = new GameObject("SubCraft");
 			DontDestroyOnLoad(host);

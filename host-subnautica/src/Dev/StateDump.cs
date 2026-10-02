@@ -68,6 +68,7 @@ namespace SubCraft.Dev
 					["biome"] = player.GetBiomeString(),
 					["kinematic"] = player.playerController.useRigidbody.isKinematic,
 					["oxygen"] = player.GetOxygenAvailable(),
+					["cursor"] = $"{Cursor.lockState} visible {Cursor.visible} mcScreen {SubCraft.Player.McScreenInput.Active}",
 					["oxygenCapacity"] = player.GetOxygenCapacity(),
 				};
 			}

@@ -392,49 +392,65 @@ namespace SubCraft.World
 			}
 		}
 
-		private readonly Dictionary<long, byte> terrainMaterials = new Dictionary<long, byte>();
+		private readonly Dictionary<int, byte> blockTypeMaterials = new Dictionary<int, byte>();
 
 		/// <summary>
-		/// Subnautica's own surface type for a terrain triangle (what its footsteps and impact effects
-		/// use: <c>MaterialDatabase.GetTerrainMaterial</c>, the voxel block type at the point plus the
-		/// slope), cached per block and 10-degree slope band.
+		/// The surface material of a terrain triangle, from the voxel block type under it. Subnautica's
+		/// own terrain-material table (MaterialDatabase) ships empty (its footsteps only know "land"),
+		/// so the block type's name and render material decide: sand, rock, coral, ice... (logged once).
 		/// </summary>
 		private byte TerrainMaterial(Vector3 a, Vector3 b, Vector3 c)
 		{
+			var streamer = LargeWorldStreamer.main;
 			var n = Vector3.Cross(b - a, c - a);
-			if (n.sqrMagnitude < 1e-12f)
+			if (streamer == null || n.sqrMagnitude < 1e-12f)
 			{
 				return Proto.MatRock;
 			}
 			n.Normalize();
 			var centre = (a + b + c) / 3f;
-			int band = (int)(Vector3.Angle(n, Vector3.up) / 10f);
-			long key = ((long)Mathf.FloorToInt(centre.x) & 0xFFFFF) << 40 | ((long)Mathf.FloorToInt(centre.y) & 0xFFFFF) << 20
-				| ((long)Mathf.FloorToInt(centre.z) & 0xFFFFF);
-			key = key * 19 + band;
-			if (terrainMaterials.TryGetValue(key, out byte mat))
+			int type = 0;
+			for (int i = 0; i < 3 && type == 0; i++)
+			{
+				type = streamer.GetBlockType(centre - n * (0.2f + 0.5f * i));
+			}
+			if (blockTypeMaterials.TryGetValue(type, out byte mat))
 			{
 				return mat;
 			}
-			string name = MaterialDatabase.GetTerrainMaterial(centre, n);
-			var type = VFXSurfaceTypes.none;
-			if (!string.IsNullOrEmpty(name))
+			string name = "";
+			var types = streamer.streamerV2 != null ? streamer.streamerV2.blockTypes : null;
+			if (types != null && type > 0 && type < types.Length && types[type] != null)
 			{
-				try
-				{
-					type = (VFXSurfaceTypes)Enum.Parse(typeof(VFXSurfaceTypes), name, true);
-				}
-				catch (ArgumentException)
-				{
-				}
+				var bt = types[type];
+				name = (bt.name ?? "") + " " + (bt.material != null ? bt.material.name : "");
 			}
-			mat = SurfaceMaterial(type, Proto.MatRock);
-			if (terrainMaterials.Count > 200000)
-			{
-				terrainMaterials.Clear();
-			}
-			terrainMaterials[key] = mat;
+			mat = ClassifyTerrain(name);
+			blockTypeMaterials[type] = mat;
+			Plugin.Log.LogInfo($"SubCraft: terrain block type {type} '{name.Trim()}' -> material {mat}");
 			return mat;
+		}
+
+		internal static byte ClassifyTerrain(string name)
+		{
+			// Blends are "AToB" (e.g. Sand01ToRock02_steep): the steep variant shows B, the flat one A.
+			string first = name.Trim().Split(' ')[0];
+			int to = first.IndexOf("To", StringComparison.Ordinal);
+			if (to > 0)
+			{
+				bool steep = first.IndexOf("steep", StringComparison.OrdinalIgnoreCase) >= 0;
+				name = steep ? first.Substring(to + 2) : first.Substring(0, to);
+			}
+			string n = name.ToLowerInvariant();
+			if (n.Contains("sand") || n.Contains("dune") || n.Contains("silt") || n.Contains("mud") || n.Contains("seabed")) return Proto.MatSand;
+			if (n.Contains("coral") || n.Contains("reef")) return Proto.MatCoral;
+			if (System.Text.RegularExpressions.Regex.IsMatch(n, @"(^|[^a-z])ice") || n.Contains("snow")) return Proto.MatIce;
+			if (n.Contains("crystal") || n.Contains("glass")) return Proto.MatGlass;
+			if (n.Contains("precursor") || n.Contains("alien")) return Proto.MatPrecursor;
+			if (n.Contains("metal") || n.Contains("wreck") || n.Contains("ship")) return Proto.MatMetal;
+			if (n.Contains("grass") || n.Contains("moss") || n.Contains("kelp") || n.Contains("mushroom") || n.Contains("root") || n.Contains("vine")
+				|| n.Contains("organic") || n.Contains("lichen")) return Proto.MatOrganic;
+			return Proto.MatRock;
 		}
 
 		internal static byte SurfaceMaterial(VFXSurfaceTypes type, byte fallback)
