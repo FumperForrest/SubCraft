@@ -236,6 +236,21 @@ the player, nearest triangle, a fall probe through the collider); state dump `li
 - **Overlay**: ScreenSpaceOverlay canvas, sorting order 50, RawImage of the overlay texture.
   Minecraft full-screen effects are cancelled (alpha blend ONE, ZERO wipes the overlay's alpha).
 
+## Phase 1: biomes, structures, saved masks (verified in game)
+
+- **Biomes** (`kColBiomes`, v15): `LargeWorld.GetBiome(Vector3)` = override biome (caves, bases)
+  else the 2D biome map, cheap. Sampled at the 64 cell centres of each section, sent right after
+  its kColTris. Guest: `SubBiomes.of` (name -> path), `BiomePatcher` (`ChunkAccess.
+  fillBiomesFromNoise` with a resolver that keeps every other cell, `ChunkMap.
+  resendBiomesForChunks`, never loads a chunk). Biomes and tags: `tools/gen_biomes.py`.
+- **Structures**: host triangles with `kTriStructure` (Base, SubRoot, EscapePod) skip the
+  inside/outside fill and are marked as a shell (each triangle sampled at a third of a sub-voxel);
+  blocks whose top surface is a structure become `subcraft:structure`.
+- **ChunkGhostData** (NeoForge chunk attachment `subcraft:ghost_terrain`): masks
+  `[key, 8 longs]*` and stamps `[sectionY, stamp]*` as long arrays plus `version`
+  (`VOXEL_VERSION`, bump when voxels change). Chunk load/unload moves masks in and out of
+  `MaskStore`; an epoch clear keeps `MaskStore` (it mirrors loaded chunks).
+
 ## Open
 
 - AlbedoBake memory at world scale (Phase 2): measure cells per section; animated sprites (water,
@@ -243,4 +258,4 @@ the player, nearest triangle, a fall probe through the collider); state dump `li
 - Translucent geometry (stained glass, water from mods): the WBOIT variants, untested so far.
 - Whether the WaterscapeVolume pass needs anything from our renderers beyond depth.
 - Collision: moving structures (Cyclops/Seamoth as kinematic triangle sets), harvest churn while
-  terrain settles, masks persisted per chunk, biomes, `subcraft:structure` blocks.
+  terrain settles, dry volumes for habitats and subs (Phase 5).

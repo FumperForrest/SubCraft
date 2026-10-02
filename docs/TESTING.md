@@ -3,7 +3,7 @@
 Things only you can judge (feel, taste) or decide. Everything here was already run by Claude
 unless marked **unverified**.
 
-## Phase 1 — the world as blocks; walk and swim: please try it first
+## Phase 1 — the world as blocks; walk and swim (done): please try it first
 
 What it does: Minecraft's player moves through Subnautica's world on Minecraft physics. It
 collides with Subnautica's exact collision surface. Mobs stand on "ghost terrain" blocks
@@ -39,6 +39,10 @@ Then click into Subnautica and play:
    you can click and drag items, Esc closes it. Chat (**T**) takes typing. **Tab** opens the PDA,
    and Minecraft's GUI hides while it's open.
 6. **Mob:** `python3 tools/mc_cmd.py "/summon cod ~ ~ ~"` (or a zombie): it stays out of the rock.
+7. **Biome:** in the Kelp Forest,
+   `python3 tools/mc_cmd.py "/execute at @p if biome ~ ~ ~ subcraft:kelp_forest"` says
+   "Test passed" (the Minecraft window is hidden, so there's no F3 screen).
+8. **Survival inventory (E):** your Minecraft character's model shows in it.
 
 **Expected rough edges:**
 - Minecraft's hearts and hunger still show above the hotbar (unified HUD dials: Phase 4).

@@ -2,6 +2,50 @@
 
 Newest first. One entry per session (MISSION.md rule 11).
 
+## 2026-10-01 — Session 6: Phase 1 finished — biomes, structures, saved masks
+
+**Done**
+- **Biomes (protocol v15, `kColBiomes`):** with each harvested section the host sends
+  `LargeWorld.GetBiome` (2D map plus cave overrides) at the centre of its 64 cells of 4x4x4
+  (Minecraft's biome resolution), names inline. The guest maps names to 21 SubCraft biomes
+  (`SubBiomes`, tested: `kelpForest_Cave` -> kelp_forest, `Precursor_LavaCastleBase` ->
+  precursor, unknown -> ocean). They're written into chunks the way `/fillbiome` does and
+  re-sent to the client. The biome data pack comes from `tools/gen_biomes.py`: ocean / deep-ocean
+  tags plus `c:is_ocean` and `c:is_aquatic`, so modded aquatic spawns apply. Water colours and
+  vanilla fish spawns differ per biome.
+- **`subcraft:structure`:** host-built triangles (bases, subs, the lifepod; flag from the host)
+  get their own block, voxelized as a **shell**, not a fill. The lifepod's hull is closed with no
+  inner faces, so the fill had turned its interior into rock. Unit test: a closed structure box
+  is open inside, its plates and walls partial.
+- **Saved masks + patch stamps (`ChunkGhostData` attachment):** partial-block masks and a stamp
+  per section are saved with the chunk. On chunk load the masks go back into `MaskStore`, so after
+  a restart partial blocks keep their shape before the host streams the area again. The stamp is
+  an order-independent hash of the section's triangles and those of its column (the host re-sends
+  identical triangles in another order). A matching section is not rebuilt.
+- **Fix:** the survival inventory crashed Minecraft ("Rendering entity in world", null camera):
+  the skipped world pass also calls `EntityRenderDispatcher.prepare`, so we call it ourselves.
+
+**Verified in game**
+- Biome at the lifepod `subcraft:safe_shallows`, at (-88, -234) `subcraft:kelp_forest` (host:
+  kelpForest).
+- Lifepod: the block at the feet is the floor plate (`subcraft:structure`), the block above is
+  air, the next is the ceiling.
+- Minecraft restarts with Subnautica running: chunks restore their masks (e.g. 1708 in one
+  chunk); 51-52 of ~280 sections skipped by stamp. The others are first submitted before their
+  column is complete and rebuilt identically (0 blocks changed: idempotent).
+- Unknown terrain is inert: a persistent zombie 100 blocks out in never-streamed water stays put
+  (same position 8 s apart); one next to the player moves.
+- Survival inventory opens (player model shown) and closes with Esc.
+- `fake_host.py` one-game run on v15: all six [ok].
+
+**Phase 1 status:** every MISSION.md Phase 1 bullet is in, and every done-when check passed in my
+runs (sessions 4-6). What remains for Sean is feel and real-input checks (TESTING.md). Next:
+Phase 2 (Unity draws Minecraft's chunks, lights and colliders).
+
+**Known limits:** stamps skip only ~20% after a restart (incomplete columns at first submission).
+Dry volumes cover the lifepod only (habitats and subs: Phase 5). Biomes are per 4-block cell, so
+narrow cave overrides can be coarse.
+
 ## 2026-10-01 — Session 5: Phase 1 — ghost terrain, breath, dry lifepod, one-game input
 
 **Done**
