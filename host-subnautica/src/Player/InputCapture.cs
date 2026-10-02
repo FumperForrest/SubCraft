@@ -83,6 +83,17 @@ namespace SubCraft.Player
 					}
 				}
 			}
+			// Raw mouse movement (kInLook) for mods that drag with the mouse; the host's camera turns
+			// with it too, unless Minecraft reports a mod took it (InputRouter freezes the look).
+			// Unity's "Mouse X/Y" axes are pixels x 0.1; GLFW's y grows downward.
+			if (!McScreenInput.Active)
+			{
+				float dx = Input.GetAxisRaw("Mouse X") * 10f, dy = -Input.GetAxisRaw("Mouse Y") * 10f;
+				if (dx != 0f || dy != 0f)
+				{
+					view.PushInput(Proto.InLook, 0, Mathf.RoundToInt(dx * 1000f), Mathf.RoundToInt(dy * 1000f));
+				}
+			}
 			float wheel = Input.mouseScrollDelta.y;
 			if (wheel != 0f)
 			{

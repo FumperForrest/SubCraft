@@ -327,6 +327,7 @@ public final class SubClient {
 			if (player.getAbilities().flying) flags |= Proto.MC_FLYING;
 			if (player.isInWater()) flags |= Proto.MC_IN_WATER;
 			if (player.isEyeInFluid(FluidTags.WATER)) flags |= Proto.MC_EYE_IN_WATER;
+			if (LookCapture.captured()) flags |= Proto.MC_LOOK_CAPTURED;
 			mc.x = feet.x;
 			mc.y = feet.y;
 			mc.z = feet.z;

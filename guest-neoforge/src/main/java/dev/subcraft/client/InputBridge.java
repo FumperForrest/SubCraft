@@ -21,6 +21,10 @@ public final class InputBridge {
 	private InputBridge() {
 	}
 
+	public static boolean isButtonDown(int button) {
+		return button >= 0 && button < BUTTONS.length && BUTTONS[button];
+	}
+
 	public static boolean isKeyDown(int key) {
 		return key >= 0 && key < KEYS.length && KEYS[key];
 	}
@@ -102,6 +106,13 @@ public final class InputBridge {
 				}
 			}
 			case Proto.IN_RELEASE_ALL -> releaseAll(minecraft);
+			case Proto.IN_LOOK -> {
+				// Raw mouse movement for mods that drag with it (see LookCapture); screens use the cursor.
+				if (minecraft.screen == null) {
+					mouse.subcraft$setAccumulatedDX(mouse.subcraft$accumulatedDX() + a / 1000.0);
+					mouse.subcraft$setAccumulatedDY(mouse.subcraft$accumulatedDY() + b / 1000.0);
+				}
+			}
 			case Proto.IN_HURT -> hurt(minecraft, code, a / 100.0F, b);
 			case Proto.IN_HURT_MOB -> dev.subcraft.combat.MobTable.hurt(minecraft.getSingleplayerServer(), b, a / 100.0F, c);
 			case Proto.IN_OPEN_MENU -> {

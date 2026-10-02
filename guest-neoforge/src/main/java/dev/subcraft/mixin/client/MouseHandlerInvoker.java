@@ -13,6 +13,18 @@ public interface MouseHandlerInvoker {
 	@Invoker("onScroll")
 	void subcraft$onScroll(long window, double xOffset, double yOffset);
 
+	@org.spongepowered.asm.mixin.gen.Accessor("accumulatedDX")
+	double subcraft$accumulatedDX();
+
+	@org.spongepowered.asm.mixin.gen.Accessor("accumulatedDX")
+	void subcraft$setAccumulatedDX(double v);
+
+	@org.spongepowered.asm.mixin.gen.Accessor("accumulatedDY")
+	double subcraft$accumulatedDY();
+
+	@org.spongepowered.asm.mixin.gen.Accessor("accumulatedDY")
+	void subcraft$setAccumulatedDY(double v);
+
 	@Invoker("onMove")
 	void subcraft$onMove(long window, double x, double y);
 }

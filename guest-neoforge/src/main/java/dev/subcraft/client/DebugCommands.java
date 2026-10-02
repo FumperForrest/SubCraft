@@ -121,6 +121,20 @@ public final class DebugCommands {
 			case "creatures" -> {
 				return dev.subcraft.combat.Proxies.stats() + ", " + dev.subcraft.combat.MobTable.stats();
 			}
+			case "ghostaudit" -> {
+				return dev.subcraft.world.ghost.GhostAudit.run(minecraft.level, minecraft.player.blockPosition(), args.length > 1 ? Integer.parseInt(args[1]) : 24);
+			}
+			case "revox" -> {
+				var server = minecraft.getSingleplayerServer();
+				return server.submit(() -> dev.subcraft.world.ghost.GhostAudit.revox(server.overworld(), Integer.parseInt(args[1]), Integer.parseInt(args[2]),
+					Integer.parseInt(args[3]))).join();
+			}
+			case "whysolid" -> {
+				return dev.subcraft.world.ghost.GhostAudit.whySolid(Integer.parseInt(args[1]), Integer.parseInt(args[2]), Integer.parseInt(args[3]));
+			}
+			case "column" -> {
+				return dev.subcraft.world.ghost.GhostAudit.column(Integer.parseInt(args[1]), Integer.parseInt(args[2]));
+			}
 			case "rawdebug" -> {
 				dev.subcraft.capture.VboCapture.debugDraws = args.length > 1 ? Integer.parseInt(args[1]) : 4;
 				dev.subcraft.capture.VboCapture.debugPass = args.length > 2 ? args[2] : "world";

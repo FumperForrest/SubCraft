@@ -67,6 +67,7 @@ public final class Voxelizer {
 		final int[] start = new int[COLS * COLS + 1];
 		float[] y;
 		boolean[] up;      // outward normal has +y: crossing upward leaves the solid
+		boolean[] terrain; // kTriTerrain: the host's terrain surface (else a prop's closed shell)
 		byte[] material;
 
 		int count(int col) {
@@ -80,45 +81,142 @@ public final class Voxelizer {
 	public static Result voxelize(Source source, int sx, int sy, int sz) {
 		Result r = new Result(sx, sy, sz);
 		TriStore.Section self = source.section(sx, sy, sz);
-		Columns cols = self == null ? null : columns(self, sx, sz);
+		// The column's known sections, contiguous around this one (an unknown section ends the reach).
+		Columns[] stack = new Columns[2 * REACH + 1];
+		stack[REACH] = self == null ? null : columns(self, sx, sz);
+		int lo = 0, hi = 0;
+		for (int d = -1; d >= -REACH; d--) {
+			TriStore.Section s = source.section(sx, sy + d, sz);
+			if (s == null) {
+				break;
+			}
+			stack[REACH + d] = cached(s, sx, sz);
+			lo = d;
+		}
+		for (int d = 1; d <= REACH; d++) {
+			TriStore.Section s = source.section(sx, sy + d, sz);
+			if (s == null) {
+				break;
+			}
+			stack[REACH + d] = cached(s, sx, sz);
+			hi = d;
+		}
 		float baseY = sy * 16;
-		for (int cz = 0; cz < COLS; cz++) {
-			for (int cx = 0; cx < COLS; cx++) {
-				int col = cz * COLS + cx;
-				int n = cols == null ? 0 : cols.count(col);
-				if (n == 0) {
-					int ext = external(source, sx, sy, sz, col);
-					r.usedNeighbours = true;
-					if (ext == 0) {
-						r.unresolved = true;
-						continue;
-					}
-					if (ext > 0) {
-						for (int j = 0; j < COLS; j++) {
-							set(r, cx, j, cz, (byte) (ext >> 8));
-						}
-					}
+		// Pass 1: every column's crossings in the known range (CSR), once each.
+		final int cap = 32;
+		float[] ys = new float[COLS * COLS * cap];
+		boolean[] ups = new boolean[ys.length];
+		byte[] mats = new byte[ys.length];
+		boolean[] terrain = new boolean[ys.length];
+		int[] count = new int[COLS * COLS];
+		int[] endWt = new int[COLS * COLS];     // terrain winding above the column's last crossing
+		float[] terrainTop = new float[COLS * COLS]; // the column's highest terrain crossing
+		for (int col = 0; col < COLS * COLS; col++) {
+			int base = col * cap, n = 0;
+			for (int d = lo; d <= hi; d++) {
+				Columns c = stack[REACH + d];
+				if (c == null) {
 					continue;
 				}
-				int s = cols.start[col], e = s + n;
-				// Sweep upward; k = first crossing above the current sub-voxel centre.
-				int k = s;
+				float y0 = (sy + d) * 16, y1 = y0 + 16;
+				for (int k = c.start[col], e = k + c.count(col); k < e; k++) {
+					float y = c.y[k];
+					if (y < y0 || y >= y1 || n == cap) {
+						continue;
+					}
+					boolean t = c.terrain[k];
+					// The same face twice (overlapping colliders): once. Only right after the same face:
+					// an opposite face in between is a seam, not a copy.
+					if (n > 0 && y - ys[base + n - 1] < 0.005f && ups[base + n - 1] == c.up[k] && terrain[base + n - 1] == t) {
+						continue;
+					}
+					ys[base + n] = y;
+					ups[base + n] = c.up[k];
+					mats[base + n] = c.material[k];
+					terrain[base + n] = t;
+					n++;
+					if (d != 0) {
+						r.usedNeighbours = true;
+					}
+				}
+			}
+			count[col] = n;
+			int wt = -1;
+			terrainTop[col] = Float.NaN;
+			for (int q = 0; q < n; q++) {
+				if (terrain[base + q]) {
+					if (wt < 0) {
+						wt = ups[base + q] ? 1 : 0;
+					}
+					wt = ups[base + q] ? 0 : 1;
+					terrainTop[col] = ys[base + q];
+				}
+			}
+			endWt[col] = Math.max(wt, 0);
+		}
+
+		// Pass 2: fill. Winding from below, terrain and props apart. Terrain is one open surface with the
+		// solid under it: under its lowest crossing the line is inside when that surface faces up, and
+		// it is inside or not (0..1: the cell-edge skirts and seams of Subnautica's meshes would
+		// otherwise stack up). Props
+		// are closed shells: outside under them, and never solid above the line's highest crossing, so a
+		// broken or inside-out prop (double-sided, mirrored) can't fill the water and sky above it.
+		// Crossing an up-facing surface leaves a solid, a down-facing one enters it.
+		for (int cz = 0; cz < COLS; cz++) {
+			for (int cx = 0; cx < COLS; cx++) {
+				int col = cz * COLS + cx, base = col * cap, n = count[col];
+				if (n == 0) {
+					r.usedNeighbours = true;
+					r.unresolved = true;
+					continue;
+				}
+				// A column still inside the terrain above its last crossing while most columns around it
+				// close: it went through a crack between terrain pieces and missed the top surface. It
+				// closes where they do.
+				float crackTop = Float.NaN;
+				if (endWt[col] > 0) {
+					int closed = 0, open = 0;
+					float sum = 0;
+					for (int dz = -2; dz <= 2; dz++) {
+						for (int dx = -2; dx <= 2; dx++) {
+							int x = cx + dx, z = cz + dz;
+							if ((dx == 0 && dz == 0) || x < 0 || z < 0 || x >= COLS || z >= COLS || count[z * COLS + x] == 0) {
+								continue;
+							}
+							int o = z * COLS + x;
+							if (endWt[o] > 0) {
+								open++;
+							} else if (!Float.isNaN(terrainTop[o])) {
+								closed++;
+								sum += terrainTop[o];
+							}
+						}
+					}
+					if (closed > open) {
+						crackTop = Math.max(sum / closed, ys[base + n - 1] + 0.01f);
+					}
+				}
+				int wt = 0, wp = 0;
+				for (int q = 0; q < n; q++) {
+					if (terrain[base + q]) {
+						wt = ups[base + q] ? 1 : 0;
+						break;
+					}
+				}
+				int k = 0;
 				for (int j = 0; j < COLS; j++) {
 					float y = baseY + (j + 0.5f) / RES;
-					while (k < e && cols.y[k] <= y) {
+					while (k < n && ys[base + k] <= y) {
+						if (terrain[base + k]) {
+							wt = ups[base + k] ? 0 : 1; // one surface: never inside twice (skirts, seams)
+						} else {
+							wp += ups[base + k] ? -1 : 1;
+						}
 						k++;
 					}
-					boolean solid;
-					byte mat;
-					if (k < e) {
-						solid = cols.up[k];
-						mat = cols.material[k];
-					} else {
-						solid = !cols.up[e - 1];
-						mat = cols.material[e - 1];
-					}
-					if (solid) {
-						set(r, cx, j, cz, mat);
+					boolean terrainSolid = wt > 0 && !(k == n && !Float.isNaN(crackTop) && y >= crackTop);
+					if (terrainSolid || (wp > 0 && k < n)) {
+						set(r, cx, j, cz, k < n ? mats[base + k] : mats[base + n - 1]);
 					}
 				}
 			}
@@ -147,39 +245,6 @@ public final class Voxelizer {
 		int index = (by * 16 + bz) * 16 + bx;
 		r.masks[index * 8 + (cy & 7)] |= 1L << ((cz & 7) * 8 + (cx & 7));
 		r.material[index] = mat; // sweeping upward: the topmost solid sub-voxel's surface wins
-	}
-
-	/**
-	 * State of a column with no crossing in its own section, from the nearest section that has one:
-	 * 0 unknown, -1 open, else (material << 8) | 1 for solid.
-	 */
-	private static int external(Source source, int sx, int sy, int sz, int col) {
-		for (int d = 1; d <= REACH; d++) {
-			TriStore.Section s = source.section(sx, sy + d, sz);
-			if (s == null) {
-				break;
-			}
-			Columns c = cached(s, sx, sz);
-			int n = c.count(col);
-			if (n > 0) {
-				int k = c.start[col];
-				// Everything below the lowest crossing: inside if that surface faces up.
-				return c.up[k] ? (c.material[k] & 0xFF) << 8 | 1 : -1;
-			}
-		}
-		for (int d = 1; d <= REACH; d++) {
-			TriStore.Section s = source.section(sx, sy - d, sz);
-			if (s == null) {
-				break;
-			}
-			Columns c = cached(s, sx, sz);
-			int n = c.count(col);
-			if (n > 0) {
-				int k = c.start[col] + n - 1;
-				return c.up[k] ? -1 : (c.material[k] & 0xFF) << 8 | 1;
-			}
-		}
-		return 0;
 	}
 
 	// Column crossings of neighbours are reused while their snapshot is unchanged.
@@ -243,6 +308,7 @@ public final class Voxelizer {
 							int at = c.start[col] + fill[col]++;
 							c.y[at] = y;
 							c.up[at] = ny > 0;
+							c.terrain[at] = (flags[t] & 2) != 0;
 							// Material (bits 8-15, < 128) plus the structure flag (kTriStructure = bit 0).
 							c.material[at] = (byte) ((flags[t] >>> 8 & 0x7F) | ((flags[t] & 1) != 0 ? STRUCTURE_BIT : 0));
 						}
@@ -256,6 +322,7 @@ public final class Voxelizer {
 				int total = c.start[COLS * COLS];
 				c.y = new float[total];
 				c.up = new boolean[total];
+				c.terrain = new boolean[total];
 				c.material = new byte[total];
 			}
 		}
@@ -265,16 +332,19 @@ public final class Voxelizer {
 			for (int a = s0 + 1; a < e0; a++) {
 				float y = c.y[a];
 				boolean u = c.up[a];
+				boolean tt = c.terrain[a];
 				byte m = c.material[a];
 				int b = a - 1;
 				while (b >= s0 && c.y[b] > y) {
 					c.y[b + 1] = c.y[b];
 					c.up[b + 1] = c.up[b];
+					c.terrain[b + 1] = c.terrain[b];
 					c.material[b + 1] = c.material[b];
 					b--;
 				}
 				c.y[b + 1] = y;
 				c.up[b + 1] = u;
+				c.terrain[b + 1] = tt;
 				c.material[b + 1] = m;
 			}
 		}

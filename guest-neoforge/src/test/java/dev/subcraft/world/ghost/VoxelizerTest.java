@@ -16,6 +16,7 @@ class VoxelizerTest {
 	private final Map<Long, TriStore.Section> store = new HashMap<>();
 	private int material = 1;
 	private int structureFlag;
+	private boolean terrainFlag = true; // kTriTerrain unless a test builds a prop
 
 	@BeforeEach
 	void reset() {
@@ -32,7 +33,7 @@ class VoxelizerTest {
 
 	private void tri(double[] a, double[] b, double[] c) {
 		this.tris.add(new float[] {(float) a[0], (float) a[1], (float) a[2], (float) b[0], (float) b[1], (float) b[2], (float) c[0], (float) c[1], (float) c[2]});
-		this.mats.add(this.material << 8 | this.structureFlag);
+		this.mats.add(this.material << 8 | this.structureFlag | (this.terrainFlag && this.structureFlag == 0 ? 2 : 0));
 	}
 
 	/** A floor (solid below) at height y over the given xz box. */
@@ -144,6 +145,117 @@ class VoxelizerTest {
 		assertFalse(run(0).unresolved);
 		Voxelizer.Result above = run(1);
 		assertEquals(0, above.full + above.partial);
+	}
+
+	/**
+	 * Found in game (2026-10-02): a double-sided or mirrored prop on the seabed gives an up-facing
+	 * crossing with a down-facing one just above it. Judged by the nearest crossing alone, "a
+	 * down-facing surface below and nothing above" filled every section up to the sky.
+	 */
+	@Test
+	void insideOutThinShellDoesNotFillTheWaterAbove() {
+		floor(-20, -20, 20, 20, -9.74);   // seabed
+		this.terrainFlag = false;
+		floor(-20, -20, 20, 20, -4.93);   // the prop: faces up...
+		ceiling(-20, -20, 20, 20, -4.81); // ...with a face just above it facing down
+		commit(0, 1);
+		Voxelizer.Result below = run(-1);
+		assertEquals(Voxelizer.FULL, below.kind[index(0, -12, 0)], "inside the seabed");
+		assertEquals(Voxelizer.EMPTY, below.kind[index(0, -2, 0)], "water above the prop");
+		assertEquals(0, run(0).full + run(0).partial, "open water");
+		assertEquals(0, run(1).full + run(1).partial, "sky");
+	}
+
+	@Test
+	void duplicatePropFacesCountOnce() {
+		floor(-20, -20, 20, 20, -24.5); // seabed
+		this.terrainFlag = false;
+		ceiling(-20, -20, 20, 20, -12); // a prop's bottom...
+		ceiling(-20, -20, 20, 20, -12); // ...twice (two overlapping colliders)
+		floor(-20, -20, 20, 20, -7);    // its top
+		commit(0);
+		Voxelizer.Result r = run(-1);
+		assertEquals(Voxelizer.FULL, r.kind[index(0, -10, 0)], "inside the prop");
+		assertEquals(Voxelizer.EMPTY, r.kind[index(0, -3, 0)], "water above it");
+		assertEquals(0, run(0).full + run(0).partial);
+	}
+
+	@Test
+	void propBottomUnderTheSeabedKeepsTheRockSolid() {
+		floor(-20, -20, 20, 20, -9.87); // seabed
+		this.terrainFlag = false;
+		ceiling(-20, -20, 20, 20, -9.97); // a prop sunk into it
+		floor(-20, -20, 20, 20, -9.05);
+		commit(0);
+		Voxelizer.Result r = run(-1);
+		assertEquals(Voxelizer.FULL, r.kind[index(0, -14, 0)], "rock under the seabed");
+		assertEquals(Voxelizer.EMPTY, r.kind[index(0, -5, 0)], "water above");
+	}
+
+	@Test
+	void propRestingOnTheSeabedIsSolid() {
+		floor(-20, -20, 20, 20, 2); // seabed
+		this.terrainFlag = false;
+		double x0 = 4, x1 = 8, z0 = 4, z1 = 8;
+		ceiling(x0, z0, x1, z1, 1.5);
+		floor(x0, z0, x1, z1, 6);
+		commit();
+		Voxelizer.Result r = run(0);
+		assertEquals(Voxelizer.FULL, r.kind[index(5, 4, 5)], "inside the prop, above the seabed");
+		assertEquals(Voxelizer.EMPTY, r.kind[index(5, 8, 5)], "above the prop");
+		assertEquals(Voxelizer.EMPTY, r.kind[index(12, 4, 12)], "beside it");
+	}
+
+	@Test
+	void terrainSeamIsNotAWall() {
+		// Overlapping terrain pieces at a seam: up, down, up within 2 cm (found in game).
+		floor(-20, -20, 20, 20, -16.38);
+		ceiling(-20, -20, 20, 20, -16.36);
+		floor(-20, -20, 20, 20, -16.355);
+		commit(0);
+		Voxelizer.Result r = run(-2);
+		assertEquals(Voxelizer.FULL, r.kind[index(0, -20, 0)]);
+		assertEquals(0, run(-1).full + run(-1).partial, "water above the seam");
+		assertEquals(0, run(0).full + run(0).partial);
+	}
+
+	@Test
+	void crackInTheTopSurfaceIsNotAPillar() {
+		// An arch: underside at -12, top at -6, but the top has a gap 0.2 wide at x 5.0..5.2 (a crack
+		// between terrain pieces, found in the kelp forest); seabed at -20.
+		floor(-20, -20, 20, 20, -20);
+		ceiling(-20, -20, 20, 20, -12);
+		floor(-20, -20, 5.0, 20, -6);
+		floor(5.2, -20, 20, 20, -6);
+		commit(0, 1);
+		Voxelizer.Result r = run(-1);
+		assertEquals(Voxelizer.FULL, r.kind[index(2, -9, 2)], "inside the arch");
+		assertEquals(Voxelizer.EMPTY, r.kind[index(2, -3, 2)], "water above the arch");
+		assertNotEquals(Voxelizer.FULL, r.kind[index(5, -3, 2)], "no pillar over the crack");
+		assertEquals(0, run(0).full + run(0).partial, "open water above");
+	}
+
+	@Test
+	void skirtUnderTheTopIsNotASecondInside() {
+		// Kelp forest, a terrain cell edge: overhang ceiling, a skirt face just under the top, the top.
+		ceiling(-20, -20, 20, 20, -54.94);
+		ceiling(-20, -20, 20, 20, -33.12);
+		floor(-20, -20, 20, 20, -32.80);
+		commit(-1, 0);
+		assertEquals(Voxelizer.FULL, run(-3).kind[index(0, -40, 0)], "inside the rock");
+		assertEquals(0, run(-2).full + run(-2).partial, "water above the rock");
+		assertEquals(0, run(0).full + run(0).partial);
+	}
+
+	@Test
+	void caveCeilingWithoutItsFloorIsAirUnderneath() {
+		ceiling(-20, -20, 20, 20, 5); // cave ceiling, the floor out of reach
+		floor(-20, -20, 20, 20, 12);  // the ground on top
+		commit();
+		Voxelizer.Result r = run(0);
+		assertEquals(Voxelizer.EMPTY, r.kind[index(0, 2, 0)]);
+		assertEquals(Voxelizer.FULL, r.kind[index(0, 8, 0)]);
+		assertEquals(Voxelizer.EMPTY, r.kind[index(0, 14, 0)]);
 	}
 
 	@Test

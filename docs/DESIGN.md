@@ -205,10 +205,17 @@ the player, nearest triangle, a fall probe through the collider); state dump `li
 ## Phase 1: ghost terrain, breath, dry volumes, input (verified in game)
 
 - **Voxelizer** (`world/ghost/Voxelizer`, pure Java, tested): 128x128 sub-voxel columns per
-  section; triangle crossings per column (CSR arrays, sorted by y); a sub-voxel is solid when the
-  nearest crossing above faces up, or with none above, the nearest below faces down. Columns
-  without crossings take the lowest crossing of the nearest known section above (or highest
-  below), up to 6 sections; sections that borrowed are redone when a neighbour arrives.
+  section; each column gathers its crossings over the known sections within 6 above and below
+  (each crossing once, in the section its y lies in; a face repeated right after itself counts
+  once). Fill by winding from below, **terrain and props apart** (`kTriTerrain`): terrain is one
+  open surface, inside under its lowest crossing when that faces up, and 0..1 (skirts and seams
+  at Subnautica's cell edges can't stack); props are closed shells, outside below, never solid
+  above the column's last crossing. A column still inside the terrain above its last crossing
+  while most columns within 2 sub-voxels close went through a crack between terrain pieces: it
+  closes at their mean top. (v7, 2026-10-02; before, the nearest crossing alone decided, and
+  inside-out props, seams, skirts and cracks raised invisible pillars to the sky: ~2000 stray
+  blocks in 24 m around the lifepod, ~4800 in 32 m of kelp forest; now 0-10 and 65.)
+  `subcraft ghostaudit [r]`, `subcraft column x z`, `subcraft revox x y z`, `subcraft whysolid x y z`.
   Verified: the host's terrain winding is outward after the mirror (seabed normal +y).
 - **GhostTerrain**: worker thread voxelizes, server thread writes (40k block checks per tick),
   never force-loads a chunk (waits for it), only replaces our terrain, air and water. Block states:

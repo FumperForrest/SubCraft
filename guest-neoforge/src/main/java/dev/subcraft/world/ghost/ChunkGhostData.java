@@ -22,7 +22,7 @@ import net.neoforged.neoforge.registries.NeoForgeRegistries;
  */
 public final class ChunkGhostData {
 	/** Bump when the voxelizer's output changes: old stamps then no longer match. */
-	public static final int VOXEL_VERSION = 2;
+	public static final int VOXEL_VERSION = 7;
 
 	/** Key: x & 15 | (z & 15) << 4 | y << 8 (block y, signed). */
 	final Map<Integer, long[]> masks = new HashMap<>();

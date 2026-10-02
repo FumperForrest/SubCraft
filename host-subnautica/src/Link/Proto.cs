@@ -7,7 +7,7 @@ namespace SubCraft.Link
 	public static class Proto
 	{
 		public const uint Magic = 0x43425553; // "SUBC"
-		public const uint Version = 23;
+		public const uint Version = 24;
 		public const string LinkFileName = "link.bin";
 		public const ulong HeartbeatTimeoutNs = 2_000_000_000UL;
 
@@ -53,7 +53,7 @@ namespace SubCraft.Link
 			MsFood = 0xD0, MsSaturation = 0xD4, MsAir = 0xD8, MsMaxAir = 0xDC;
 		public const int McStateBytes = 0xF0;
 		public const uint McInWorld = 1, McScreenOpen = 1 << 1, McOnGround = 1 << 2, McSneaking = 1 << 3, McSprinting = 1 << 4, McDead = 1 << 5,
-			McSwimming = 1 << 6, McFlying = 1 << 7, McInWater = 1 << 8, McEyeInWater = 1 << 9;
+			McSwimming = 1 << 6, McFlying = 1 << 7, McInWater = 1 << 8, McEyeInWater = 1 << 9, McLookCaptured = 1 << 10;
 
 		// ---- Overlay ----
 		public const long OcState = 0x00, OcFramesPublished = 0x08;

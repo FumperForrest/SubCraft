@@ -69,6 +69,29 @@ namespace SubCraft.Player
 		}
 	}
 
+	/// <summary>While a Minecraft mod has the mouse (LookCapture on the guest), the camera stands still.</summary>
+	[HarmonyPatch]
+	internal static class LookVectorPatch
+	{
+		private static System.Collections.Generic.IEnumerable<System.Reflection.MethodBase> TargetMethods()
+		{
+			foreach (var t in new[] { typeof(GameInputLegacy), typeof(GameInputSystem), typeof(GameInputSteam) })
+			{
+				var m = AccessTools.Method(t, "GetVector2", new[] { typeof(GameInput.Button) });
+				if (m != null) yield return m;
+			}
+		}
+
+		private static void Postfix(GameInput.Button __0, ref Vector2 __result)
+		{
+			var d = LinkDriver.Instance;
+			if (__0 == GameInput.Button.Look && PlayerPuppet.Active && d != null && d.HaveMc && d.Mc.Has(Link.Proto.McLookCaptured))
+			{
+				__result = Vector2.zero;
+			}
+		}
+	}
+
 	[HarmonyPatch]
 	internal static class ButtonHeldTimePatch
 	{

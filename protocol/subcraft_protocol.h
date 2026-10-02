@@ -26,7 +26,7 @@
 namespace subcraft::proto
 {
 	inline constexpr std::uint32_t kMagic = 0x43425553;  // "SUBC"
-	inline constexpr std::uint32_t kVersion = 23;
+	inline constexpr std::uint32_t kVersion = 24;
 
 	// Default file locations: macOS $TMPDIR/subcraft/link.bin, Windows %LOCALAPPDATA%\SubCraft\link.bin.
 	// Both sides accept an override (Java -Dsubcraft.link=<path>, host config, env SUBCRAFT_LINK).
@@ -111,6 +111,7 @@ namespace subcraft::proto
 		kMcFlying = 1u << 7,
 		kMcInWater = 1u << 8,
 		kMcEyeInWater = 1u << 9,
+		kMcLookCaptured = 1u << 10,  // a mod took the mouse (a drag, a lever): the host's look stands still (v24)
 	};
 
 	struct McState
@@ -225,7 +226,8 @@ namespace subcraft::proto
 		kInHurt = 7,         // host hurt the player: code = HurtKind, a = MC damage * 100 (negative: heal, e.g.
 		                     // a first aid kit), b = attacker id, c = HurtFlags
 		kInOpenMenu = 8,     // open Minecraft's pause/options menu
-		kInLook = 9,         // relative look: a, b = mouse dx, dy * 1000 (used only when MC owns the look)
+		kInLook = 9,         // raw mouse movement, every frame without a screen (v24): a, b = dx, dy * 1000 in
+		                     // pixels, y down. Minecraft turns its player with it unless a mod takes it.
 		kInHurtMob = 10,     // a host creature hurt a Minecraft mob (v22): code = HurtKind, a = MC damage * 100,
 		                     // b = mob id (MobRecord::id), c = attacker creature id (CreatureRecord::id)
 	};
