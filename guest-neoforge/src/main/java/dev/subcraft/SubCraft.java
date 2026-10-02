@@ -40,6 +40,7 @@ public final class SubCraft {
 			}
 		});
 		NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post e) -> CollisionConsumer.serverTick(e.getServer().overworld()));
+		NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post e) -> followHostTime(e.getServer().overworld()));
 		NeoForge.EVENT_BUS.addListener((ServerStartedEvent e) -> configureWorld(e.getServer().overworld()));
 		NeoForge.EVENT_BUS.addListener((PlayerTickEvent.Post e) -> holdBreath(e.getEntity()));
 		NeoForge.EVENT_BUS.addListener(SubCraft::spawnOnlyOnKnownTerrain);
@@ -47,6 +48,32 @@ public final class SubCraft {
 	}
 
 	private static final LinkView.HostState breathState = new LinkView.HostState();
+	private static final LinkView.HostState timeState = new LinkView.HostState();
+
+	/**
+	 * Subnautica's day/night drives Minecraft's time (MISSION.md 3.4). The host sends its cycle with
+	 * 0 = midnight, 0.25 = sunrise, 0.5 = noon, 0.75 = sunset; Minecraft's day starts at sunrise
+	 * (tick 0), noon 6000, sunset 12000, midnight 18000. The day counter keeps counting forward.
+	 */
+	private static void followHostTime(ServerLevel level) {
+		LinkView view = SubLink.view();
+		if (!SubWorld.is(level) || view == null || !SubLink.active()) {
+			return;
+		}
+		view.readHostState(timeState);
+		if (!timeState.inGame()) {
+			return;
+		}
+		long want = Math.floorMod(Math.round((timeState.dayFraction - 0.25) * 24000.0), 24000L);
+		long now = level.getDayTime();
+		long diff = Math.floorMod(want - Math.floorMod(now, 24000L), 24000L);
+		if (diff > 12000) {
+			diff -= 24000; // a small step back (host time jitter) rather than a whole day forward
+		}
+		if (diff != 0) {
+			level.setDayTime(now + diff);
+		}
+	}
 
 	/**
 	 * Oxygen belongs to the host (MISSION.md section 2): the air bar shows Subnautica's oxygen, and

@@ -43,6 +43,10 @@ namespace SubCraft
 			{
 				flags |= Proto.HostLoading;
 			}
+			if (Plugin.UnifiedHud.Value)
+			{
+				flags |= Proto.HostUnifiedHud;
+			}
 			s.Flags = flags;
 			s.WorldId = 1;
 			s.X = feetMc.x;
@@ -57,7 +61,9 @@ namespace SubCraft
 			s.TeleportSeq = teleportSeq;
 			s.ViewportW = (uint)Screen.width;
 			s.ViewportH = (uint)Screen.height;
-			s.DayFraction = DayNightCycle.main != null ? DayNightCycle.main.GetDayScalar() : 0.5f;
+			// GetDayNightCycleTime, not GetDayScalar: Subnautica's sun is up 0.125..0.875 of the raw
+			// scalar; the cycle time puts sunrise at 0.25 and sunset at 0.75, like Minecraft's day.
+			s.DayFraction = DayNightCycle.main != null ? DayNightCycle.main.GetDayNightCycleTime() : 0.5f;
 			var player = global::Player.main;
 			if (player != null)
 			{

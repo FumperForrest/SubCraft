@@ -26,7 +26,7 @@
 namespace subcraft::proto
 {
 	inline constexpr std::uint32_t kMagic = 0x43425553;  // "SUBC"
-	inline constexpr std::uint32_t kVersion = 17;
+	inline constexpr std::uint32_t kVersion = 18;
 
 	// Default file locations: macOS $TMPDIR/subcraft/link.bin, Windows %LOCALAPPDATA%\SubCraft\link.bin.
 	// Both sides accept an override (Java -Dsubcraft.link=<path>, host config, env SUBCRAFT_LINK).
@@ -76,6 +76,7 @@ namespace subcraft::proto
 		kHostLoading = 1u << 2,   // loading screen in progress
 		kHostUnderwater = 1u << 3,  // the host considers the player underwater (Player.IsUnderwater, v14)
 		kHostInside = 1u << 4,      // the player is inside a dry interior (lifepod, base, sub) (v14)
+		kHostUnifiedHud = 1u << 5,  // the host's dials show MC health/hunger: MC hides hearts, food, armour, air (v18)
 	};
 
 	struct HostState
@@ -88,7 +89,7 @@ namespace subcraft::proto
 		float         yaw, pitch;        // authoritative look (MC degrees)
 		std::uint32_t teleportSeq;       // MC teleports its player to pos when this changes
 		std::uint32_t viewportW, viewportH;
-		float         dayFraction;       // host time of day, 0..1 (0 = midnight)
+		float         dayFraction;       // host time of day, 0..1: 0 midnight, 0.25 sunrise, 0.5 noon, 0.75 sunset
 		// v14: breath. The host owns oxygen (MISSION.md section 2); Minecraft mirrors it into its air bar.
 		float         oxygen;            // seconds of oxygen left
 		float         oxygenCapacity;    // seconds when full (tanks included)

@@ -186,8 +186,10 @@ namespace SubCraft.Player
 				{
 					player.playerController.useRigidbody.isKinematic = savedKinematic;
 				}
+				// Hunger stays Minecraft's for as long as the link lasts (piloting, menus, teleports):
+				// only a lost link or player hands Subnautica its own food and water back.
 				var survival = player.GetComponent<Survival>();
-				if (survival != null)
+				if (survival != null && why != null)
 				{
 					survival.freezeStats = savedFreezeStats;
 				}

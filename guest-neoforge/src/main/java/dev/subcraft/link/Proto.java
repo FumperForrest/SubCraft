@@ -9,7 +9,7 @@ public final class Proto {
 	}
 
 	public static final int MAGIC = 0x43425553; // "SUBC"
-	public static final int VERSION = 17;
+	public static final int VERSION = 18;
 	public static final String LINK_FILE_NAME = "link.bin";
 	public static final long HEARTBEAT_TIMEOUT_NS = 2_000_000_000L;
 
@@ -66,6 +66,7 @@ public final class Proto {
 	public static final int HOST_LOADING = 1 << 2;
 	public static final int HOST_UNDERWATER = 1 << 3;
 	public static final int HOST_INSIDE = 1 << 4;
+	public static final int HOST_UNIFIED_HUD = 1 << 5;
 
 	// ---- McState (relative to OFF_MC_STATE) ----
 	public static final long MS_SEQ = 0x00;

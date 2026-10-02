@@ -3,6 +3,17 @@
 Things only you can judge (feel, taste) or decide. Everything here was already run by Claude
 unless marked **unverified**.
 
+## Phase 4 (started) — time and HUD: please try it first
+
+What it does: Subnautica's time of day drives Minecraft's (noon = 6000, midnight = 18000), and in
+survival Subnautica's health dial shows your Minecraft health, the food dial your Minecraft hunger.
+Minecraft's hearts, hunger, armour and air bars are hidden; the water dial is hidden (Minecraft has
+no thirst). `UnifiedHud = false` in `BepInEx\config\dev.subcraft.host.cfg` brings Minecraft's bars back.
+
+**Try:** a survival game; get hurt in Minecraft (`python tools/mc_cmd.py "/damage @p 6"`), eat, go
+hungry. **Expected rough edge:** an empty dark ring where the water dial was.
+**Send back:** whether the dials feel right, and whether you'd rather keep a water dial.
+
 ## Windows setup (2026-10-02)
 
 Everything below was set up on the Windows PC; run commands from PowerShell in the repo root.
@@ -20,6 +31,8 @@ Everything below was set up on the Windows PC; run commands from PowerShell in t
 - If PowerShell refuses the scripts ("running scripts is disabled"), call them as
   `powershell -ExecutionPolicy Bypass -File tools\mc_dev.ps1 start`.
 - The shared folder is `%LOCALAPPDATA%\SubCraft`.
+- In Git Bash, `export MSYS_NO_PATHCONV=1` before `python tools/mc_cmd.py "/time ..."`: otherwise
+  Git Bash turns `/time` into a Windows path. PowerShell is unaffected.
 - `sn_dev.ps1` keeps Subnautica's screen prefs in the registry
   (`HKCU\Software\Unknown Worlds\Subnautica`); the first `start` backs them up to
   `~\Documents\Development\Modding\SubCraft-save-backups\subnautica-prefs-original.json` and `stop`

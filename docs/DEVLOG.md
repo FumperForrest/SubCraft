@@ -22,6 +22,17 @@ Newest first. One entry per session (MISSION.md rule 11).
   player is teleported along with the vehicle (every 0.5 s when > 2 m off), so leaving the
   vehicle hands control back at once instead of after a long teleport.
 - Harness: `pilot` (board the nearest vehicle), `eject`; the dump has `player.mode`.
+- **Phase 4 started — time:** the host sends `DayNightCycle.GetDayNightCycleTime()` (0 midnight,
+  0.25 sunrise, 0.5 noon, 0.75 sunset; the raw `GetDayScalar` has the sun up 0.125..0.875) and the
+  server sets the SubCraft world's day time to match every tick. Verified: noon -> 6035, midnight
+  -> 18108.
+- **Phase 4 — unified HUD (protocol v18, `kHostUnifiedHud`):** prefixes on
+  `uGUI_HealthBar/uGUI_FoodBar.SetValue` show MC health/hunger on the 0-100 scale while a Minecraft
+  player is in world; the water dial fades out (CanvasGroup); Minecraft cancels its health, armour,
+  food and air layers (`RenderGuiLayerEvent.Pre`). Config `Hud.UnifiedHud`. Subnautica's food and
+  water now stay frozen for the whole link (they thawed while piloting). Verified in survival:
+  damage 6 -> dial ~87% after regen, hunger dial 19/20, MC bars gone. Open: the water dial's empty
+  ring stays; the low-health pulse and damage punch still follow Subnautica's LiveMixin.
 
 **Verified in game (Windows)**: `fake_host.py` six `[ok]`; both games linked (heartbeat 5–8 ms),
 W/Space, clicks, block placement, a zombie and the held block drawn; Seamoth boarded: kinematic

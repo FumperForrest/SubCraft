@@ -1,8 +1,8 @@
 {
-  "version": 17,
+  "version": 18,
   "constants": {
     "kMagic": 1128420691,
-    "kVersion": 17,
+    "kVersion": 18,
     "kHeartbeatTimeoutNs": 2000000000,
     "kOffHeader": 0,
     "kOffHostState": 256,
