@@ -311,6 +311,12 @@ namespace SubCraft.Dev
 					case "fmod":
 						msg = Audio.SoundBridge.ListBuses() + $"played {Audio.SoundBridge.Played} failed {Audio.SoundBridge.Failed} files {Audio.SoundBridge.FileCount}";
 						break;
+					case "intopod":
+						// Inside the lifepod, the way the game spawns the player there.
+						EscapePod.main.RespawnPlayer();
+						global::Player.main.currentEscapePod = EscapePod.main;
+						msg = EscapePod.main.playerSpawn.position.ToString();
+						break;
 					case "fmodchain":
 						msg = Audio.SoundBridge.DescribeChain();
 						break;

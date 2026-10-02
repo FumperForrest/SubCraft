@@ -60,6 +60,18 @@ Newest first. One entry per session (MISSION.md rule 11).
   water (`Ocean.GetDepthOf(camera) > 0`, not inside). Harness: `fmod` (bus list + counters),
   `fmodchain` (effect chain). Verified: 6 plays, 5 files, 0 FMOD failures, music dropped; cutoff
   22000 in air, 900 at depth, back to 22000.
+- **Sean: FOV stutters while flying/moving.** `PDACameraFOVControl.Update` eases the FOV toward
+  Subnautica's setting every frame; we only re-applied Minecraft's FOV when it changed, so the two
+  alternated whenever Minecraft's FOV moved. Now that script stands aside while Minecraft drives
+  (not with the PDA open) and the FOV is set every frame. Verified: steady 66 swimming (70 x 0.857
+  x 1.1 flying), 75.9 sprint-swimming, no drift toward 60.
+- **Sean: the lifepod glitches.** Two causes. (1) Regression from the camera work: the puppet's
+  eye was a cached world position, so when Subnautica moved the player itself (hatch, leaving a
+  vehicle, respawn) Minecraft was teleported back to the old spot and yanked the player after it;
+  the eye is now kept relative to the player. (2) The bobbing pod's colliders were re-captured on
+  every 5 cm / 1 degree of motion and Minecraft re-voxelized them several times a second; while
+  linked the pod is held still (`LifepodAnchor`: kinematic). Verified with harness `intopod`:
+  inside, walking, stable for 10 s, 2 sections voxelized (first load only).
 
 **Verified in game (Windows)**: `fake_host.py` six `[ok]`; both games linked (heartbeat 5–8 ms),
 W/Space, clicks, block placement, a zombie and the held block drawn; Seamoth boarded: kinematic

@@ -111,6 +111,7 @@ namespace SubCraft
 				Harvester.Frame(view, global::Player.main.transform.position, velocityMc);
 				Dry.Frame(view, Harvester.Epoch, global::Player.main.transform.position);
 			}
+			World.LifepodAnchor.Frame(McLinked && inGame);
 			PlayerPuppet.Frame(this);
 			Audio.SoundBridge.Frame();
 			Diag();

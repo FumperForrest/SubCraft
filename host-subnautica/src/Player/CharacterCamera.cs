@@ -18,8 +18,21 @@ namespace SubCraft.Player
 	/// </summary>
 	public static class CharacterCamera
 	{
-		/// <summary>The first-person eye pose of the latest camera update, before any Minecraft offset.</summary>
-		public static Vector3 EyePosition { get; private set; }
+		/// <summary>
+		/// The first-person eye of the latest camera update, before any Minecraft offset. Kept relative
+		/// to the player, so it follows when Subnautica moves the player between camera updates (hatches,
+		/// leaving a vehicle, respawn): a world-space copy sent Minecraft back to the old spot.
+		/// </summary>
+		public static Vector3 EyePosition
+		{
+			get
+			{
+				var player = global::Player.main;
+				return player != null ? player.transform.TransformPoint(eyeLocal) : eyeLocal;
+			}
+		}
+
+		private static Vector3 eyeLocal;
 		public static Vector3 LookForward { get; private set; }
 		public static bool HaveEye { get; private set; }
 
@@ -65,7 +78,8 @@ namespace SubCraft.Player
 				baseLocalPos = cameraTf.localPosition;
 				baseLocalRot = cameraTf.localRotation;
 			}
-			EyePosition = cameraTf.position;
+			var player = global::Player.main;
+			eyeLocal = player != null ? player.transform.InverseTransformPoint(cameraTf.position) : cameraTf.position;
 			LookForward = cameraTf.forward;
 			HaveEye = true;
 			if (!active)
@@ -105,12 +119,19 @@ namespace SubCraft.Player
 				hand.localScale = new Vector3(k, k, 1f);
 			}
 
-			ApplyFov(mc.Fov);
+			var pda = global::Player.main.GetPDA();
+			if (pda == null || !pda.isInUse)
+			{
+				ApplyFov(mc.Fov); // with the PDA open, Subnautica's PDA zoom has the FOV
+			}
 		}
+
+		/// <summary>Minecraft owns the FOV now (PDACameraFOVControl stands aside, see below).</summary>
+		public static bool OwnsFov => lastFov > 0f;
 
 		private static void ApplyFov(float fov)
 		{
-			if (fov < 1f || fov > 179f || Mathf.Abs(fov - lastFov) < 0.01f || SNCameraRoot.main == null)
+			if (fov < 1f || fov > 179f || SNCameraRoot.main == null)
 			{
 				return;
 			}
@@ -140,6 +161,21 @@ namespace SubCraft.Player
 				return 1f;
 			}
 			return Mathf.Tan(worldFov * 0.5f * Mathf.Deg2Rad) / Mathf.Tan(handFov * 0.5f * Mathf.Deg2Rad);
+		}
+	}
+
+	/// <summary>
+	/// Subnautica eases the FOV toward its own setting every frame (and to 60 with the PDA open).
+	/// While Minecraft drives the camera that fought Minecraft's FOV and made it stutter whenever
+	/// Minecraft's changed (sprinting, flying, water); with the PDA open Subnautica keeps its zoom.
+	/// </summary>
+	[HarmonyPatch(typeof(PDACameraFOVControl), "Update")]
+	internal static class PdaFovPatch
+	{
+		private static bool Prefix()
+		{
+			var pda = global::Player.main != null ? global::Player.main.GetPDA() : null;
+			return !(CharacterCamera.OwnsFov && PlayerPuppet.Active && (pda == null || !pda.isInUse));
 		}
 	}
 
