@@ -143,6 +143,12 @@ namespace SubCraft.Dev
 					case "key":
 						InputCapture.Inject(LinkDriver.Instance.Link.View, (int)cmd["glfw"], (bool?)cmd["down"] ?? true);
 						break;
+					case "gamemode":
+						// Dev slot only matters: survival / freedom / creative (oxygen tests need survival).
+						var gm = (string)cmd["mode"] ?? "survival";
+						GameModeUtils.SetGameMode(gm == "creative" ? GameModeOption.Creative : gm == "freedom" ? GameModeOption.Freedom : GameModeOption.Survival, GameModeOption.None);
+						msg = gm;
+						break;
 					case "newgame":
 						inner = NewGame((string)cmd["mode"] ?? "creative");
 						break;

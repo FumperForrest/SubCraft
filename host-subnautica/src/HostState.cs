@@ -55,6 +55,21 @@ namespace SubCraft
 			s.ViewportW = (uint)Screen.width;
 			s.ViewportH = (uint)Screen.height;
 			s.DayFraction = DayNightCycle.main != null ? DayNightCycle.main.GetDayScalar() : 0.5f;
+			var player = global::Player.main;
+			if (player != null)
+			{
+				if (player.IsUnderwater())
+				{
+					flags |= Proto.HostUnderwater;
+				}
+				if (player.IsInside())
+				{
+					flags |= Proto.HostInside;
+				}
+				s.Flags = flags;
+				s.Oxygen = player.GetOxygenAvailable();
+				s.OxygenCapacity = player.GetOxygenCapacity();
+			}
 		}
 	}
 }

@@ -94,6 +94,7 @@ int main()
 	F(HostState, seq); F(HostState, flags); F(HostState, worldId); F(HostState, collisionEpoch);
 	F(HostState, posX); F(HostState, posY); F(HostState, posZ); F(HostState, yaw); F(HostState, pitch);
 	F(HostState, teleportSeq); F(HostState, viewportW); F(HostState, viewportH); F(HostState, dayFraction);
+	F(HostState, oxygen); F(HostState, oxygenCapacity);
 	endStruct();
 
 	S(McState);
@@ -146,6 +147,15 @@ int main()
 	S(ColRegion);
 	F(ColRegion, minX); F(ColRegion, minY); F(ColRegion, minZ); F(ColRegion, maxX); F(ColRegion, maxY);
 	F(ColRegion, maxZ); F(ColRegion, epoch); F(ColRegion, count);
+	endStruct();
+
+	S(ColDryHeader);
+	F(ColDryHeader, epoch); F(ColDryHeader, count);
+	endStruct();
+
+	S(DryBox);
+	F(DryBox, minX); F(DryBox, minY); F(DryBox, minZ); F(DryBox, maxX); F(DryBox, maxY); F(DryBox, maxZ);
+	F(DryBox, id); F(DryBox, flags);
 	endStruct();
 
 	S(ColTri);

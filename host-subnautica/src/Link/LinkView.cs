@@ -83,6 +83,7 @@ namespace SubCraft.Link
 			public uint TeleportSeq;
 			public uint ViewportW, ViewportH;
 			public float DayFraction;
+			public float Oxygen, OxygenCapacity;
 		}
 
 		/// <summary>Single writer (the Unity main thread). Advances seq by 2 per call.</summary>
@@ -104,6 +105,8 @@ namespace SubCraft.Link
 			Put(o + Proto.HsViewportW, s.ViewportW);
 			Put(o + Proto.HsViewportH, s.ViewportH);
 			Put(o + Proto.HsDayFraction, s.DayFraction);
+			Put(o + Proto.HsOxygen, s.Oxygen);
+			Put(o + Proto.HsOxygenCapacity, s.OxygenCapacity);
 			I32Release(o + Proto.HsSeq, seq + 2);
 		}
 

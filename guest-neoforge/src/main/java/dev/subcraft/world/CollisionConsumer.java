@@ -5,6 +5,7 @@ import static dev.subcraft.link.Proto.*;
 import dev.subcraft.SubCraft;
 import dev.subcraft.link.LinkView;
 import dev.subcraft.link.SubLink;
+import dev.subcraft.world.ghost.DryVolumes;
 import dev.subcraft.world.ghost.GhostTerrain;
 import dev.subcraft.world.tri.TriStore;
 import java.util.ArrayDeque;
@@ -53,15 +54,32 @@ public final class CollisionConsumer {
 			current = null;
 			TriStore.clear();
 			GhostTerrain.clear();
+			DryVolumes.clear();
 		}
 		view.drainCollision((type, off, bytes) -> read(view, type, off, bytes), 256);
 		apply(level);
 		GhostTerrain.tick(level);
+		DryVolumes.tick(level);
 	}
 
 	private static void read(LinkView v, int type, long off, int bytes) {
 		if (type == COL_TRIS) {
 			readTris(v, off, bytes);
+			return;
+		}
+		if (type == COL_DRY) {
+			int count = v.getInt(off + 4);
+			if (count < 0 || COL_DRY_HEADER_BYTES + (long) count * DRY_BOX_BYTES > bytes) {
+				SubCraft.LOG.warn("SubCraft: malformed dry volumes");
+				return;
+			}
+			float[] boxes = new float[count * 6];
+			for (int i = 0; i < count; i++) {
+				for (int k = 0; k < 6; k++) {
+					boxes[i * 6 + k] = v.getFloat(off + COL_DRY_HEADER_BYTES + (long) i * DRY_BOX_BYTES + k * 4L);
+				}
+			}
+			DryVolumes.set(boxes);
 			return;
 		}
 		if (type == COL_CLEAR) {
@@ -72,6 +90,7 @@ public final class CollisionConsumer {
 				current = null;
 				TriStore.clear();
 				GhostTerrain.clear();
+				DryVolumes.clear();
 				SubCraft.LOG.info("SubCraft: collision epoch {}", epoch);
 			}
 			return;

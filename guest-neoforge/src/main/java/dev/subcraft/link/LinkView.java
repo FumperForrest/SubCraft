@@ -121,6 +121,15 @@ public final class LinkView {
 		public int teleportSeq;
 		public int viewportW, viewportH;
 		public float dayFraction;
+		public float oxygen, oxygenCapacity;
+
+		public boolean underwater() {
+			return (this.flags & HOST_UNDERWATER) != 0;
+		}
+
+		public boolean inside() {
+			return (this.flags & HOST_INSIDE) != 0;
+		}
 
 		public boolean inGame() {
 			return (this.flags & HOST_IN_GAME) != 0;
@@ -160,6 +169,8 @@ public final class LinkView {
 			int vw = getInt(b + HS_VIEWPORT_W);
 			int vh = getInt(b + HS_VIEWPORT_H);
 			float day = getFloat(b + HS_DAY_FRACTION);
+			float oxygen = getFloat(b + HS_OXYGEN);
+			float oxygenCapacity = getFloat(b + HS_OXYGEN_CAPACITY);
 			VarHandle.loadLoadFence();
 			if (getIntAcquire(b + HS_SEQ) == seq1) {
 				out.seq = seq1;
@@ -175,6 +186,8 @@ public final class LinkView {
 				out.viewportW = vw;
 				out.viewportH = vh;
 				out.dayFraction = day;
+				out.oxygen = oxygen;
+				out.oxygenCapacity = oxygenCapacity;
 				return true;
 			}
 		}

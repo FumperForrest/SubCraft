@@ -54,7 +54,12 @@ public final class InputBridge {
 				mouse.subcraft$onPress(handle, code, a != 0 ? GLFW.GLFW_PRESS : GLFW.GLFW_RELEASE, b);
 			}
 			case Proto.IN_SCROLL -> mouse.subcraft$onScroll(handle, 0.0, a / 120.0);
-			case Proto.IN_CURSOR -> mouse.subcraft$onMove(handle, a, b);
+			case Proto.IN_CURSOR -> {
+				// Overlay pixels -> window points (GLFW cursor coordinates; Retina: half).
+				var window = minecraft.getWindow();
+				double scale = window.getWidth() > 0 ? (double) window.getScreenWidth() / window.getWidth() : 1.0;
+				mouse.subcraft$onMove(handle, a * scale, b * scale);
+			}
 			case Proto.IN_TEXT -> {
 				if (minecraft.screen != null && Character.isValidCodePoint(a)) {
 					// KeyboardHandler.charTyped is private; screens take characters directly.

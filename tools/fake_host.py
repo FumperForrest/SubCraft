@@ -21,7 +21,7 @@ import zlib
 
 # ---- protocol (protocol/subcraft_protocol.h; tools/check_layout.sh keeps that header honest) ----
 MAGIC = 0x43425553
-VERSION = 13
+VERSION = 14
 OFF_HOST = 0x100
 OFF_MC = 0x200
 OFF_OVL = 0x300
@@ -94,7 +94,7 @@ class Link:
     def write_host_state(self, flags, pos, yaw, pitch, teleport_seq, day=0.5):
         self.host_seq += 1
         struct.pack_into("<I", self.m, OFF_HOST, self.host_seq * 2 - 1)  # odd: writing
-        struct.pack_into("<IIIdddffIIIf", self.m, OFF_HOST + 4, flags, 1, 1, pos[0], pos[1], pos[2], yaw, pitch, teleport_seq, W, H, day)
+        struct.pack_into("<IIIdddffIIIfff", self.m, OFF_HOST + 4, flags, 1, 1, pos[0], pos[1], pos[2], yaw, pitch, teleport_seq, W, H, day, 45.0, 45.0)
         struct.pack_into("<I", self.m, OFF_HOST, self.host_seq * 2)
 
     def send_input(self, typ, code, a=0, b=0, c=0):

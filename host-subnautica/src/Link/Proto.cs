@@ -7,7 +7,7 @@ namespace SubCraft.Link
 	public static class Proto
 	{
 		public const uint Magic = 0x43425553; // "SUBC"
-		public const uint Version = 13;
+		public const uint Version = 14;
 		public const string LinkFileName = "link.bin";
 		public const ulong HeartbeatTimeoutNs = 2_000_000_000UL;
 
@@ -38,9 +38,10 @@ namespace SubCraft.Link
 
 		// ---- HostState (relative to OffHostState) ----
 		public const long HsSeq = 0x00, HsFlags = 0x04, HsWorldId = 0x08, HsCollisionEpoch = 0x0C, HsPosX = 0x10, HsPosY = 0x18, HsPosZ = 0x20,
-			HsYaw = 0x28, HsPitch = 0x2C, HsTeleportSeq = 0x30, HsViewportW = 0x34, HsViewportH = 0x38, HsDayFraction = 0x3C;
-		public const int HostStateBytes = 0x40;
-		public const uint HostInGame = 1, HostMenuOpen = 1 << 1, HostLoading = 1 << 2;
+			HsYaw = 0x28, HsPitch = 0x2C, HsTeleportSeq = 0x30, HsViewportW = 0x34, HsViewportH = 0x38, HsDayFraction = 0x3C,
+			HsOxygen = 0x40, HsOxygenCapacity = 0x44;
+		public const int HostStateBytes = 0x60;
+		public const uint HostInGame = 1, HostMenuOpen = 1 << 1, HostLoading = 1 << 2, HostUnderwater = 1 << 3, HostInside = 1 << 4;
 
 		// ---- McState (relative to OffMcState) ----
 		public const long MsSeq = 0x00, MsFlags = 0x04, MsX = 0x08, MsY = 0x10, MsZ = 0x18, MsYaw = 0x20, MsPitch = 0x24, MsEyeHeight = 0x28,
@@ -89,7 +90,8 @@ namespace SubCraft.Link
 		// ---- Collision ring (relative to OffCollisionRing) ----
 		public const long CrHead = 0x00, CrTail = 0x40, CrData = 0x80;
 		public const long CrDataBytes = CollisionRingBytes - CrData;
-		public const uint ColPad = 0, ColClear = 1, ColRegion = 2, ColTris = 3;
+		public const uint ColPad = 0, ColClear = 1, ColRegion = 2, ColTris = 3, ColDry = 4;
+		public const int ColDryHeaderBytes = 8, DryBoxBytes = 32;
 		public const int ColTriBytes = 40;
 		public const uint TriStructure = 1, TriTerrain = 2;
 		public const int TriMaterialShift = 8;

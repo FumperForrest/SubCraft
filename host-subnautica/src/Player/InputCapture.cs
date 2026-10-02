@@ -7,8 +7,7 @@ namespace SubCraft.Player
 	/// <summary>
 	/// Reads the real keyboard and mouse through Unity's input and forwards them to Minecraft as
 	/// GLFW events. Subnautica keeps Tab (PDA) and Esc (pause menu) and the mouse look; everything
-	/// else also goes to Minecraft while in game. Phase 1 adds full routing (Minecraft screens get
-	/// the cursor, Subnautica stops acting on routed keys).
+	/// else goes to Minecraft while in game, and InputRouter keeps Subnautica from also acting on it.
 	/// </summary>
 	public static class InputCapture
 	{
@@ -45,7 +44,8 @@ namespace SubCraft.Player
 				Input.GetKey(KeyCode.LeftCommand) || Input.GetKey(KeyCode.RightCommand));
 			foreach (int unity in Keys)
 			{
-				if (HostOnly.Contains(unity))
+				// Esc closes an open Minecraft screen instead of pausing Subnautica.
+				if (HostOnly.Contains(unity) && !(unity == (int)KeyCode.Escape && McScreenInput.Active))
 				{
 					continue;
 				}
@@ -61,10 +61,26 @@ namespace SubCraft.Player
 			for (int button = 0; button < HeldButtons.Length; button++)
 			{
 				bool down = Input.GetMouseButton(button);
+				// A left click on something Subnautica can interact with is Subnautica's (InputRouter).
+				if (down && !HeldButtons[button] && button == 0 && !McScreenInput.Active && InputRouter.HostInteractTarget())
+				{
+					continue;
+				}
 				if (down != HeldButtons[button])
 				{
 					HeldButtons[button] = down;
 					view.PushInput(Proto.InMouseButton, (ushort)button, down ? 1 : 0, mods, 0);
+				}
+			}
+			// Typed characters, for Minecraft's text fields (chat, signs, search).
+			if (McScreenInput.Active)
+			{
+				foreach (char ch in Input.inputString)
+				{
+					if (ch >= ' ' && ch != 127)
+					{
+						view.PushInput(Proto.InText, 0, ch);
+					}
 				}
 			}
 			float wheel = Input.mouseScrollDelta.y;

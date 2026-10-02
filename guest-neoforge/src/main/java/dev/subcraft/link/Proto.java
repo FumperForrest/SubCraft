@@ -9,7 +9,7 @@ public final class Proto {
 	}
 
 	public static final int MAGIC = 0x43425553; // "SUBC"
-	public static final int VERSION = 13;
+	public static final int VERSION = 14;
 	public static final String LINK_FILE_NAME = "link.bin";
 	public static final long HEARTBEAT_TIMEOUT_NS = 2_000_000_000L;
 
@@ -57,11 +57,15 @@ public final class Proto {
 	public static final long HS_VIEWPORT_W = 0x34;
 	public static final long HS_VIEWPORT_H = 0x38;
 	public static final long HS_DAY_FRACTION = 0x3C;
-	public static final int HOST_STATE_BYTES = 0x40;
+	public static final long HS_OXYGEN = 0x40;
+	public static final long HS_OXYGEN_CAPACITY = 0x44;
+	public static final int HOST_STATE_BYTES = 0x60;
 
 	public static final int HOST_IN_GAME = 1;
 	public static final int HOST_MENU_OPEN = 1 << 1;
 	public static final int HOST_LOADING = 1 << 2;
+	public static final int HOST_UNDERWATER = 1 << 3;
+	public static final int HOST_INSIDE = 1 << 4;
 
 	// ---- McState (relative to OFF_MC_STATE) ----
 	public static final long MS_SEQ = 0x00;
@@ -185,6 +189,9 @@ public final class Proto {
 	public static final int COL_CLEAR = 1;
 	public static final int COL_REGION = 2;
 	public static final int COL_TRIS = 3;
+	public static final int COL_DRY = 4;
+	public static final int COL_DRY_HEADER_BYTES = 8;
+	public static final int DRY_BOX_BYTES = 32;
 	public static final int COL_TRI_BYTES = 40;
 	public static final int TRI_STRUCTURE = 1, TRI_TERRAIN = 2, TRI_MATERIAL_SHIFT = 8;
 	public static final int COL_REGION_BYTES = 32;

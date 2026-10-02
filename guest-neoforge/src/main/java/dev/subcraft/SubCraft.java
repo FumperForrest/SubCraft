@@ -4,6 +4,7 @@ import com.mojang.logging.LogUtils;
 import dev.subcraft.world.CollisionConsumer;
 import dev.subcraft.world.SubBlocks;
 import dev.subcraft.world.SubWorld;
+import dev.subcraft.link.LinkView;
 import dev.subcraft.link.SubLink;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -29,13 +30,26 @@ public final class SubCraft {
 		NeoForge.EVENT_BUS.addListener((PlayerTickEvent.Post e) -> holdBreath(e.getEntity()));
 	}
 
+	private static final LinkView.HostState breathState = new LinkView.HostState();
+
 	/**
-	 * Oxygen belongs to the host (MISSION.md section 2): Minecraft never drowns a player in the
-	 * SubCraft world while a host is linked. Phase 1 mirrors the host's oxygen into the air bar.
+	 * Oxygen belongs to the host (MISSION.md section 2): the air bar shows Subnautica's oxygen, and
+	 * Minecraft never drowns a player in the SubCraft world while a host is linked (resetting the
+	 * air every tick keeps it from ever counting down to drowning damage; running out of oxygen is
+	 * Subnautica's suffocation).
 	 */
 	private static void holdBreath(Player player) {
-		if (player instanceof ServerPlayer && SubWorld.is(player.level()) && SubLink.active()) {
-			player.setAirSupply(player.getMaxAirSupply());
+		LinkView view = SubLink.view();
+		if (!(player instanceof ServerPlayer) || !SubWorld.is(player.level()) || view == null || !SubLink.active()) {
+			return;
+		}
+		view.readHostState(breathState);
+		int max = player.getMaxAirSupply();
+		if (breathState.oxygenCapacity > 0) {
+			float f = Math.max(0, Math.min(1, breathState.oxygen / breathState.oxygenCapacity));
+			player.setAirSupply(Math.round(f * max));
+		} else {
+			player.setAirSupply(max);
 		}
 	}
 

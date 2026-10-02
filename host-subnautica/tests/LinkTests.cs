@@ -76,7 +76,7 @@ namespace SubCraft.Tests
 				["seq"] = Proto.HsSeq, ["flags"] = Proto.HsFlags, ["worldId"] = Proto.HsWorldId, ["collisionEpoch"] = Proto.HsCollisionEpoch,
 				["posX"] = Proto.HsPosX, ["posY"] = Proto.HsPosY, ["posZ"] = Proto.HsPosZ, ["yaw"] = Proto.HsYaw, ["pitch"] = Proto.HsPitch,
 				["teleportSeq"] = Proto.HsTeleportSeq, ["viewportW"] = Proto.HsViewportW, ["viewportH"] = Proto.HsViewportH,
-				["dayFraction"] = Proto.HsDayFraction,
+				["dayFraction"] = Proto.HsDayFraction, ["oxygen"] = Proto.HsOxygen, ["oxygenCapacity"] = Proto.HsOxygenCapacity,
 			};
 			foreach (var kv in hs) Assert.True(kv.Value == F("HostState", kv.Key), "HostState." + kv.Key);
 			Assert.Equal(Proto.McStateBytes, Size("McState"));
@@ -112,6 +112,9 @@ namespace SubCraft.Tests
 			Assert.Equal(Proto.ColRegionBytes, Size("ColRegion"));
 			Assert.Equal(Proto.ColBlockBytes, Size("ColBlock"));
 			Assert.Equal(Proto.ColTriBytes, Size("ColTri"));
+			Assert.Equal(Proto.ColDryHeaderBytes, Size("ColDryHeader"));
+			Assert.Equal(Proto.DryBoxBytes, Size("DryBox"));
+			Assert.Equal(24, F("DryBox", "id"));
 			Assert.Equal(36, F("ColTri", "flags"));
 			Assert.Equal(Proto.TriMaterialShift, C("kTriMaterialShift"));
 			Assert.Equal(Proto.ColBlockBits, F("ColBlock", "bits"));

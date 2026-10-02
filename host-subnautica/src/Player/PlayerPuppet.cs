@@ -78,10 +78,19 @@ namespace SubCraft.Player
 				}
 				Active = true;
 				savedKinematic = controller.useRigidbody.isKinematic;
+				var survival = player.GetComponent<Survival>();
+				savedFreezeStats = survival != null && survival.freezeStats;
 				Plugin.Log.LogInfo("SubCraft: Minecraft now drives the player");
 			}
 			controller.useRigidbody.isKinematic = true;
 			controller.useRigidbody.velocity = Vector3.zero;
+			// Hunger is Minecraft's (MISSION.md section 2): Subnautica's food and water stand still.
+			// Every frame: Player.UnfreezeStats (beds, benches) clears the flag.
+			var stats = player.GetComponent<Survival>();
+			if (stats != null)
+			{
+				stats.freezeStats = true;
+			}
 
 			// Put Subnautica's camera on Minecraft's eye (feet + eye height: sneaking and swimming
 			// lower it). The camera hangs off the player, so moving the player by the difference does it.
@@ -101,6 +110,7 @@ namespace SubCraft.Player
 		}
 
 		private static float lastRescueCheck;
+		private static bool savedFreezeStats;
 
 		/// <summary>
 		/// If Minecraft's feet ended up inside Subnautica's terrain (a ray going up hits the terrain's
@@ -148,6 +158,11 @@ namespace SubCraft.Player
 			if (player != null)
 			{
 				player.playerController.useRigidbody.isKinematic = savedKinematic;
+				var survival = player.GetComponent<Survival>();
+				if (survival != null)
+				{
+					survival.freezeStats = savedFreezeStats;
+				}
 			}
 			Plugin.Log.LogInfo($"SubCraft: Subnautica drives the player again{(why != null ? " (" + why + ")" : "")}");
 		}

@@ -169,7 +169,7 @@ public final class GhostTerrain {
 				byte kind = r.kind[i];
 				BlockState want;
 				if (kind == Voxelizer.EMPTY) {
-					want = water ? Blocks.WATER.defaultBlockState() : Blocks.AIR.defaultBlockState();
+					want = water && !DryVolumes.isDry(pos.getX(), pos.getY(), pos.getZ()) ? Blocks.WATER.defaultBlockState() : Blocks.AIR.defaultBlockState();
 					MaskStore.remove(key);
 				} else {
 					want = terrain.setValue(TerrainBlock.WATERLOGGED, water).setValue(TerrainBlock.PARTIAL, kind == Voxelizer.PARTIAL)

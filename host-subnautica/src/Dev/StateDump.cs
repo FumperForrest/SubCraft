@@ -67,7 +67,13 @@ namespace SubCraft.Dev
 					["depth"] = Ocean.GetDepthOf(player.gameObject),
 					["biome"] = player.GetBiomeString(),
 					["kinematic"] = player.playerController.useRigidbody.isKinematic,
+					["oxygen"] = player.GetOxygenAvailable(),
+					["oxygenCapacity"] = player.GetOxygenCapacity(),
 				};
+			}
+			if (EscapePod.main != null)
+			{
+				o["lifepod"] = new JObject { ["pos"] = Vec(EscapePod.main.transform.position), ["dryVolumes"] = LinkDriver.Instance != null ? LinkDriver.Instance.Dry.Count : 0 };
 			}
 			var cam = MainCamera.camera;
 			if (cam != null)

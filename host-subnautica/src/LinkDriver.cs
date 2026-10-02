@@ -20,6 +20,7 @@ namespace SubCraft
 		public bool HaveMc;
 		public uint TeleportSeq { get; private set; }
 		public World.CollisionHarvester Harvester { get; } = new World.CollisionHarvester();
+		public World.DryVolumes Dry { get; } = new World.DryVolumes();
 
 		private LinkView.HostState host;
 		private readonly List<LinkView.McEvent> events = new List<LinkView.McEvent>();
@@ -63,6 +64,7 @@ namespace SubCraft
 				if (alive)
 				{
 					Harvester.Reset(view);
+					Dry.Reset();
 					RequestTeleport("link up");
 				}
 				else
@@ -91,9 +93,11 @@ namespace SubCraft
 			wasInGame = inGame;
 
 			InputCapture.Frame(view, McLinked && inGame && !HostState.MenuOpen());
+			McScreenInput.Frame(this);
 			if (McLinked && inGame && global::Player.main != null)
 			{
 				Harvester.Frame(view, global::Player.main.transform.position);
+				Dry.Frame(view, Harvester.Epoch, global::Player.main.transform.position);
 			}
 			PlayerPuppet.Frame(this);
 			Diag();

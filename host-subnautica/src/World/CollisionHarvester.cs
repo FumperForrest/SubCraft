@@ -46,6 +46,8 @@ namespace SubCraft.World
 		}
 
 		/// <summary>New Minecraft session: it forgot everything, send it all again.</summary>
+		public uint Epoch => epoch;
+
 		public void Reset(LinkView view)
 		{
 			sent.Clear();
@@ -114,6 +116,8 @@ namespace SubCraft.World
 			}
 			var mc = hit.collider as MeshCollider;
 			var sb = new System.Text.StringBuilder($"physics hit {hit.point} normal {hit.normal} on {hit.collider.name} triangleIndex {hit.triangleIndex}\n");
+			var streamer = LargeWorldStreamer.main;
+			sb.Append($"terrain material '{MaterialDatabase.GetTerrainMaterial(hit.point, hit.normal)}' surface {Utils.GetTerrainSurfaceType(hit.point, hit.normal)} block type {(streamer != null ? streamer.GetBlockType(hit.point - hit.normal * 0.2f) : -1)}\n");
 			if (mc == null || mc.sharedMesh == null)
 			{
 				return sb.Append("not a mesh collider").ToString();
@@ -301,7 +305,8 @@ namespace SubCraft.World
 				return false;
 			}
 			var rb = c.attachedRigidbody;
-			if (rb != null && !rb.isKinematic)
+			// Floating but static enough to stand in: the lifepod bobs on the waves.
+			if (rb != null && !rb.isKinematic && rb.GetComponent<EscapePod>() == null)
 			{
 				return false;
 			}
@@ -313,8 +318,11 @@ namespace SubCraft.World
 		{
 			long s = c.GetInstanceID();
 			var t = c.transform;
-			s = s * 31 + t.position.GetHashCode();
-			s = s * 31 + t.rotation.GetHashCode();
+			// Quantized, so a bobbing lifepod isn't re-sent every frame (5 cm, ~1 degree).
+			var p = t.position * 20f;
+			var r = t.rotation.eulerAngles;
+			s = s * 31 + Mathf.RoundToInt(p.x) * 73856093L + Mathf.RoundToInt(p.y) * 19349663L + Mathf.RoundToInt(p.z) * 83492791L;
+			s = s * 31 + Mathf.RoundToInt(r.x) * 73856093L + Mathf.RoundToInt(r.y) * 19349663L + Mathf.RoundToInt(r.z) * 83492791L;
 			if (c is MeshCollider mc && mc.sharedMesh != null)
 			{
 				s = s * 31 + mc.sharedMesh.GetInstanceID();
@@ -346,7 +354,7 @@ namespace SubCraft.World
 		private void AddCollider(Collider c, Vector3 lo, Vector3 hi)
 		{
 			bool terrain = c.gameObject.layer == LayerID.TerrainCollider;
-			bool structure = !terrain && (c.GetComponentInParent<Base>() != null || c.GetComponentInParent<SubRoot>() != null);
+			bool structure = !terrain && (c.GetComponentInParent<Base>() != null || c.GetComponentInParent<SubRoot>() != null || c.GetComponentInParent<EscapePod>() != null);
 			byte objMat = terrain ? Proto.MatRock : SurfaceMaterial(Utils.GetObjectSurfaceType(c.gameObject), structure ? Proto.MatMetal : Proto.MatRock);
 			uint flags = (terrain ? Proto.TriTerrain : structure ? Proto.TriStructure : 0u) | ((uint)objMat << Proto.TriMaterialShift);
 			var m = c.transform.localToWorldMatrix;

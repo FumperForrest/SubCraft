@@ -100,7 +100,8 @@ class ProtoLayoutTest {
 			Map.entry("collisionEpoch", Proto.HS_COLLISION_EPOCH), Map.entry("posX", Proto.HS_POS_X), Map.entry("posY", Proto.HS_POS_Y),
 			Map.entry("posZ", Proto.HS_POS_Z), Map.entry("yaw", Proto.HS_YAW), Map.entry("pitch", Proto.HS_PITCH),
 			Map.entry("teleportSeq", Proto.HS_TELEPORT_SEQ), Map.entry("viewportW", Proto.HS_VIEWPORT_W),
-			Map.entry("viewportH", Proto.HS_VIEWPORT_H), Map.entry("dayFraction", Proto.HS_DAY_FRACTION)));
+			Map.entry("viewportH", Proto.HS_VIEWPORT_H), Map.entry("dayFraction", Proto.HS_DAY_FRACTION),
+			Map.entry("oxygen", Proto.HS_OXYGEN), Map.entry("oxygenCapacity", Proto.HS_OXYGEN_CAPACITY)));
 	}
 
 	@Test
@@ -152,6 +153,9 @@ class ProtoLayoutTest {
 		assertEquals(Proto.COL_REGION_BYTES, size("ColRegion"));
 		assertEquals(Proto.COL_BLOCK_BYTES, size("ColBlock"));
 		assertEquals(Proto.COL_TRI_BYTES, size("ColTri"));
+		assertEquals(Proto.COL_DRY_HEADER_BYTES, size("ColDryHeader"));
+		assertEquals(Proto.DRY_BOX_BYTES, size("DryBox"));
+		assertEquals(24L, field("DryBox", "id"));
 		assertEquals(36L, field("ColTri", "flags"));
 		assertEquals(Proto.TRI_MATERIAL_SHIFT, constant("kTriMaterialShift"));
 		fields("ColBlock", Map.of("x", 0L, "y", 4L, "z", 8L, "material", 12L, "flags", 13L, "bits", (long) Proto.COL_BLOCK_BITS));

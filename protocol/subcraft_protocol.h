@@ -26,7 +26,7 @@
 namespace subcraft::proto
 {
 	inline constexpr std::uint32_t kMagic = 0x43425553;  // "SUBC"
-	inline constexpr std::uint32_t kVersion = 13;
+	inline constexpr std::uint32_t kVersion = 14;
 
 	// Default file locations: macOS $TMPDIR/subcraft/link.bin, Windows %LOCALAPPDATA%\SubCraft\link.bin.
 	// Both sides accept an override (Java -Dsubcraft.link=<path>, host config, env SUBCRAFT_LINK).
@@ -74,6 +74,8 @@ namespace subcraft::proto
 		kHostInGame = 1u << 0,    // a save is loaded and the player exists
 		kHostMenuOpen = 1u << 1,  // a host menu (PDA, pause, fabricator) owns input; MC drops held keys
 		kHostLoading = 1u << 2,   // loading screen in progress
+		kHostUnderwater = 1u << 3,  // the host considers the player underwater (Player.IsUnderwater, v14)
+		kHostInside = 1u << 4,      // the player is inside a dry interior (lifepod, base, sub) (v14)
 	};
 
 	struct HostState
@@ -87,8 +89,12 @@ namespace subcraft::proto
 		std::uint32_t teleportSeq;       // MC teleports its player to pos when this changes
 		std::uint32_t viewportW, viewportH;
 		float         dayFraction;       // host time of day, 0..1 (0 = midnight)
+		// v14: breath. The host owns oxygen (MISSION.md section 2); Minecraft mirrors it into its air bar.
+		float         oxygen;            // seconds of oxygen left
+		float         oxygenCapacity;    // seconds when full (tanks included)
+		std::uint8_t  reserved[0x18];
 	};
-	static_assert(sizeof(HostState) == 0x40);
+	static_assert(sizeof(HostState) == 0x60);
 
 	// ---- MC -> host state @0x200 (seqlock) --------------------------------------------------
 	enum McFlags : std::uint32_t
@@ -312,6 +318,9 @@ namespace subcraft::proto
 		                 // collision surface in the box. Replaces every triangle sent for the same box
 		                 // before (boxes are 16-block sections). count 0 = known to be empty. Minecraft
 		                 // moves players against these triangles and voxelizes them into ghost terrain.
+		kColDry = 4,     // payload: ColDryHeader + DryBox[count] (v14): every dry volume near the player
+		                 // (lifepod, habitats, subs). Replaces the previous set; count 0 = none. Water
+		                 // inside them becomes air in Minecraft.
 	};
 
 	struct ColMsgHeader
@@ -361,6 +370,23 @@ namespace subcraft::proto
 		std::uint32_t flags;  // ColTriFlags | material << kTriMaterialShift
 	};
 	static_assert(sizeof(ColTri) == 40);
+
+	struct ColDryHeader
+	{
+		std::uint32_t epoch;
+		std::uint32_t count;
+	};
+	static_assert(sizeof(ColDryHeader) == 8);
+
+	// An axis-aligned dry box in MC coordinates (blocks whose centre is inside are dry).
+	struct DryBox
+	{
+		float         minX, minY, minZ;
+		float         maxX, maxY, maxZ;
+		std::uint32_t id;     // host instance id of the interior
+		std::uint32_t flags;  // reserved
+	};
+	static_assert(sizeof(DryBox) == 32);
 
 	// One block's worth of host collision as an 8x8x8 occupancy mask.
 	// bits[y] bit (z * 8 + x) is sub-voxel (x, y, z), each 1/8 block, in MC axes.
