@@ -2,6 +2,59 @@
 
 Newest first. One entry per session (MISSION.md rule 11).
 
+## 2026-10-02 — Session 7: fast-flight freeze fixed; Phase 2 — Unity draws Minecraft's blocks
+
+**Sean's report:** flying fast on an elytra froze him mid-air. Cause, as he suspected: Minecraft
+treats unknown space as solid, and Subnautica only builds terrain collision in a 5x5x5 window of
+16 m cells around the camera, so at elytra speed the sections ahead stayed unknown.
+
+**Fix (host only):** `OctreeProbe` walks Subnautica's voxel octrees (streamed far beyond the
+collision window; whole empty octrees are flagged; ids outside the octree bounds are empty; above
+the sea the low-detail octrees answer when the detailed ones aren't loaded). The harvester probes
+sections around where the player will be in 1.5 s and sends those with no terrain voxel within 2
+blocks and no object collider as known-empty right away. The exact harvest replaces them once
+built. Never-sent sections now go before the refresh round robin. Measured at 25 blocks/s: 430-480
+blocks in 25-35 s with no stop except flying level into a rising seabed (real collision).
+
+**Phase 2 done**
+- Guest `SectionStreamer` + `SectionCapture`: sections Minecraft marks dirty (hooked at
+  `LevelRenderer.setSectionDirty`) and sections coming into range (16 x 11 x 16 around the player)
+  are captured with Minecraft's own block renderers and streamed: mesh, light emitters, collision
+  boxes (new `kRenColliders`, protocol v16). A palette check (`maybeHas`) skips sections holding
+  only air, water and ghost terrain; unchanged captures (hash) aren't re-sent; out of range ->
+  removed.
+- Host `LiveWorld`: one GameObject per section with MarmosetUBER materials on shared `BakeCache`
+  pages (a cell is baked once for the whole world; 42 cells for the test hut), SkyApplier, block
+  lights (nearest 24 on), BoxColliders tagged `McGeometry` (the harvester skips them).
+- Harness `push` (throw/place a rigidbody, heading; reports lights).
+
+**Found on the way**
+- Magenta hut after a Subnautica restart: Minecraft re-sent everything at link-up, during
+  Subnautica's load, before any MarmosetUBER template existed. LiveWorld now drains only in game,
+  sections with a missing material are rebuilt every 2 s, and a missing glow variant falls back
+  to the plain one.
+- The survival-inventory crash fix and the dark shaded wall: Sean asked whether the black walls
+  were night. The shot was at noon; the shaded side of cobblestone is dark, the sky block is
+  applied (checked `_SH*`, `_SpecCubeIBL`, `_Outdoors` equal to native kelp next to it), same as
+  the approved 0c look.
+- Sean was playing the dev game while Claude scripted shots; agreed to hand over (TESTING note).
+
+**Verified in game (docs/look/2-*)**
+- A 6x6x6 cobblestone hut with torches beside the lifepod: noon (caustics on the roof), dusk,
+  night (torches light the sand), Seamoth headlights light its wall like the rocks behind it,
+  swallowed by fog at 41 m.
+- Seamoth thrown at 20 m/s: stops at the wall (6.6 m), 17.4 m in open water. Peeper at 15 m/s
+  bounces off the wall (-351.5 -> -348.7); 3.5 m further in open water.
+- Roof blocks replaced with water: the hole appears, colliders 86 -> 88.
+- `fake_host.py` on v16: all six [ok].
+
+**Memory:** swap reached 6.7 of 7 GB with both games (Sean's session plus ours); Minecraft RSS
+~1.3 GB peak.
+
+**Open (Phase 2):** block entities (chests, signs) aren't in sections yet (dynamic draws, Phase
+3); animated sprites (water, lava, fire) draw their first frame; BakeCache never frees cells;
+two of the six test torches were placed in water and popped (Minecraft's own rule).
+
 ## 2026-10-01 — Session 6: Phase 1 finished — biomes, structures, saved masks
 
 **Done**

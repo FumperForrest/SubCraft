@@ -3,6 +3,35 @@
 Things only you can judge (feel, taste) or decide. Everything here was already run by Claude
 unless marked **unverified**.
 
+## Phase 2 — Minecraft blocks drawn by Subnautica: please try it first
+
+What it does: blocks you place in Minecraft appear in Subnautica, lit by Subnautica (sun,
+caustics, fog, flashlight, Seamoth lights). Torches light the sand. Creatures and vehicles bump
+into your builds.
+
+**Steps** (as for Phase 1, then)
+
+1. Next to the lifepod there's a test hut (cobblestone, torches) on the seabed. Look at it at
+   different times of day (`python3 tools/sn_cmd.py '{"cmd":"time","value":0.0}'` = night).
+2. Build and break things in survival or creative: the change shows in Subnautica within a frame
+   or two. Try glass, leaves, a torch, glowstone, slabs and stairs.
+3. Bump the Seamoth into a wall; watch fish swim around your build.
+
+**Expected rough edges:** chests, signs and other block entities don't show yet (Phase 3).
+Water, lava and fire don't animate. Torches can't sit in water (Minecraft rule), and they pop.
+
+**Send back:** anything that looks wrong next to Subnautica's own rocks and props (too dark,
+too bright, shiny, flickering), missing or misplaced blocks, frame-rate drops while building.
+
+**Note:** when you play the dev game, tell Claude, so scripted runs don't fight your input.
+
+## Fast flight (elytra) — fixed 2026-10-02, please re-try
+
+Flying fast no longer freezes you in open water or air: Subnautica's voxel data tells Minecraft
+early that the space ahead is empty. You still stop when you fly into real terrain (as in
+Minecraft). **Send back:** any place where you still freeze in open space, with
+`python3 tools/mc_cmd.py "subcraft tris"` taken there.
+
 ## Phase 1 — the world as blocks; walk and swim (done): please try it first
 
 What it does: Minecraft's player moves through Subnautica's world on Minecraft physics. It

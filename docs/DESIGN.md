@@ -251,6 +251,30 @@ the player, nearest triangle, a fall probe through the collider); state dump `li
   (`VOXEL_VERSION`, bump when voxels change). Chunk load/unload moves masks in and out of
   `MaskStore`; an epoch clear keeps `MaskStore` (it mirrors loaded chunks).
 
+## Fast movement: open space from the octrees
+
+`OctreeProbe` (host): `LargeWorldStreamer.streamerV2.octreesStreamer.GetOctree(id)` is null
+while not loaded; `Octree.IsEmpty()`; nodes: `GetFirstChildId` 0 = leaf, `GetType` 0 = no
+terrain. Octree ids outside `octreeBounds` have no terrain. Above sea level the
+`lowDetailOctreesStreamer` (LOD 4, much further out) stands in when the detailed one isn't loaded.
+The harvester sends a probed section as known-empty (kColTris count 0) only with no terrain voxel
+within 2 blocks and no wanted object collider; the exact harvest replaces it.
+
+## Phase 2: live sections (verified in game)
+
+- Guest: `LevelRenderer.setSectionDirty(IIIZ)` HEAD -> `SectionStreamer` (urgent queue; range
+  sweep nearest first; 3 ms per frame; all three messages of a section or none: `renderFree`).
+  `SectionCapture` = block models + non-water fluids + light emitters + `getCollisionShape` boxes
+  (x runs merged). Relevant blocks: not air, not `minecraft:water`, not our TerrainBlock.
+- Host: `LiveWorld` (render ring, 4 ms per frame, in game only), section root at Unity
+  `(sx*16, sy*16, -sz*16)`, vertices `(x, y, -z)`, flipped winding, submesh per (bake page,
+  material class, emitter). `BakeCache`: 1024 px pages, shelf-packed, cells keyed by
+  (sprite area, quantized corner colours), shared world-wide. Lights: `BlockLights` per emitter,
+  nearest `MaxLights` (24) enabled every 0.5 s. Colliders: BoxColliders on layer Default under a
+  `McGeometry` root (creatures and vehicles collide; the harvester skips it).
+- MarmosetUBER templates exist only once the game scene is loaded: nothing is built before
+  `HostState.InGame()`.
+
 ## Open
 
 - AlbedoBake memory at world scale (Phase 2): measure cells per section; animated sprites (water,
