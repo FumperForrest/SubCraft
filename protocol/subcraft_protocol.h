@@ -26,7 +26,7 @@
 namespace subcraft::proto
 {
 	inline constexpr std::uint32_t kMagic = 0x43425553;  // "SUBC"
-	inline constexpr std::uint32_t kVersion = 22;
+	inline constexpr std::uint32_t kVersion = 23;
 
 	// Default file locations: macOS $TMPDIR/subcraft/link.bin, Windows %LOCALAPPDATA%\SubCraft\link.bin.
 	// Both sides accept an override (Java -Dsubcraft.link=<path>, host config, env SUBCRAFT_LINK).
@@ -344,6 +344,7 @@ namespace subcraft::proto
 	{
 		kSoundRelative = 1u << 24,  // no position: plays at the listener (UI, the player's own sounds)
 		kSoundLoop = 1u << 25,      // loops until kEvSoundStop
+		kSoundUi = 1u << 26,        // Minecraft's interface (MASTER category): no underwater filter, no PDA pause (v23)
 	};
 
 	struct McEvent

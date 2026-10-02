@@ -12,6 +12,7 @@ powershell -ExecutionPolicy Bypass -File tools\mc_dev.ps1 start      # hidden Mi
 powershell -ExecutionPolicy Bypass -File tools\sn_restart.ps1        # build + deploy the plugin, start Subnautica, load the dev game
 ```
 
+`python tools\smoke.py` checks the essentials in a minute (12 checks, all [ok] on 2026-10-02).
 Then click into the Subnautica window and play. Minecraft's keys work (WASD, Space, Shift, Ctrl,
 E inventory, F5 camera, 1-9 hotbar, Q drop); Tab is Subnautica's PDA, Esc Subnautica's pause.
 When done: `tools\sn_dev.ps1 stop` (puts your Subnautica window settings back) and

@@ -9,7 +9,7 @@ public final class Proto {
 	}
 
 	public static final int MAGIC = 0x43425553; // "SUBC"
-	public static final int VERSION = 22;
+	public static final int VERSION = 23;
 	public static final String LINK_FILE_NAME = "link.bin";
 	public static final long HEARTBEAT_TIMEOUT_NS = 2_000_000_000L;
 
@@ -199,6 +199,7 @@ public final class Proto {
 	public static final int EV_SOUND_STOP = 7;
 	public static final int SOUND_RELATIVE = 1 << 24;
 	public static final int SOUND_LOOP = 1 << 25;
+	public static final int SOUND_UI = 1 << 26;
 
 	// ---- Collision ring (relative to OFF_COLLISION_RING) ----
 	public static final long CR_HEAD = 0x00;

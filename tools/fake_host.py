@@ -21,7 +21,7 @@ import zlib
 
 # ---- protocol (protocol/subcraft_protocol.h; tools/check_layout.sh keeps that header honest) ----
 MAGIC = 0x43425553
-VERSION = 22
+VERSION = 23
 OFF_HOST = 0x100
 OFF_MC = 0x200
 OFF_OVL = 0x300
@@ -185,7 +185,10 @@ class Link:
         head, tail = struct.unpack_from("<Q", self.m, OFF_EVENTS)[0], struct.unpack_from("<Q", self.m, OFF_EVENTS + 0x40)[0]
         while tail < head:
             ev = struct.unpack_from("<IIffffII", self.m, OFF_EVENTS + 0x80 + (tail % EVENT_ENTRIES) * 32)
-            print(f"  event from Minecraft: {ev}")
+            if ev[0] in (5, 6, 7):  # kEvSoundPlay/Update/Stop: the fake host has no audio
+                self.sound_events = getattr(self, "sound_events", 0) + 1
+            else:
+                print(f"  event from Minecraft: {ev}")
             self.events.append(ev)
             tail += 1
         struct.pack_into("<Q", self.m, OFF_EVENTS + 0x40, tail)
@@ -370,6 +373,7 @@ def main():
         print(f"  Minecraft peak RSS seen: {peak_rss} MB")
     if link.render_msgs:
         print(f"  render messages: {link.render_msgs}")
+        print(f"  sound events: {getattr(link, 'sound_events', 0)}")
     sys.exit(0 if ok else 1)
 
 

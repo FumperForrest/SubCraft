@@ -108,6 +108,13 @@ Newest first. One entry per session (MISSION.md rule 11).
 - **Fixed in sn_dev.ps1:** `New-Item -Force` on the existing registry key recreated it empty, wiping
   Subnautica's registry settings on every dev start; the backup is retaken if it has no values.
 
+- **Polish: UI sounds** (protocol v23, `kSoundUi`): Minecraft's MASTER-category sounds (menu
+  clicks) play on Subnautica's interface bus, never muffled or paused by the PDA. `.gitattributes`
+  keeps shell scripts LF in Windows checkouts. `fake_host.py` counts sound events quietly.
+- **`tools/smoke.py`**: both-games smoke test (link, F5 behind/front/back, FOV = Minecraft's,
+  sound through FMOD, a Minecraft hit on a creature, Subnautica damage on Minecraft's player,
+  Seamoth board/eject, lifepod steady). 12/12 on 2026-10-02; Phase 0a `fake_host.py` 6/6.
+
 **Phase 4 result: done** (pending Sean's play-test): time, unified HUD, sound mix, character
 camera, combat both ways, mobs vs creatures.
 

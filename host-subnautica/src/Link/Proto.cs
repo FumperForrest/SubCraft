@@ -7,7 +7,7 @@ namespace SubCraft.Link
 	public static class Proto
 	{
 		public const uint Magic = 0x43425553; // "SUBC"
-		public const uint Version = 22;
+		public const uint Version = 23;
 		public const string LinkFileName = "link.bin";
 		public const ulong HeartbeatTimeoutNs = 2_000_000_000UL;
 
@@ -95,7 +95,7 @@ namespace SubCraft.Link
 		public const long ErHead = 0x00, ErTail = 0x40, ErData = 0x80;
 		public const int EventBytes = 32;
 		public const uint EvHitCreature = 1, EvPlayerDied = 2, EvExplosion = 3, EvDebugResult = 4, EvSoundPlay = 5, EvSoundUpdate = 6, EvSoundStop = 7;
-		public const uint SoundRelative = 1u << 24, SoundLoop = 1u << 25;
+		public const uint SoundRelative = 1u << 24, SoundLoop = 1u << 25, SoundUi = 1u << 26;
 
 		// ---- Collision ring (relative to OffCollisionRing) ----
 		public const long CrHead = 0x00, CrTail = 0x40, CrData = 0x80;

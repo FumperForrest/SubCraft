@@ -80,6 +80,9 @@ public final class SoundBridge {
 		if (s.isLooping()) {
 			flags |= Proto.SOUND_LOOP;
 		}
+		if (s.getSource() == SoundSource.MASTER) {
+			flags |= Proto.SOUND_UI; // menu clicks and the like: never muffled
+		}
 		float range = Math.max(s.getVolume(), 1.0F) * sound.getAttenuationDistance();
 		if (!push(view, Proto.EV_SOUND_PLAY, instance, s, flags, range)) {
 			dropped++;

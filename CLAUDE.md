@@ -45,12 +45,20 @@ tools/sn_restart.sh [scenario.jsonl]       # rebuild+deploy plugin, restart Subn
 python3 tools/mc_cmd.py "subcraft tris"    # command into the running Minecraft (also "/..." commands)
 python3 tools/capture_dump.py f.scdump --preview out.png   # inspect a capture dump without games
 python3 tools/look_shots.py docs/look      # Phase 0c screenshot set (scene placed by look_place.jsonl)
+python3 tools/smoke.py                     # both games running: link, camera, sound, combat, Seamoth, lifepod
 ```
+
+On Windows (Sean's PC since 2026-10-02) use the PowerShell twins: `tools\mc_dev.ps1`,
+`tools\sn_dev.ps1`, `tools\sn_restart.ps1`, `tools\check_layout.ps1` (call them with
+`powershell -ExecutionPolicy Bypass -File ...`); `python` instead of `python3`; in Git Bash set
+`MSYS_NO_PATHCONV=1` before `mc_cmd.py "/..."`. Subnautica is in
+`C:\Program Files (x86)\Steam\steamapps\common\Subnautica`, the dev slot is `slot0004`.
 
 Harness commands (`host-subnautica/src/Dev/DevHarness.cs`): wait, screenshot, dump, recon,
 console, teleport, look, time, key, newgame, load, save, skipintro, waitingame, quit, loaddump,
-unloaddump, matinfo, matset, lightset, rendinfo, equip, holster, colprobe, harvestprobe, tricheck.
-Minecraft's own: `subcraft dump|tris|pos` and any `/command` (DebugCommands.java).
+unloaddump, matinfo, matset, lightset, rendinfo, equip, holster, colprobe, harvestprobe, tricheck,
+pilot, eject, intopod, fmod, fmodchain, creatures, hurtplayer, heal.
+Minecraft's own: `subcraft dump|tris|pos|sections|sounds|creatures` and any `/command` (DebugCommands.java).
 
 Harness rules: the dev save slot is `slot0002` (BepInEx config `DevSlot`); never load, save or
 touch `slot0000`/`slot0001` (Sean's). Back up `SNAppData/SavedGames` before save-related work.

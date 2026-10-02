@@ -57,6 +57,8 @@ namespace SubCraft.Dev
 						["pos"] = new JArray(driver.Mc.X, driver.Mc.Y, driver.Mc.Z),
 						["look"] = new JArray(driver.Mc.Yaw, driver.Mc.Pitch),
 						["eyeHeight"] = driver.Mc.EyeHeight,
+						["fov"] = driver.Mc.Fov,
+						["cameraMode"] = driver.Mc.CameraMode,
 						["flags"] = driver.Mc.Flags,
 						["teleportAck"] = driver.Mc.TeleportAck,
 						["frame"] = driver.Mc.FrameCounter,

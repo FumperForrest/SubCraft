@@ -140,7 +140,8 @@ namespace SubCraft.Audio
 			{
 				return false;
 			}
-			if (!Group(out var cg))
+			FMOD.ChannelGroup cg;
+			if ((ev.Flags & Proto.SoundUi) != 0 ? !UiGroup(out cg) : !Group(out cg))
 			{
 				return false;
 			}
@@ -224,6 +225,27 @@ namespace SubCraft.Audio
 			haveGroup = true;
 			groupBus = path;
 			cg = group;
+			return true;
+		}
+
+		private static FMOD.ChannelGroup uiGroup;
+		private static string uiBus;
+
+		/// <summary>Interface sounds: straight onto Subnautica's interface bus, no low-pass.</summary>
+		private static bool UiGroup(out FMOD.ChannelGroup cg)
+		{
+			string path = Plugin.SoundUiBus.Value;
+			if (uiBus == path && uiGroup.hasHandle())
+			{
+				cg = uiGroup;
+				return true;
+			}
+			if (!BusGroup(path, out cg))
+			{
+				return false;
+			}
+			uiGroup = cg;
+			uiBus = path;
 			return true;
 		}
 
