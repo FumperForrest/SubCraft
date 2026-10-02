@@ -145,6 +145,9 @@ namespace SubCraft.Render
 			byte* p = view.Base + off;
 			switch (type)
 			{
+				case Proto.RenSound:
+					Audio.SoundBridge.Load(*(uint*)p, p + Proto.RenSoundBytes, *(int*)(p + 4));
+					break;
 				case Proto.RenClearAll:
 					ClearAll("Minecraft asked");
 					break;

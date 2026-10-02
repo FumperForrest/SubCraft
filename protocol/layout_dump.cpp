@@ -167,6 +167,10 @@ int main()
 	F(RenColliders, sx); F(RenColliders, sy); F(RenColliders, sz); F(RenColliders, count);
 	endStruct();
 
+	S(RenSound);
+	F(RenSound, id); F(RenSound, bytes);
+	endStruct();
+
 	S(RenBox);
 	F(RenBox, minX); F(RenBox, maxZ);
 	endStruct();

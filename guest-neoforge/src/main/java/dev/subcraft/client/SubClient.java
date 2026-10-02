@@ -141,6 +141,7 @@ public final class SubClient {
 	}
 
 	private static void onLinkChanged(Minecraft minecraft) {
+		SoundBridge.reset();
 		if (linked) {
 			tookOver = true;
 			applyLinkedOptions(minecraft);

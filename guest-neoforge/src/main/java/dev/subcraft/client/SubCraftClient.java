@@ -37,6 +37,8 @@ public final class SubCraftClient {
 			SectionStreamer.frame(net.minecraft.client.Minecraft.getInstance());
 		});
 		NeoForge.EVENT_BUS.addListener(SubCraftClient::hideBarsTheHostShows);
+		NeoForge.EVENT_BUS.addListener(SoundBridge::onPlay);
+		NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post e) -> SoundBridge.tick());
 		SubCraft.LOG.info("SubCraft client ready; link file {}", Platform.linkFile());
 	}
 }

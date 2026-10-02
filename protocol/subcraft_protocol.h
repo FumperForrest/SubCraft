@@ -26,7 +26,7 @@
 namespace subcraft::proto
 {
 	inline constexpr std::uint32_t kMagic = 0x43425553;  // "SUBC"
-	inline constexpr std::uint32_t kVersion = 19;
+	inline constexpr std::uint32_t kVersion = 20;
 
 	// Default file locations: macOS $TMPDIR/subcraft/link.bin, Windows %LOCALAPPDATA%\SubCraft\link.bin.
 	// Both sides accept an override (Java -Dsubcraft.link=<path>, host config, env SUBCRAFT_LINK).
@@ -288,6 +288,19 @@ namespace subcraft::proto
 		kEvPlayerDied = 2,   // the Minecraft player died: run the host's death flow
 		kEvExplosion = 3,    // a/b/c = centre (MC coords), d = radius (blocks)
 		kEvDebugResult = 4,  // reply to a debug command: id = command sequence number, flags = 0 ok / 1 error
+		// v20, sound (MISSION.md 3.4): Minecraft's gameplay sounds, played by the host's audio.
+		// id = sound instance (1+); a/b/c = position (MC coords); d = volume 0..1 (category volume
+		// applied); flags = kRenSound id (bits 0-23) | SoundFlags; extra = range in 1/16 blocks
+		// (bits 16-31, linear falloff to silence) | pitch * 10000 (bits 0-15).
+		kEvSoundPlay = 5,
+		kEvSoundUpdate = 6,  // same fields, for a moving or changing sound already playing
+		kEvSoundStop = 7,    // id = sound instance; 0 = every sound
+	};
+
+	enum SoundFlags : std::uint32_t
+	{
+		kSoundRelative = 1u << 24,  // no position: plays at the listener (UI, the player's own sounds)
+		kSoundLoop = 1u << 25,      // loops until kEvSoundStop
 	};
 
 	struct McEvent
@@ -442,6 +455,8 @@ namespace subcraft::proto
 		kRenHand = 10,        // like kRenScene (v17), but positions are in Minecraft's view space (camera at
 		                      // the origin, x right, y up, looking down -z): the first-person hand and
 		                      // held item, drawn by the host attached to its camera. Origin fields are 0.
+		kRenSound = 11,       // RenSound + the sound file (Ogg Vorbis) (v20): sent once per file, before
+		                      // the first kEvSoundPlay that uses its id
 		kRenColliders = 9,    // RenColliders + RenBox[count] (v16): a section's block collision boxes
 		                      // (Minecraft VoxelShapes, merged), so the host's creatures and vehicles
 		                      // collide with Minecraft blocks; 0 = none. Sent with its kRenSection.
@@ -526,6 +541,14 @@ namespace subcraft::proto
 	static_assert(sizeof(RenColliders) == 16);
 
 	// An axis-aligned box in MC coords relative to the section origin.
+	struct RenSound
+	{
+		std::uint32_t id;     // 1+, referenced by kEvSoundPlay
+		std::uint32_t bytes;  // file length that follows
+		std::uint32_t pad[2];
+	};
+	static_assert(sizeof(RenSound) == 16);
+
 	struct RenBox
 	{
 		float minX, minY, minZ;

@@ -9,7 +9,7 @@ public final class Proto {
 	}
 
 	public static final int MAGIC = 0x43425553; // "SUBC"
-	public static final int VERSION = 19;
+	public static final int VERSION = 20;
 	public static final String LINK_FILE_NAME = "link.bin";
 	public static final long HEARTBEAT_TIMEOUT_NS = 2_000_000_000L;
 
@@ -181,6 +181,11 @@ public final class Proto {
 	public static final int EV_PLAYER_DIED = 2;
 	public static final int EV_EXPLOSION = 3;
 	public static final int EV_DEBUG_RESULT = 4;
+	public static final int EV_SOUND_PLAY = 5;
+	public static final int EV_SOUND_UPDATE = 6;
+	public static final int EV_SOUND_STOP = 7;
+	public static final int SOUND_RELATIVE = 1 << 24;
+	public static final int SOUND_LOOP = 1 << 25;
 
 	// ---- Collision ring (relative to OFF_COLLISION_RING) ----
 	public static final long CR_HEAD = 0x00;
@@ -222,6 +227,8 @@ public final class Proto {
 	public static final int REN_ATLAS_REGION = 7;
 	public static final int REN_LIGHTS = 8;
 	public static final int REN_COLLIDERS = 9;
+	public static final int REN_SOUND = 11;
+	public static final int REN_SOUND_BYTES = 16;
 	public static final int REN_HAND = 10;
 	public static final int REN_COLLIDERS_BYTES = 16;
 	public static final int REN_BOX_BYTES = 24;

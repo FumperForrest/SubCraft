@@ -18,6 +18,7 @@ namespace SubCraft
 		internal static ConfigEntry<bool> ShowOverlay;
 		internal static ConfigEntry<bool> HideDiver;
 		internal static ConfigEntry<bool> UnifiedHud;
+		internal static ConfigEntry<string> SoundBus;
 
 		private void Awake()
 		{
@@ -28,6 +29,8 @@ namespace SubCraft
 			ShowOverlay = Config.Bind("Hud", "ShowMinecraftOverlay", true, "Draw Minecraft's GUI (hotbar, screens) on top of Subnautica.");
 			UnifiedHud = Config.Bind("Hud", "UnifiedHud", true,
 				"Subnautica's dials show Minecraft's health and hunger (Minecraft's hearts, hunger, armour and air bars hidden). False: Minecraft's own bars.");
+			SoundBus = Config.Bind("Sound", "Bus", "bus:/master/SFX_for_pause/PDA_pause/all/SFX",
+				"Subnautica FMOD bus Minecraft's sounds play on (so Subnautica's underwater muffling and volume apply). The harness command 'fmod' lists the buses.");
 			HideDiver = Config.Bind("Player", "HideDiver", true, "Hide Subnautica's diver (body, arms, tools, mask) while Minecraft drives the player.");
 			new Harmony(Guid).PatchAll(typeof(Plugin).Assembly);
 			var host = new GameObject("SubCraft");

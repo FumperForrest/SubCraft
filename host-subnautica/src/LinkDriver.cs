@@ -61,6 +61,7 @@ namespace SubCraft
 			{
 				McLinked = alive;
 				Plugin.Log.LogInfo($"SubCraft: Minecraft link {(alive ? "up" : "down")} (mc pid {view.McPid})");
+				Audio.SoundBridge.Reset();
 				if (alive)
 				{
 					Harvester.Reset(view);
@@ -78,7 +79,11 @@ namespace SubCraft
 			view.DrainEvents(events);
 			foreach (var ev in events)
 			{
-				if (ev.Type == Proto.EvPlayerDied)
+				if (ev.Type == Proto.EvSoundPlay || ev.Type == Proto.EvSoundUpdate || ev.Type == Proto.EvSoundStop)
+				{
+					Audio.SoundBridge.Event(ev);
+				}
+				else if (ev.Type == Proto.EvPlayerDied)
 				{
 					Plugin.Log.LogInfo("SubCraft: Minecraft player died (host death flow: Phase 5)");
 					RequestTeleport("Minecraft respawn");
@@ -107,6 +112,7 @@ namespace SubCraft
 				Dry.Frame(view, Harvester.Epoch, global::Player.main.transform.position);
 			}
 			PlayerPuppet.Frame(this);
+			Audio.SoundBridge.Frame();
 			Diag();
 		}
 

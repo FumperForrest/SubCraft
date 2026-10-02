@@ -17,7 +17,7 @@ namespace SubCraft.Dev
 	///
 	/// Commands: wait {seconds} | screenshot {name} | dump {name} | recon {name} | console {text}
 	/// | teleport {x,y,z} (Unity) | look {yaw,pitch} (Unity degrees) | time {value 0..1}
-	/// | key {glfw, down} (to Minecraft) | newgame {mode} | load {slot} | save | skipintro | pilot | eject
+	/// | key {glfw, down} (to Minecraft) | newgame {mode} | load {slot} | save | skipintro | pilot | eject | fmod
 	/// | waitingame {timeout} | quit
 	/// </summary>
 	public sealed class DevHarness : MonoBehaviour
@@ -307,6 +307,12 @@ namespace SubCraft.Dev
 							nearest.OnHandClick(global::Player.main.guiHand);
 							msg = $"{nearest.name} at {nearest.transform.position}";
 						}
+						break;
+					case "fmod":
+						msg = Audio.SoundBridge.ListBuses() + $"played {Audio.SoundBridge.Played} failed {Audio.SoundBridge.Failed} files {Audio.SoundBridge.FileCount}";
+						break;
+					case "fmodchain":
+						msg = Audio.SoundBridge.DescribeChain();
 						break;
 					case "eject":
 						global::Player.main.TryEject();

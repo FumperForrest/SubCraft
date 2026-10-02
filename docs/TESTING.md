@@ -3,6 +3,22 @@
 Things only you can judge (feel, taste) or decide. Everything here was already run by Claude
 unless marked **unverified**.
 
+## Phase 4 — sound, a mix: please listen first
+
+What it does: Subnautica keeps all of its own sound (ambience, music, creatures, vehicles).
+Minecraft's own audio is silent; its gameplay sounds (your steps, hits, eating, blocks, mobs,
+items, chests, doors, menu clicks) play through Subnautica's audio at the right place, with
+Subnautica's volume sliders, pausing with the PDA, and muffled while the camera is underwater.
+Minecraft's music, cave ambience and weather are dropped.
+
+**Try:** break and place blocks on land and underwater, summon a zombie
+(`python tools/mc_cmd.py "/summon zombie ~ ~ ~4"`) and listen from the surface, underwater and in
+the lifepod; open a Minecraft chest; ride a minecart if you have rails.
+**Expected rough edges:** the muffling is SubCraft's own low-pass (Subnautica muffles inside each of
+its own sounds, there's no shared filter to borrow); no reverb in caves or the Aurora.
+**Send back:** sounds too loud or quiet next to Subnautica's, missing sounds, the muffling amount.
+`Sound.Bus` in the BepInEx config picks the Subnautica bus (harness command `fmod` lists them).
+
 ## Phase 4 — your character is Minecraft's: please try it first
 
 What it does: Subnautica's diver is gone everywhere (vehicles too), Subnautica's swim/step camera

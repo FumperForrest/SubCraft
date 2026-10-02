@@ -47,6 +47,19 @@ Newest first. One entry per session (MISSION.md rule 11).
   (restored on unlink). Diver hidden whenever a Minecraft player is in world. Verified: back and
   front cameras 4 m off the eye, player model captured (642 vertices), hand off and back on;
   underwater FOV 60 = 70 x 0.857.
+- **Sound mix (protocol v20):** guest `SoundBridge` cancels every `PlaySoundEvent` while linked
+  (Minecraft silent), drops MUSIC/AMBIENT/WEATHER/RECORDS and streamed sounds, resolves the rest,
+  ships each .ogg once (`kRenSound`, render ring) and sends `kEvSoundPlay/Update/Stop` (event
+  ring; file id + flags in `flags`, range/pitch packed in `extra`). Tickable and looping sounds are
+  ticked by the bridge; `SoundEngineMixin` (@Inject) forwards stop/stopAll and answers isActive.
+  Host `Audio.SoundBridge`: FMOD core sounds from memory (Ogg decoded by FMOD), channels in a
+  "SubCraft Minecraft" channel group under `bus:/master/SFX_for_pause/PDA_pause/all/SFX` (volume,
+  PDA pause), linear 3D roll-off to Minecraft's range. Finding: Subnautica's underwater muffling is
+  inside its events (FMOD parameters like `depth`), not on buses: the SFX chain's LOWPASS/EQ stay at
+  22 kHz at 11 m. So our group has its own LOWPASS gliding to 900 Hz while the camera is in open
+  water (`Ocean.GetDepthOf(camera) > 0`, not inside). Harness: `fmod` (bus list + counters),
+  `fmodchain` (effect chain). Verified: 6 plays, 5 files, 0 FMOD failures, music dropped; cutoff
+  22000 in air, 900 at depth, back to 22000.
 
 **Verified in game (Windows)**: `fake_host.py` six `[ok]`; both games linked (heartbeat 5–8 ms),
 W/Space, clicks, block placement, a zombie and the held block drawn; Seamoth boarded: kinematic

@@ -69,6 +69,9 @@ public final class DebugCommands {
 			case "sections" -> {
 				return SectionStreamer.stats() + "\n" + dev.subcraft.capture.DynamicCapture.stats();
 			}
+			case "sounds" -> {
+				return SoundBridge.stats();
+			}
 			case "pos" -> {
 				return minecraft.player == null ? "no player" : minecraft.player.position().toString();
 			}
