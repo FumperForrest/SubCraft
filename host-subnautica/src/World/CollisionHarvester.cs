@@ -478,7 +478,7 @@ namespace SubCraft.World
 				return false;
 			}
 			// Minecraft's own blocks (LiveWorld) must not come back as host terrain.
-			if (c.GetComponentInParent<Render.McGeometry>() != null)
+			if (c.GetComponentInParent<Render.McGeometry>() != null || c.GetComponentInParent<Combat.McMobStandIn>() != null)
 			{
 				return false;
 			}

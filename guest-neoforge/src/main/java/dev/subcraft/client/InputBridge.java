@@ -92,6 +92,7 @@ public final class InputBridge {
 			}
 			case Proto.IN_RELEASE_ALL -> releaseAll(minecraft);
 			case Proto.IN_HURT -> hurt(minecraft, code, a / 100.0F, b);
+			case Proto.IN_HURT_MOB -> dev.subcraft.combat.MobTable.hurt(minecraft.getSingleplayerServer(), b, a / 100.0F, c);
 			case Proto.IN_OPEN_MENU -> {
 				if (minecraft.screen == null && minecraft.player != null) {
 					releaseAll(minecraft);

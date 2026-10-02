@@ -343,6 +343,33 @@ public final class LinkView {
 		return n;
 	}
 
+	// ---- mob table (seqlock write, v22) ----
+
+	public record Mob(int id, int flags, float x, float y, float z, float width, float height, float healthFrac) {
+	}
+
+	public void writeMobs(java.util.List<Mob> mobs) {
+		long b = OFF_MOB_TABLE;
+		int seq = getInt(b + MT_SEQ);
+		setIntRelease(b + MT_SEQ, seq + 1);
+		VarHandle.storeStoreFence();
+		int count = Math.min(mobs.size(), MAX_MOBS);
+		for (int i = 0; i < count; i++) {
+			Mob m = mobs.get(i);
+			long r = b + MT_RECORDS + (long) i * MOB_RECORD_BYTES;
+			putInt(r + MREC_ID, m.id());
+			putInt(r + MREC_FLAGS, m.flags());
+			putFloat(r + MREC_X, m.x());
+			putFloat(r + MREC_Y, m.y());
+			putFloat(r + MREC_Z, m.z());
+			putFloat(r + MREC_WIDTH, m.width());
+			putFloat(r + MREC_HEIGHT, m.height());
+			putFloat(r + MREC_HEALTH_FRAC, m.healthFrac());
+		}
+		putInt(b + MT_COUNT, count);
+		setIntRelease(b + MT_SEQ, seq + 2);
+	}
+
 	// ---- creature table (seqlock read) ----
 
 	public record Creature(int id, int flags, float x, float y, float z, float yaw, float width, float height, float healthFrac, String name) {

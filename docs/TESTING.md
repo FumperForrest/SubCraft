@@ -11,8 +11,9 @@ character (x0.2, after Subnautica's suits): knockback, hurt tilt, the health dia
 out of oxygen kills both at once. Minecraft mobs (zombies turn into drowned underwater) fight you too.
 
 **Try:** a sword in the safe shallows against peepers, a stalker or a sand shark; a bow; get bitten.
-**Expected rough edges:** creatures don't attack Minecraft mobs yet, and Minecraft mobs don't go
-after creatures by themselves; the health dial doesn't pulse at low health yet.
+Creatures and Minecraft mobs fight each other too: summon a zombie near biters or a stalker
+(`python tools/mc_cmd.py "/summon zombie ~3 ~ ~"`) and watch.
+**Expected rough edges:** the health dial doesn't pulse at low health yet.
 **Send back:** whether hits feel right (damage, knockback), anything you can't hit.
 
 ## Phase 4 — sound, a mix: please listen first

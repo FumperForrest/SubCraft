@@ -53,6 +53,7 @@ class ProtoLayoutTest {
 		assertEquals(Proto.OFF_OVERLAY_SLOT_HDR, constant("kOffOverlaySlotHdr"));
 		assertEquals(Proto.OFF_INPUT_RING, constant("kOffInputRing"));
 		assertEquals(Proto.OFF_CREATURE_TABLE, constant("kOffCreatureTable"));
+		assertEquals(Proto.OFF_MOB_TABLE, constant("kOffMobTable"));
 		assertEquals(Proto.OFF_EVENT_RING, constant("kOffEventRing"));
 		assertEquals(Proto.OFF_COLLISION_RING, constant("kOffCollisionRing"));
 		assertEquals(Proto.COLLISION_RING_BYTES, constant("kCollisionRingBytes"));
@@ -70,6 +71,7 @@ class ProtoLayoutTest {
 		assertEquals(Proto.IR_TAIL, constant("kInputRingTailOff"));
 		assertEquals(Proto.IR_DATA, constant("kInputRingDataOff"));
 		assertEquals(Proto.MAX_CREATURES, constant("kMaxCreatures"));
+		assertEquals(Proto.MAX_MOBS, constant("kMaxMobs"));
 		assertEquals(Proto.EVENT_RING_ENTRIES, constant("kEventRingEntries"));
 		assertEquals(Proto.ER_HEAD, constant("kEventRingHeadOff"));
 		assertEquals(Proto.ER_TAIL, constant("kEventRingTailOff"));
@@ -150,6 +152,10 @@ class ProtoLayoutTest {
 		fields("CreatureRecord", Map.of("id", Proto.CREC_ID, "flags", Proto.CREC_FLAGS, "x", Proto.CREC_X, "y", Proto.CREC_Y, "z", Proto.CREC_Z,
 			"yaw", Proto.CREC_YAW, "width", Proto.CREC_WIDTH, "height", Proto.CREC_HEIGHT, "healthFrac", Proto.CREC_HEALTH_FRAC, "name", Proto.CREC_NAME));
 		fields("CreatureTable", Map.of("seq", Proto.CT_SEQ, "count", Proto.CT_COUNT, "creatures", Proto.CT_RECORDS));
+		assertEquals(Proto.MOB_RECORD_BYTES, size("MobRecord"));
+		fields("MobRecord", Map.of("id", Proto.MREC_ID, "flags", Proto.MREC_FLAGS, "x", Proto.MREC_X, "y", Proto.MREC_Y, "z", Proto.MREC_Z,
+			"width", Proto.MREC_WIDTH, "height", Proto.MREC_HEIGHT, "healthFrac", Proto.MREC_HEALTH_FRAC));
+		fields("MobTable", Map.of("seq", Proto.MT_SEQ, "count", Proto.MT_COUNT, "mobs", Proto.MT_RECORDS));
 		assertEquals(Proto.COL_REGION_BYTES, size("ColRegion"));
 		assertEquals(Proto.COL_BLOCK_BYTES, size("ColBlock"));
 		assertEquals(Proto.COL_TRI_BYTES, size("ColTri"));

@@ -42,6 +42,8 @@ namespace SubCraft.Tests
 			Assert.Equal(Proto.OffOverlaySlotHdr, C("kOffOverlaySlotHdr"));
 			Assert.Equal(Proto.OffInputRing, C("kOffInputRing"));
 			Assert.Equal(Proto.OffCreatureTable, C("kOffCreatureTable"));
+			Assert.Equal(Proto.OffMobTable, C("kOffMobTable"));
+			Assert.Equal(Proto.MaxMobs, (int)C("kMaxMobs"));
 			Assert.Equal(Proto.OffEventRing, C("kOffEventRing"));
 			Assert.Equal(Proto.OffCollisionRing, C("kOffCollisionRing"));
 			Assert.Equal(Proto.CollisionRingBytes, C("kCollisionRingBytes"));
@@ -109,6 +111,9 @@ namespace SubCraft.Tests
 			Assert.Equal(Proto.CreatureRecordBytes, Size("CreatureRecord"));
 			Assert.Equal(Proto.CrecName, F("CreatureRecord", "name"));
 			Assert.Equal(Proto.CtRecords, F("CreatureTable", "creatures"));
+			Assert.Equal(Proto.MobRecordBytes, Size("MobRecord"));
+			Assert.Equal(Proto.MrecHealthFrac, F("MobRecord", "healthFrac"));
+			Assert.Equal(Proto.MtRecords, F("MobTable", "mobs"));
 			Assert.Equal(Proto.ColRegionBytes, Size("ColRegion"));
 			Assert.Equal(Proto.ColBlockBytes, Size("ColBlock"));
 			Assert.Equal(Proto.ColTriBytes, Size("ColTri"));

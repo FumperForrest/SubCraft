@@ -26,7 +26,7 @@
 namespace subcraft::proto
 {
 	inline constexpr std::uint32_t kMagic = 0x43425553;  // "SUBC"
-	inline constexpr std::uint32_t kVersion = 21;
+	inline constexpr std::uint32_t kVersion = 22;
 
 	// Default file locations: macOS $TMPDIR/subcraft/link.bin, Windows %LOCALAPPDATA%\SubCraft\link.bin.
 	// Both sides accept an override (Java -Dsubcraft.link=<path>, host config, env SUBCRAFT_LINK).
@@ -44,6 +44,7 @@ namespace subcraft::proto
 	inline constexpr std::uint64_t kOffCommandBox = 0x400;      // host -> MC debug commands (v12), see CommandBox
 	inline constexpr std::uint64_t kOffInputRing = 0x1000;
 	inline constexpr std::uint64_t kOffCreatureTable = 0x12000;  // host -> MC, see CreatureTable
+	inline constexpr std::uint64_t kOffMobTable = 0x16100;       // MC -> host (v22), see MobTable
 	inline constexpr std::uint64_t kOffEventRing = 0x17000;      // MC -> host, see McEvent
 	inline constexpr std::uint64_t kOffCollisionRing = 0x20000;
 	inline constexpr std::uint64_t kCollisionRingBytes = 32ull << 20;
@@ -224,6 +225,8 @@ namespace subcraft::proto
 		kInHurt = 7,         // host hurt the player: code = HurtKind, a = host damage * 100, b = attacker id, c = HurtFlags
 		kInOpenMenu = 8,     // open Minecraft's pause/options menu
 		kInLook = 9,         // relative look: a, b = mouse dx, dy * 1000 (used only when MC owns the look)
+		kInHurtMob = 10,     // a host creature hurt a Minecraft mob (v22): code = HurtKind, a = MC damage * 100,
+		                     // b = mob id (MobRecord::id), c = attacker creature id (CreatureRecord::id)
 	};
 
 	enum HurtKind : std::uint16_t
@@ -282,6 +285,38 @@ namespace subcraft::proto
 	};
 	static_assert(sizeof(CreatureTable) == 0x40 + 64 * kMaxCreatures);
 	static_assert(kOffCreatureTable + sizeof(CreatureTable) <= kOffEventRing);
+
+	// ---- mob table @0x16100 (MC -> host, seqlock, v22) ----------------------------------------
+	// Minecraft's mobs near the player, so the host's creatures can see, chase and bite them
+	// (each gets an invisible stand-in with the box). Rewritten every client tick.
+	inline constexpr std::uint32_t kMaxMobs = 96;
+
+	enum MobFlags : std::uint32_t
+	{
+		kMobHostile = 1u << 0,
+	};
+
+	struct MobRecord
+	{
+		std::uint32_t id;          // Minecraft entity id
+		std::uint32_t flags;       // MobFlags
+		float         x, y, z;     // centre of the bottom of its box, MC coords
+		float         width;       // blocks
+		float         height;      // blocks
+		float         healthFrac;  // 0..1
+	};
+	static_assert(sizeof(MobRecord) == 32);
+
+	struct MobTable
+	{
+		std::uint32_t seq;
+		std::uint32_t count;
+		std::uint8_t  pad[0x40 - 8];
+		MobRecord     mobs[kMaxMobs];
+	};
+	static_assert(sizeof(MobTable) == 0x40 + 32 * kMaxMobs);
+	static_assert(kOffCreatureTable + sizeof(CreatureTable) <= kOffMobTable);
+	static_assert(kOffMobTable + sizeof(MobTable) <= kOffEventRing);
 
 	// ---- event ring @0x17000 (MC -> host) -----------------------------------------------------
 	inline constexpr std::uint32_t kEventRingEntries = 512;  // power of two

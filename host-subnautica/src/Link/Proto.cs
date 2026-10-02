@@ -7,7 +7,7 @@ namespace SubCraft.Link
 	public static class Proto
 	{
 		public const uint Magic = 0x43425553; // "SUBC"
-		public const uint Version = 21;
+		public const uint Version = 22;
 		public const string LinkFileName = "link.bin";
 		public const ulong HeartbeatTimeoutNs = 2_000_000_000UL;
 
@@ -20,6 +20,7 @@ namespace SubCraft.Link
 		public const long OffCommandBox = 0x400;
 		public const long OffInputRing = 0x1000;
 		public const long OffCreatureTable = 0x12000;
+		public const long OffMobTable = 0x16100;
 		public const long OffEventRing = 0x17000;
 		public const long OffCollisionRing = 0x20000;
 		public const long CollisionRingBytes = 32L << 20;
@@ -69,7 +70,7 @@ namespace SubCraft.Link
 		public const long IrHead = 0x00, IrTail = 0x40, IrData = 0x80;
 		public const int InputEventBytes = 16;
 		public const ushort InKey = 1, InMouseButton = 2, InScroll = 3, InCursor = 4, InText = 5, InReleaseAll = 6, InHurt = 7, InOpenMenu = 8,
-			InLook = 9;
+			InLook = 9, InHurtMob = 10;
 		public const ushort HurtMelee = 0, HurtProjectile = 1, HurtOther = 2;
 		public const int HurtGrab = 1;
 
@@ -81,6 +82,13 @@ namespace SubCraft.Link
 			CrecHealthFrac = 32, CrecName = 40;
 		public const int CreatureNameBytes = 24;
 		public const uint CreatureHostile = 1, CreatureDead = 1 << 1, CreatureInvulnerable = 1 << 2;
+
+		// ---- Mob table (v22) ----
+		public const int MaxMobs = 96;
+		public const long MtSeq = 0x00, MtCount = 0x04, MtRecords = 0x40;
+		public const int MobRecordBytes = 32;
+		public const long MrecId = 0, MrecFlags = 4, MrecX = 8, MrecY = 12, MrecZ = 16, MrecWidth = 20, MrecHeight = 24, MrecHealthFrac = 28;
+		public const uint MobHostile = 1;
 
 		// ---- Event ring (relative to OffEventRing) ----
 		public const int EventRingEntries = 512;

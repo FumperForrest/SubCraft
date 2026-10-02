@@ -43,6 +43,8 @@ public final class SubCraft {
 		NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post e) -> CollisionConsumer.serverTick(e.getServer().overworld()));
 		NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post e) -> followHostTime(e.getServer().overworld()));
 		NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post e) -> dev.subcraft.combat.Proxies.serverTick(e.getServer().overworld()));
+		NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post e) -> dev.subcraft.combat.MobTable.serverTick(e.getServer().overworld()));
+		NeoForge.EVENT_BUS.addListener(dev.subcraft.combat.MobTable::onJoin);
 		NeoForge.EVENT_BUS.addListener((ServerStartedEvent e) -> configureWorld(e.getServer().overworld()));
 		NeoForge.EVENT_BUS.addListener((PlayerTickEvent.Post e) -> holdBreath(e.getEntity()));
 		NeoForge.EVENT_BUS.addListener(SubCraft::spawnOnlyOnKnownTerrain);

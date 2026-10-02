@@ -69,6 +69,8 @@ int main()
 	C(kInputRingTailOff);
 	C(kInputRingDataOff);
 	C(kMaxCreatures);
+	C(kOffMobTable);
+	C(kMaxMobs);
 	C(kEventRingEntries);
 	C(kEventRingHeadOff);
 	C(kEventRingTailOff);
@@ -134,6 +136,15 @@ int main()
 
 	S(CreatureTable);
 	F(CreatureTable, seq); F(CreatureTable, count); F(CreatureTable, creatures);
+	endStruct();
+
+	S(MobRecord);
+	F(MobRecord, id); F(MobRecord, flags); F(MobRecord, x); F(MobRecord, y); F(MobRecord, z);
+	F(MobRecord, width); F(MobRecord, height); F(MobRecord, healthFrac);
+	endStruct();
+
+	S(MobTable);
+	F(MobTable, seq); F(MobTable, count); F(MobTable, mobs);
 	endStruct();
 
 	S(McEvent);

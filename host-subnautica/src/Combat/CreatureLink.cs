@@ -89,7 +89,7 @@ namespace SubCraft.Combat
 		/// <summary>Harness: the creatures in the table and their health.</summary>
 		public static string Describe()
 		{
-			var sb = new System.Text.StringBuilder($"{records.Count} creatures, hits {Hits}, hurts {Hurts}\n");
+			var sb = new System.Text.StringBuilder($"{records.Count} creatures, hits {Hits}, hurts {Hurts}, mob stand-ins {MobStandIns.Count}, mob bites {MobStandIns.Bites}\n");
 			foreach (var r in records)
 			{
 				string hostile = (r.Flags & Proto.CreatureHostile) != 0 ? " hostile" : "";
@@ -200,6 +200,13 @@ namespace SubCraft.Combat
 	{
 		private static bool Prefix(LiveMixin __instance, float originalDamage, DamageType type, GameObject dealer, ref bool __result)
 		{
+			var standIn = __instance.GetComponent<McMobStandIn>();
+			if (standIn != null)
+			{
+				MobStandIns.Hurt(standIn, __instance, originalDamage, type, dealer);
+				__result = false;
+				return false;
+			}
 			if (global::Player.main == null || __instance.gameObject != global::Player.main.gameObject)
 			{
 				return true;

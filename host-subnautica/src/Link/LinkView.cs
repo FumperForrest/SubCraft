@@ -57,6 +57,7 @@ namespace SubCraft.Link
 			Zero(0, 0x1000); // header, HostState, McState, overlay control + slot headers
 			Zero(Proto.OffInputRing, Proto.IrData);
 			Zero(Proto.OffCreatureTable, Proto.CtRecords);
+			Zero(Proto.OffMobTable, Proto.MtRecords);
 			Zero(Proto.OffEventRing, Proto.ErData);
 			Zero(Proto.OffCollisionRing, Proto.CrData);
 			Zero(Proto.OffRenderRing, Proto.RrData);
@@ -239,6 +240,56 @@ namespace SubCraft.Link
 					return true;
 				}
 			}
+			return false;
+		}
+
+		// ---- mob table (seqlock read, v22) ----
+
+		public struct MobRecord
+		{
+			public uint Id, Flags;
+			public float X, Y, Z, Width, Height, HealthFrac;
+		}
+
+		public bool ReadMobs(List<MobRecord> list)
+		{
+			long o = Proto.OffMobTable;
+			for (int attempt = 0; attempt < 16; attempt++)
+			{
+				list.Clear();
+				int seq1 = I32Acquire(o + Proto.MtSeq);
+				if (seq1 == 0)
+				{
+					return false;
+				}
+				if ((seq1 & 1) != 0)
+				{
+					Thread.SpinWait(20);
+					continue;
+				}
+				int count = Math.Min(I32(o + Proto.MtCount), Proto.MaxMobs);
+				for (int i = 0; i < count; i++)
+				{
+					long r = o + Proto.MtRecords + (long)i * Proto.MobRecordBytes;
+					list.Add(new MobRecord
+					{
+						Id = U32(r + Proto.MrecId),
+						Flags = U32(r + Proto.MrecFlags),
+						X = F32(r + Proto.MrecX),
+						Y = F32(r + Proto.MrecY),
+						Z = F32(r + Proto.MrecZ),
+						Width = F32(r + Proto.MrecWidth),
+						Height = F32(r + Proto.MrecHeight),
+						HealthFrac = F32(r + Proto.MrecHealthFrac),
+					});
+				}
+				Thread.MemoryBarrier();
+				if (I32Acquire(o + Proto.MtSeq) == seq1)
+				{
+					return true;
+				}
+			}
+			list.Clear();
 			return false;
 		}
 

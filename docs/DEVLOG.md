@@ -89,6 +89,18 @@ Newest first. One entry per session (MISSION.md rule 11).
   RabbitRay's proxy took it 0.70 -> 0.40 (6 x 5 = 30 of 100); a biter's bite arrived as "1.4 damage
   (mob by creature_proxy)" (7 x 0.2); a Minecraft drowned (a zombie converted underwater) fought the
   player. Harness: `creatures`, `hurtplayer`; Minecraft `subcraft creatures`.
+- **Mobs in the ecosystem (protocol v22).** Mob table at 0x16100 (96 x 32 bytes, MC -> host,
+  seqlock, written every server tick for mobs within 48 blocks). Host `Combat.MobStandIns`: per mob
+  an invisible stand-in (BoxCollider, kinematic Rigidbody, LiveMixin with a shared LiveMixinData,
+  EcoTarget type Shark like the player); `MeleeAttack.CanDealDamageTo` prefix lets creatures bite
+  it; the TakeDamage prefix sends its damage as `kInHurtMob` (x0.2, attacker creature) and keeps its
+  health full. Minecraft hurts the mob from the creature's proxy. Hostile mobs in the SubCraft world
+  get a `NearestAttackableTargetGoal<CreatureProxy>` (priority 3, after players). Stand-ins are
+  skipped by the collision harvester. Verified: two zombies (drowned) and five biters: 4 bites on
+  the zombies arrived in Minecraft, the zombies landed 5 hits on creatures.
+
+**Phase 4 result: done** (pending Sean's play-test): time, unified HUD, sound mix, character
+camera, combat both ways, mobs vs creatures.
 
 **Verified in game (Windows)**: `fake_host.py` six `[ok]`; both games linked (heartbeat 5–8 ms),
 W/Space, clicks, block placement, a zombie and the held block drawn; Seamoth boarded: kinematic

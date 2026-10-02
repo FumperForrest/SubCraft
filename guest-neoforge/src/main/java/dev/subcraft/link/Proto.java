@@ -9,7 +9,7 @@ public final class Proto {
 	}
 
 	public static final int MAGIC = 0x43425553; // "SUBC"
-	public static final int VERSION = 21;
+	public static final int VERSION = 22;
 	public static final String LINK_FILE_NAME = "link.bin";
 	public static final long HEARTBEAT_TIMEOUT_NS = 2_000_000_000L;
 
@@ -22,6 +22,7 @@ public final class Proto {
 	public static final long OFF_COMMAND_BOX = 0x400;
 	public static final long OFF_INPUT_RING = 0x1000;
 	public static final long OFF_CREATURE_TABLE = 0x12000;
+	public static final long OFF_MOB_TABLE = 0x16100;
 	public static final long OFF_EVENT_RING = 0x17000;
 	public static final long OFF_COLLISION_RING = 0x20000;
 	public static final long COLLISION_RING_BYTES = 32L << 20;
@@ -156,6 +157,7 @@ public final class Proto {
 	public static final int IN_HURT = 7;
 	public static final int IN_OPEN_MENU = 8;
 	public static final int IN_LOOK = 9;
+	public static final int IN_HURT_MOB = 10;
 	public static final int HURT_MELEE = 0;
 	public static final int HURT_PROJECTILE = 1;
 	public static final int HURT_OTHER = 2;
@@ -171,6 +173,14 @@ public final class Proto {
 		CREC_HEALTH_FRAC = 32, CREC_NAME = 40;
 	public static final int CREATURE_NAME_BYTES = 24;
 	public static final int CREATURE_HOSTILE = 1;
+	// ---- Mob table (relative to OFF_MOB_TABLE, v22) ----
+	public static final int MAX_MOBS = 96;
+	public static final long MT_SEQ = 0x00;
+	public static final long MT_COUNT = 0x04;
+	public static final long MT_RECORDS = 0x40;
+	public static final int MOB_RECORD_BYTES = 32;
+	public static final long MREC_ID = 0, MREC_FLAGS = 4, MREC_X = 8, MREC_Y = 12, MREC_Z = 16, MREC_WIDTH = 20, MREC_HEIGHT = 24, MREC_HEALTH_FRAC = 28;
+	public static final int MOB_HOSTILE = 1;
 	public static final int CREATURE_DEAD = 1 << 1;
 	public static final int CREATURE_INVULNERABLE = 1 << 2;
 

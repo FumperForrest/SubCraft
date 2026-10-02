@@ -117,6 +117,7 @@ namespace SubCraft
 			}
 			World.LifepodAnchor.Frame(McLinked && inGame);
 			Combat.CreatureLink.Frame(view, McLinked && inGame);
+			Combat.MobStandIns.Frame(view, McLinked && inGame);
 			PlayerPuppet.Frame(this);
 			Audio.SoundBridge.Frame();
 			Diag();

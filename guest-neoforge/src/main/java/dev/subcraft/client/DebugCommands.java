@@ -70,7 +70,7 @@ public final class DebugCommands {
 				return SectionStreamer.stats() + "\n" + dev.subcraft.capture.DynamicCapture.stats();
 			}
 			case "creatures" -> {
-				return dev.subcraft.combat.Proxies.stats();
+				return dev.subcraft.combat.Proxies.stats() + ", " + dev.subcraft.combat.MobTable.stats();
 			}
 			case "sounds" -> {
 				return SoundBridge.stats();
