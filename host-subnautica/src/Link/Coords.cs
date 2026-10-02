@@ -9,6 +9,20 @@ namespace SubCraft.Link
 	/// </summary>
 	public static class Coords
 	{
+		/// <summary>
+		/// Minecraft's GameRenderer.bobView, as applied to the world in view space (GL: -z forward):
+		/// translate (tx, ty, 0), then roll about +Z by rollDeg, then pitch about +X by pitchDeg.
+		/// phase = -(walkDist + delta * partial), amount = lerped bob (both from McState).
+		/// </summary>
+		public static void BobView(float phase, float amount, out float tx, out float ty, out float rollDeg, out float pitchDeg)
+		{
+			double a = phase * Math.PI;
+			tx = (float)(Math.Sin(a) * amount * 0.5);
+			ty = (float)-Math.Abs(Math.Cos(a) * amount);
+			rollDeg = (float)(Math.Sin(a) * amount * 3.0);
+			pitchDeg = (float)(Math.Abs(Math.Cos(a - 0.2) * amount) * 5.0);
+		}
+
 		public static void ToMc(double ux, double uy, double uz, out double mx, out double my, out double mz)
 		{
 			mx = ux;

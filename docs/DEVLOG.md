@@ -33,6 +33,20 @@ Newest first. One entry per session (MISSION.md rule 11).
   water now stay frozen for the whole link (they thawed while piloting). Verified in survival:
   damage 6 -> dial ~87% after regen, hunger dial 19/20, MC bars gone. Open: the water dial's empty
   ring stays; the low-health pulse and damage punch still follow Subnautica's LiveMixin.
+- **Sean's new goals (MISSION.md 3.4):** the Minecraft character fully replaces Subnautica's
+  (camera, third person, no Subnautica first-person animation); sound is a mix (Subnautica
+  ambience and music, Minecraft's gameplay sounds through Subnautica's audio).
+- **Character camera (protocol v19, `McState.handFovDeg` in the old pad):** `CharacterCamera`
+  wraps `MainCameraControl.OnUpdate` (prefix restores the Camera's own local pose; postfix zeroes
+  Subnautica's bob on the control transform, records the first-person eye pose for the look and
+  the puppet, then places the Camera). F5: behind `eye - f*d` / in front `eye + f*d` looking back,
+  d = Minecraft's collision-reduced distance. View bobbing: Minecraft multiplies its projection by
+  B (bobView, view space); the camera gets `S B^-1 S` in local space (unit-tested formula); the
+  hand, a child of the camera, then lands exactly where Minecraft draws it, and is scaled by
+  `tan(fov/2)/tan(handFov/2)` for Minecraft's hand projection. FOV through `SNCameraRoot.SetFov`
+  (restored on unlink). Diver hidden whenever a Minecraft player is in world. Verified: back and
+  front cameras 4 m off the eye, player model captured (642 vertices), hand off and back on;
+  underwater FOV 60 = 70 x 0.857.
 
 **Verified in game (Windows)**: `fake_host.py` six `[ok]`; both games linked (heartbeat 5–8 ms),
 W/Space, clicks, block placement, a zombie and the held block drawn; Seamoth boarded: kinematic

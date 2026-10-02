@@ -215,7 +215,7 @@ public final class LinkView {
 		public int guiScale;
 		public long frameCounter;
 		public float fov;
-		public float bobPhase, bobAmount;
+		public float bobPhase, bobAmount, handFov;
 		public double eyeX, eyeY, eyeZ;
 		public long tickNs;
 		public double prevX, prevY, prevZ;
@@ -252,6 +252,7 @@ public final class LinkView {
 		putFloat(b + MS_FOV, st.fov);
 		putFloat(b + MS_BOB_PHASE, st.bobPhase);
 		putFloat(b + MS_BOB_AMOUNT, st.bobAmount);
+		putFloat(b + MS_HAND_FOV, st.handFov);
 		putDouble(b + MS_EYE_X, st.eyeX);
 		putDouble(b + MS_EYE_Y, st.eyeY);
 		putDouble(b + MS_EYE_Z, st.eyeZ);

@@ -102,7 +102,7 @@ int main()
 	F(McState, seq); F(McState, flags); F(McState, x); F(McState, y); F(McState, z);
 	F(McState, yaw); F(McState, pitch); F(McState, eyeHeight); F(McState, sensitivity);
 	F(McState, teleportAck); F(McState, guiScale); F(McState, frameCounter); F(McState, fovDeg);
-	F(McState, bobPhase); F(McState, bobAmount); F(McState, eyeX); F(McState, eyeY); F(McState, eyeZ);
+	F(McState, bobPhase); F(McState, bobAmount); F(McState, handFovDeg); F(McState, eyeX); F(McState, eyeY); F(McState, eyeZ);
 	F(McState, tickNs); F(McState, prevX); F(McState, prevY); F(McState, prevZ);
 	F(McState, curX); F(McState, curY); F(McState, curZ); F(McState, tickEyeO); F(McState, tickEye);
 	F(McState, walkDistO); F(McState, walkDist); F(McState, bobO); F(McState, bob); F(McState, tickMs);

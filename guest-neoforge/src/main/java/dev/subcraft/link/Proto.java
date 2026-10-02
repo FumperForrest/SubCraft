@@ -9,7 +9,7 @@ public final class Proto {
 	}
 
 	public static final int MAGIC = 0x43425553; // "SUBC"
-	public static final int VERSION = 18;
+	public static final int VERSION = 19;
 	public static final String LINK_FILE_NAME = "link.bin";
 	public static final long HEARTBEAT_TIMEOUT_NS = 2_000_000_000L;
 
@@ -84,6 +84,7 @@ public final class Proto {
 	public static final long MS_FOV = 0x40;
 	public static final long MS_BOB_PHASE = 0x44;
 	public static final long MS_BOB_AMOUNT = 0x48;
+	public static final long MS_HAND_FOV = 0x4C;
 	public static final long MS_EYE_X = 0x50;
 	public static final long MS_EYE_Y = 0x58;
 	public static final long MS_EYE_Z = 0x60;

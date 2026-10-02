@@ -16,7 +16,9 @@ namespace SubCraft.Player
 		public static void LateFrame()
 		{
 			var player = global::Player.main;
-			bool hide = PlayerPuppet.Active && Plugin.HideDiver.Value && player != null;
+			var driver = LinkDriver.Instance;
+			bool linked = driver != null && driver.McLinked && driver.HaveMc && driver.Mc.Has(Link.Proto.McInWorld);
+			bool hide = linked && Plugin.HideDiver.Value && player != null;
 			if (!hide)
 			{
 				Restore();

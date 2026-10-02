@@ -26,7 +26,7 @@
 namespace subcraft::proto
 {
 	inline constexpr std::uint32_t kMagic = 0x43425553;  // "SUBC"
-	inline constexpr std::uint32_t kVersion = 18;
+	inline constexpr std::uint32_t kVersion = 19;
 
 	// Default file locations: macOS $TMPDIR/subcraft/link.bin, Windows %LOCALAPPDATA%\SubCraft\link.bin.
 	// Both sides accept an override (Java -Dsubcraft.link=<path>, host config, env SUBCRAFT_LINK).
@@ -126,7 +126,7 @@ namespace subcraft::proto
 		float         fovDeg;         // effective vertical FOV (includes sprint / fluid modifiers)
 		float         bobPhase;       // MC walk-bob phase; 0 if bobbing is off
 		float         bobAmount;      // MC walk-bob amplitude
-		std::uint32_t pad4C;
+		float         handFovDeg;     // vertical FOV Minecraft draws the first-person hand with (v19)
 		double        eyeX, eyeY, eyeZ;  // MC camera position (interpolated, includes sneak eye lerp)
 
 		// Raw 20 Hz physics ticks, so the host can interpolate on its own frame clock exactly like

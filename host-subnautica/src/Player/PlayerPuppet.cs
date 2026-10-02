@@ -45,7 +45,9 @@ namespace SubCraft.Player
 			var cam = MainCamera.camera;
 			// The view is what has to match: "feet" are the camera minus Minecraft's standing eye
 			// height, both ways (Subnautica's collider shrinks while swimming, Minecraft's doesn't).
-			Vector3 camU = cam != null ? cam.transform.position : player.transform.position + Vector3.up * StandingEye;
+			// The first-person eye, before Minecraft's third-person and bobbing offsets (CharacterCamera).
+			Vector3 camU = CharacterCamera.HaveEye ? CharacterCamera.EyePosition
+				: cam != null ? cam.transform.position : player.transform.position + Vector3.up * StandingEye;
 			Vector3 feetU = camU - Vector3.up * StandingEye;
 			HostFeetMc = new Vector3(feetU.x, feetU.y, -feetU.z);
 

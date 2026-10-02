@@ -134,10 +134,18 @@ Log each fallback-rendered draw source so it can be promoted to captured later.
 ### 3.4 One game: integration checklist
 
 - **Light:** §3.2. Subnautica's day/night drives Minecraft's `dayTime`; Minecraft weather off.
-- **Sound:** Minecraft sound events are captured (`SoundEngine` play/stop, with position, volume,
-  pitch, category) and played by **Subnautica's audio** (FMOD or Unity audio — verify which) at the
-  right 3D position, with Subnautica's **underwater muffling** applied. Minecraft's own audio
-  output muted; Minecraft music off; Subnautica music stays.
+- **Sound (Sean, 2026-10-02): a mix.** Subnautica keeps its ambience, underwater music, creature
+  and vehicle sounds. Minecraft brings over its *important* sounds: the player (steps, hurt, eat),
+  blocks (place, break, dig), items, mobs, combat, doors and chests. They are captured
+  (`SoundEngine` play/stop, with position, volume, pitch, category) and played by **Subnautica's
+  audio** at the right 3D position with Subnautica's **underwater muffling**. Minecraft's own audio
+  output muted; Minecraft music, ambient and weather sounds off.
+- **Character (Sean, 2026-10-02): Minecraft's character fully replaces Subnautica's**, as in
+  SkyCraft. No Subnautica first-person animations (diver body, arms, swim/step/impact camera bob,
+  PDA arm pose) whenever linked, vehicles included. Minecraft's camera system exactly: first
+  person with Minecraft's FOV, view bobbing and hand (hand FOV and pose as Minecraft draws them);
+  F5 third person behind/in front at the distance Minecraft computes against its own blocks, with
+  the Minecraft player model drawn by Unity.
 - **HUD:** default: Minecraft hotbar + Subnautica's survival dials, with Minecraft health/hunger/air
   shown *in Subnautica's dials* (health dial = MC health, food dial = MC hunger, O2 = oxygen).
   Minecraft hearts/hunger bars hidden. Config to use Minecraft's HUD instead. Depth meter and
@@ -318,7 +326,9 @@ building the rest.
 - Creature proxies; MC hits → `LiveMixin.TakeDamage` (verify) + knockback; creature hits →
   cancelled, sent as `kInHurt`; grabs hand control to Subnautica; Minecraft mobs can damage
   creatures.
-- Sound capture → Subnautica audio with underwater muffling; Minecraft audio muted.
+- Sound capture → Subnautica audio with underwater muffling; Minecraft audio muted; the mix in 3.4.
+- Character replacement (3.4): Minecraft camera (FOV, bobbing, F5 third person), diver gone
+  everywhere, no Subnautica first-person animations.
 - Day/night sync. Unified HUD (Minecraft stats in Subnautica's dials) + config.
 - **Done when:** a stalker fight with sword and bow sounds and looks native; a zombie's groan is
   muffled underwater and clear in the lifepod; the health dial drops when a sand shark bites.

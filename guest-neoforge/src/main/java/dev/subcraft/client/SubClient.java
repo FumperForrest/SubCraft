@@ -336,6 +336,8 @@ public final class SubClient {
 			mc.eyeY = eye.y;
 			mc.eyeZ = eye.z;
 			mc.fov = (float) ((GameRendererInvoker) minecraft.gameRenderer).subcraft$getFov(camera, partial, true);
+			// GameRenderer.renderItemInHand projects the hand with getFov(.., false): 70 plus fluid effects.
+			mc.handFov = (float) ((GameRendererInvoker) minecraft.gameRenderer).subcraft$getFov(camera, partial, false);
 			mc.cameraMode = minecraft.options.getCameraType().ordinal();
 			mc.cameraDistance = camera.isDetached() ? (float) camera.getPosition().distanceTo(player.getEyePosition(partial)) : 0.0F;
 			boolean bob = minecraft.options.bobView().get();

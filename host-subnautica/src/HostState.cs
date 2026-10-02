@@ -55,7 +55,8 @@ namespace SubCraft
 			var cam = MainCamera.camera;
 			if (cam != null)
 			{
-				Vector3 f = cam.transform.forward;
+				// The look, not where the camera points: in Minecraft's front view it faces the player.
+				Vector3 f = Player.CharacterCamera.HaveEye ? Player.CharacterCamera.LookForward : cam.transform.forward;
 				Link.Coords.LookToMc(f.x, f.y, f.z, out s.Yaw, out s.Pitch);
 			}
 			s.TeleportSeq = teleportSeq;

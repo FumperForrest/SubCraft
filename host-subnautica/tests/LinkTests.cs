@@ -85,7 +85,7 @@ namespace SubCraft.Tests
 				["seq"] = Proto.MsSeq, ["flags"] = Proto.MsFlags, ["x"] = Proto.MsX, ["y"] = Proto.MsY, ["z"] = Proto.MsZ, ["yaw"] = Proto.MsYaw,
 				["pitch"] = Proto.MsPitch, ["eyeHeight"] = Proto.MsEyeHeight, ["sensitivity"] = Proto.MsSensitivity,
 				["teleportAck"] = Proto.MsTeleportAck, ["guiScale"] = Proto.MsGuiScale, ["frameCounter"] = Proto.MsFrameCounter,
-				["fovDeg"] = Proto.MsFov, ["bobPhase"] = Proto.MsBobPhase, ["bobAmount"] = Proto.MsBobAmount, ["eyeX"] = Proto.MsEyeX,
+				["fovDeg"] = Proto.MsFov, ["bobPhase"] = Proto.MsBobPhase, ["bobAmount"] = Proto.MsBobAmount, ["handFovDeg"] = Proto.MsHandFov, ["eyeX"] = Proto.MsEyeX,
 				["eyeY"] = Proto.MsEyeY, ["eyeZ"] = Proto.MsEyeZ, ["tickNs"] = Proto.MsTickNs, ["prevX"] = Proto.MsPrevX, ["prevY"] = Proto.MsPrevY,
 				["prevZ"] = Proto.MsPrevZ, ["curX"] = Proto.MsCurX, ["curY"] = Proto.MsCurY, ["curZ"] = Proto.MsCurZ, ["tickEyeO"] = Proto.MsTickEyeO,
 				["tickEye"] = Proto.MsTickEye, ["walkDistO"] = Proto.MsWalkDistO, ["walkDist"] = Proto.MsWalkDist, ["bobO"] = Proto.MsBobO,
@@ -167,6 +167,19 @@ namespace SubCraft.Tests
 			Coords.LookToMc(Math.Sin(r), 0, Math.Cos(r), out float yaw, out float pitch);
 			Assert.Equal(0.0, Coords.WrapDegrees(yaw - Coords.UnityYawToMc(unityYaw)), 3);
 			Assert.Equal(0f, pitch, 3);
+		}
+
+		[Fact]
+		public void BobViewMatchesMinecraft()
+		{
+			Coords.BobView(0.3f, 0f, out float tx, out float ty, out float roll, out float pitch);
+			Assert.Equal((0f, 0f, 0f, 0f), (tx, ty, roll, pitch));
+			// GameRenderer.bobView at phase 0, bob 1: translate (0, -1, 0), roll 0, pitch |cos(-0.2)| * 5.
+			Coords.BobView(0f, 1f, out tx, out ty, out roll, out pitch);
+			Assert.Equal(0f, tx, 5);
+			Assert.Equal(-1f, ty, 5);
+			Assert.Equal(0f, roll, 5);
+			Assert.Equal(4.90033f, pitch, 4);
 		}
 
 		[Fact]

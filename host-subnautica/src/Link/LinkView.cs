@@ -119,7 +119,7 @@ namespace SubCraft.Link
 			public float Yaw, Pitch, EyeHeight, Sensitivity;
 			public uint TeleportAck, GuiScale;
 			public long FrameCounter;
-			public float Fov, BobPhase, BobAmount;
+			public float Fov, BobPhase, BobAmount, HandFov;
 			public double EyeX, EyeY, EyeZ;
 			public long TickNs;
 			public double PrevX, PrevY, PrevZ, CurX, CurY, CurZ;
@@ -164,6 +164,7 @@ namespace SubCraft.Link
 				s.Fov = F32(o + Proto.MsFov);
 				s.BobPhase = F32(o + Proto.MsBobPhase);
 				s.BobAmount = F32(o + Proto.MsBobAmount);
+				s.HandFov = F32(o + Proto.MsHandFov);
 				s.EyeX = F64(o + Proto.MsEyeX);
 				s.EyeY = F64(o + Proto.MsEyeY);
 				s.EyeZ = F64(o + Proto.MsEyeZ);

@@ -3,6 +3,19 @@
 Things only you can judge (feel, taste) or decide. Everything here was already run by Claude
 unless marked **unverified**.
 
+## Phase 4 — your character is Minecraft's: please try it first
+
+What it does: Subnautica's diver is gone everywhere (vehicles too), Subnautica's swim/step camera
+bob is gone, and the camera is Minecraft's: its FOV (narrower underwater, wider when sprinting),
+its view bobbing, its hand, and **F5** cycles first person / behind / in front, with your Minecraft
+character drawn by Subnautica (`docs/look/4-third-person-*.png`).
+
+**Try:** walk on land and swim in first person (bobbing like Minecraft), sprint (FOV widens), F5
+through all three views near rocks (the camera pulls in like Minecraft's), get in the Seamoth.
+**Expected rough edges:** no hurt tilt yet (comes with combat); in a vehicle the camera is still
+Subnautica's vehicle camera; the PDA still floats where the diver's hands were.
+**Send back:** anything that doesn't feel like Minecraft's camera.
+
 ## Phase 4 (started) — time and HUD: please try it first
 
 What it does: Subnautica's time of day drives Minecraft's (noon = 6000, midnight = 18000), and in
