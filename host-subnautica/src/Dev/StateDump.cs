@@ -46,6 +46,10 @@ namespace SubCraft.Dev
 						["messages"] = Render.LiveWorld.Instance.Messages,
 						["pages"] = Render.LiveWorld.Instance.Pages,
 						["cells"] = Render.LiveWorld.Instance.Cells,
+						["textures"] = Render.LiveWorld.Instance.Textures,
+						["dynamicVertices"] = Render.LiveWorld.Instance.DynamicVertices,
+						["handVertices"] = Render.LiveWorld.Instance.HandVertices,
+						["animatedCells"] = Render.LiveWorld.Instance.AnimatedCells,
 					},
 					["mcFeetToSurface"] = driver.HaveMc ? (JToken)SurfaceGap(driver.Mc.X, driver.Mc.Y, driver.Mc.Z) : null,
 					["mc"] = driver.HaveMc ? new JObject

@@ -22,6 +22,8 @@ namespace SubCraft.Render
 
 		public readonly List<Page> Pages = new List<Page>();
 		private readonly Dictionary<AlbedoBake.Key, (int page, int x, int y)> cells = new Dictionary<AlbedoBake.Key, (int, int, int)>();
+		/// <summary>Each cell's source quad (6 vertices), to redo it when its sprite animates.</summary>
+		private readonly List<(AlbedoBake.Key key, int page, int x, int y, DumpReader.Vertex[] quad)> sources = new List<(AlbedoBake.Key, int, int, int, DumpReader.Vertex[])>();
 
 		public int Cells => cells.Count;
 
@@ -39,6 +41,9 @@ namespace SubCraft.Render
 					AlbedoBake.FillCell(k, (cell.x, cell.y), verts, q, atlasW, atlasH, atlas, p.Rgba, PageSize);
 					p.Dirty = true;
 					cells[k] = cell;
+					var quad = new DumpReader.Vertex[6];
+					for (int j = 0; j < 6; j++) quad[j] = verts[q * 6 + j];
+					sources.Add((k, cell.page, cell.x, cell.y, quad));
 				}
 				for (int j = 0; j < 6; j++)
 				{
@@ -86,10 +91,30 @@ namespace SubCraft.Render
 			return (Pages.Count - 1, 0, 0);
 		}
 
+		/// <summary>The source texture changed in a rectangle (an animated sprite): redo the cells that use it.</summary>
+		public int Refill(int x, int y, int w, int h, int atlasW, int atlasH, byte[] atlas)
+		{
+			int n = 0;
+			foreach (var s in sources)
+			{
+				var k = s.key;
+				if (k.X1 <= x || k.X0 >= x + w || k.Y1 <= y || k.Y0 >= y + h)
+				{
+					continue;
+				}
+				var p = Pages[s.page];
+				AlbedoBake.FillCell(k, (s.x, s.y), s.quad, 0, atlasW, atlasH, atlas, p.Rgba, PageSize);
+				p.Dirty = true;
+				n++;
+			}
+			return n;
+		}
+
 		public void Clear()
 		{
 			Pages.Clear();
 			cells.Clear();
+			sources.Clear();
 		}
 	}
 }

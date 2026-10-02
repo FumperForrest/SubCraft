@@ -12,11 +12,13 @@
     "client.CompositeRenderTypeAccessor",
     "client.CompositeStateAccessor",
     "client.GameRendererInvoker",
+    "client.GameRendererMixin",
     "client.GuiMixin",
     "client.InputConstantsMixin",
     "client.LevelRendererMixin",
     "client.MinecraftMixin",
     "client.MouseHandlerInvoker",
+    "client.ParticleEngineAccessor",
     "client.ScreenEffectRendererMixin",
     "client.TextureStateShardInvoker",
     "client.WorldOpenFlowsMixin"

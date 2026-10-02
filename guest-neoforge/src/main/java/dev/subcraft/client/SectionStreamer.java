@@ -82,8 +82,10 @@ public final class SectionStreamer {
 				return;
 			}
 			atlasSent = true;
+			dev.subcraft.capture.AtlasAnimator.reset();
 			SubCraft.LOG.info("SubCraft: block atlas sent to the host ({}x{})", atlas.width(), atlas.height());
 		}
+		dev.subcraft.capture.AtlasAnimator.frame(view, atlas);
 		SectionPos here = SectionPos.of(minecraft.player.blockPosition());
 		if (here.asLong() != center) {
 			center = here.asLong();

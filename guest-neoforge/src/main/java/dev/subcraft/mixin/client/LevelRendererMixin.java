@@ -34,6 +34,7 @@ public abstract class LevelRendererMixin {
 			Minecraft minecraft = Minecraft.getInstance();
 			if (minecraft.level != null) {
 				minecraft.getEntityRenderDispatcher().prepare(minecraft.level, camera, minecraft.crosshairPickEntity);
+				dev.subcraft.capture.DynamicCapture.frame(minecraft, camera, deltaTracker.getGameTimeDeltaPartialTick(false));
 			}
 			RenderSystem.clearColor(0.0F, 0.0F, 0.0F, 0.0F);
 			RenderSystem.clear(16640, Minecraft.ON_OSX); // GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT

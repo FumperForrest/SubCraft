@@ -82,5 +82,33 @@ namespace SubCraft.Tests
 			Assert.Equal(2, cache.Pages.Count);
 			Assert.Equal(1, r.page[r.page.Length - 1]);
 		}
+
+		[Fact]
+		public void AnimatedSpriteRefillsItsCells()
+		{
+			var cache = new BakeCache();
+			var verts = new List<DumpReader.Vertex>();
+			Quad(verts, 0, 0, 0.5f, 1, 0xFFFFFFFF);  // left sprite (x 0..16)
+			Quad(verts, 0.5f, 0, 1, 1, 0xFFFFFFFF);  // right sprite (x 16..32)
+			var atlas = Atlas();
+			var p = new int[verts.Count];
+			var u = new float[verts.Count];
+			var v = new float[verts.Count];
+			cache.Bake(verts, 32, 16, atlas, p, u, v);
+			// The left sprite's next frame is blue.
+			for (int y = 0; y < 16; y++)
+				for (int x = 0; x < 16; x++)
+				{
+					int o = (y * 32 + x) * 4;
+					atlas[o] = 0; atlas[o + 1] = 0; atlas[o + 2] = 255;
+				}
+			cache.Pages[0].Dirty = false;
+			Assert.Equal(1, cache.Refill(0, 0, 16, 16, 32, 16, atlas));
+			Assert.True(cache.Pages[0].Dirty);
+			int px = (int)(u[0] * BakeCache.PageSize + 0.5f), py = (int)(v[0] * BakeCache.PageSize + 0.5f);
+			int at = (py * BakeCache.PageSize + px) * 4;
+			Assert.Equal(255, cache.Pages[0].Rgba[at + 2]);
+			Assert.Equal(0, cache.Pages[0].Rgba[at]);
+		}
 	}
 }

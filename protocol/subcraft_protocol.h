@@ -26,7 +26,7 @@
 namespace subcraft::proto
 {
 	inline constexpr std::uint32_t kMagic = 0x43425553;  // "SUBC"
-	inline constexpr std::uint32_t kVersion = 16;
+	inline constexpr std::uint32_t kVersion = 17;
 
 	// Default file locations: macOS $TMPDIR/subcraft/link.bin, Windows %LOCALAPPDATA%\SubCraft\link.bin.
 	// Both sides accept an override (Java -Dsubcraft.link=<path>, host config, env SUBCRAFT_LINK).
@@ -438,6 +438,9 @@ namespace subcraft::proto
 		kRenAtlasRegion = 7,  // RenAtlasRegion + RGBA8 pixels: an animated sprite's current frame
 		kRenLights = 8,       // RenLights + RenLight[count]: a section's light-emitting blocks (sent
 		                      // after its kRenSection; 0 = none)
+		kRenHand = 10,        // like kRenScene (v17), but positions are in Minecraft's view space (camera at
+		                      // the origin, x right, y up, looking down -z): the first-person hand and
+		                      // held item, drawn by the host attached to its camera. Origin fields are 0.
 		kRenColliders = 9,    // RenColliders + RenBox[count] (v16): a section's block collision boxes
 		                      // (Minecraft VoxelShapes, merged), so the host's creatures and vehicles
 		                      // collide with Minecraft blocks; 0 = none. Sent with its kRenSection.
@@ -490,8 +493,9 @@ namespace subcraft::proto
 		std::uint32_t texture;   // 0: the block/item atlas, else a RenTexture id
 		std::uint32_t first;     // first vertex
 		std::uint32_t count;     // vertices (multiple of 3)
-		std::uint32_t material;  // RenMaterial
+		std::uint32_t material;  // RenMaterial; bit 8 (kRenDoubleSided, v17): draw both faces
 	};
+	inline constexpr std::uint32_t kRenDoubleSided = 0x100;
 	static_assert(sizeof(RenBatch) == 16);
 
 	struct RenVertex

@@ -413,6 +413,8 @@ public final class SubClient {
 		// Tutorial toasts ("Look around", "Move") would sit in the overlay forever.
 		minecraft.getTutorial().setStep(net.minecraft.client.tutorial.TutorialSteps.NONE);
 		options.getSoundSourceOptionInstance(SoundSource.MUSIC).set(0.0);
+		// Blob shadows would be drawn onto the invisible ghost terrain; Subnautica casts real shadows.
+		options.entityShadows().set(false);
 		options.save();
 	}
 

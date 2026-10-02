@@ -7,7 +7,7 @@ namespace SubCraft.Link
 	public static class Proto
 	{
 		public const uint Magic = 0x43425553; // "SUBC"
-		public const uint Version = 16;
+		public const uint Version = 17;
 		public const string LinkFileName = "link.bin";
 		public const ulong HeartbeatTimeoutNs = 2_000_000_000UL;
 
@@ -104,8 +104,9 @@ namespace SubCraft.Link
 		public const long RrHead = 0x00, RrTail = 0x40, RrData = 0x80;
 		public const long RrDataBytes = RenderRingBytes - RrData;
 		public const uint DumpMagic = 0x4D444353; // "SCDM"
-		public const uint RenPad = 0, RenAtlas = 1, RenSection = 2, RenClearAll = 3, RenTexture = 4, RenScene = 6, RenAtlasRegion = 7, RenLights = 8, RenColliders = 9;
+		public const uint RenPad = 0, RenAtlas = 1, RenSection = 2, RenClearAll = 3, RenTexture = 4, RenScene = 6, RenAtlasRegion = 7, RenLights = 8, RenColliders = 9, RenHand = 10;
 		public const int RenCollidersBytes = 16, RenBoxBytes = 24;
+		public const uint RenDoubleSided = 0x100;
 		public const int RenVertexBytes = 32, RenBatchBytes = 16;
 		public const int RenMatOpaque = 0, RenMatCutout = 1, RenMatTranslucent = 2, RenMatEmissive = 3, RenMatAdditive = 4;
 		public const uint VertexEmitter = 1 << 3;
