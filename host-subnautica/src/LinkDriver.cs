@@ -96,7 +96,13 @@ namespace SubCraft
 			McScreenInput.Frame(this);
 			if (McLinked && inGame && global::Player.main != null)
 			{
-				Harvester.Frame(view, global::Player.main.transform.position);
+				var velocityMc = Vector3.zero;
+				if (HaveMc && Mc.TickMs > 0f)
+				{
+					float perSecond = 1000f / Mc.TickMs;
+					velocityMc = new Vector3((float)(Mc.CurX - Mc.PrevX), (float)(Mc.CurY - Mc.PrevY), (float)(Mc.CurZ - Mc.PrevZ)) * perSecond;
+				}
+				Harvester.Frame(view, global::Player.main.transform.position, velocityMc);
 				Dry.Frame(view, Harvester.Epoch, global::Player.main.transform.position);
 			}
 			PlayerPuppet.Frame(this);

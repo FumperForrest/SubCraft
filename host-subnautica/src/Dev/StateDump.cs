@@ -34,6 +34,7 @@ namespace SubCraft.Dev
 						["bytesSent"] = driver.Harvester.BytesSent,
 						["lastColliders"] = driver.Harvester.Collisions,
 						["notReadySkips"] = driver.Harvester.NotReady,
+						["provisionalOpen"] = driver.Harvester.ProvisionalSent,
 						["terrainMeshesCaptured"] = World.TerrainMeshCapture.Captured,
 						["terrainMeshesHeld"] = World.TerrainMeshCapture.Count,
 					},

@@ -51,12 +51,25 @@ namespace SubCraft.World
 		public void Reset(LinkView view)
 		{
 			sent.Clear();
+			provisional.Clear();
 			epoch++;
 			var payload = BitConverter.GetBytes(epoch);
 			view.TryWriteCollision(Proto.ColClear, payload, payload.Length);
 		}
 
-		public void Frame(LinkView view, Vector3 playerUnity)
+		/// <summary>Never-sent sections handled per frame before the refresh round robin.</summary>
+		public static int NewSectionsPerFrame = 6;
+		/// <summary>Octree probes per frame for sections ahead of the player.</summary>
+		public static int ProbesPerFrame = 24;
+
+		/// <summary>Sections described as open from the octrees only; the exact harvest replaces them.</summary>
+		private readonly HashSet<long> provisional = new HashSet<long>();
+		public long ProvisionalSent { get; private set; }
+
+		private static long Key(int sx, int sy, int sz) => ((long)(sx & 0x3FFFFF) << 42) | ((long)(sy & 0xFFFFF) << 22) | (long)(sz & 0x3FFFFF);
+
+		/// <param name="velocityMc">Minecraft's player velocity, blocks per second (MC axes).</param>
+		public void Frame(LinkView view, Vector3 playerUnity, Vector3 velocityMc)
 		{
 			var player = global::Player.main;
 			if (player == null)
@@ -66,6 +79,31 @@ namespace SubCraft.World
 			playerLayerMask = PlayerCollisionMask(player);
 			// The player's section in Minecraft coordinates (z mirrored).
 			int psx = Mathf.FloorToInt(playerUnity.x) >> 4, psy = Mathf.FloorToInt(playerUnity.y) >> 4, psz = Mathf.FloorToInt(-playerUnity.z) >> 4;
+
+			// 1. Sections never sent exactly (the player just moved into range): nearest first.
+			int budget = NewSectionsPerFrame;
+			foreach (var d in Unique())
+			{
+				if (budget <= 0)
+				{
+					break;
+				}
+				int sx = psx + d.x, sy = psy + d.y, sz = psz + d.z;
+				if (sent.ContainsKey(Key(sx, sy, sz)) || !TerrainBuilt(new Vector3(sx * 16 + 8, sy * 16 + 8, -(sz * 16 + 8))))
+				{
+					continue;
+				}
+				budget--;
+				if (!Harvest(view, sx, sy, sz))
+				{
+					return; // ring full
+				}
+			}
+
+			// 2. Ahead of a fast player, beyond what Subnautica has built: open water/air from the octrees.
+			Probe(view, playerUnity, velocityMc);
+
+			// 3. Refresh known sections (round robin, nearer more often).
 			var order = Order();
 			for (int n = 0; n < SectionsPerFrame; n++)
 			{
@@ -75,6 +113,83 @@ namespace SubCraft.World
 					cursor--; // ring full: retry this section next frame
 					return;
 				}
+			}
+		}
+
+		private static List<Vector3Int> unique;
+
+		private static List<Vector3Int> Unique()
+		{
+			if (unique == null)
+			{
+				Order();
+			}
+			return unique;
+		}
+
+		private static List<Vector3Int> probeOrder;
+
+		private void Probe(LinkView view, Vector3 playerUnity, Vector3 velocityMc)
+		{
+			if (probeOrder == null)
+			{
+				probeOrder = new List<Vector3Int>();
+				for (int x = -3; x <= 3; x++)
+					for (int y = -2; y <= 2; y++)
+						for (int z = -3; z <= 3; z++)
+							probeOrder.Add(new Vector3Int(x, y, z));
+				probeOrder.Sort((a, b) => a.sqrMagnitude.CompareTo(b.sqrMagnitude));
+			}
+			// Where the player will be in ~1.5 s (MC axes), clamped to the octrees' detailed range.
+			var aheadMc = new Vector3(playerUnity.x, playerUnity.y, -playerUnity.z) + Vector3.ClampMagnitude(velocityMc * 1.5f, 64f);
+			int cx = Mathf.FloorToInt(aheadMc.x) >> 4, cy = Mathf.FloorToInt(aheadMc.y) >> 4, cz = Mathf.FloorToInt(aheadMc.z) >> 4;
+			int probes = ProbesPerFrame;
+			foreach (var d in probeOrder)
+			{
+				if (probes <= 0)
+				{
+					return;
+				}
+				int sx = cx + d.x, sy = cy + d.y, sz = cz + d.z;
+				long key = Key(sx, sy, sz);
+				if (sent.ContainsKey(key) || provisional.Contains(key))
+				{
+					continue;
+				}
+				probes--;
+				// The section plus a 2-block margin: no terrain voxel, and no object collider (wrecks,
+				// rocks, bases are loaded further out than terrain collision) in the section itself.
+				var minU = new Vector3(sx * 16 - 2, sy * 16 - 2, -(sz * 16 + 18));
+				var maxU = new Vector3(sx * 16 + 18, sy * 16 + 18, -(sz * 16 - 2));
+				if (OctreeProbe.Open(minU, maxU) != true)
+				{
+					continue;
+				}
+				var centerU = new Vector3(sx * 16 + 8, sy * 16 + 8, -(sz * 16 + 8));
+				int hits = Physics.OverlapBoxNonAlloc(centerU, new Vector3(9, 9, 9), overlap, Quaternion.identity, playerLayerMask, QueryTriggerInteraction.Ignore);
+				bool any = false;
+				for (int i = 0; i < hits && !any; i++)
+				{
+					any = Wanted(overlap[i]);
+				}
+				if (any)
+				{
+					continue;
+				}
+				var payload = new byte[Proto.ColRegionBytes];
+				using (var w = new BinaryWriter(new MemoryStream(payload)))
+				{
+					w.Write(sx * 16); w.Write(sy * 16); w.Write(sz * 16);
+					w.Write(sx * 16 + 15); w.Write(sy * 16 + 15); w.Write(sz * 16 + 15);
+					w.Write(epoch);
+					w.Write(0);
+				}
+				if (!view.TryWriteCollision(Proto.ColTris, payload, payload.Length))
+				{
+					return;
+				}
+				provisional.Add(key);
+				ProvisionalSent++;
 			}
 		}
 
@@ -93,6 +208,7 @@ namespace SubCraft.World
 					for (int z = -RadiusH; z <= RadiusH; z++)
 						list.Add(new Vector3Int(x, y, z));
 			list.Sort((a, b) => a.sqrMagnitude.CompareTo(b.sqrMagnitude));
+			unique = list;
 			// Nearer sections appear more often in the round robin.
 			var weighted = new List<Vector3Int>();
 			foreach (var v in list)
