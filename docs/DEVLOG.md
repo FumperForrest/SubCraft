@@ -115,7 +115,19 @@ Newest first. One entry per session (MISSION.md rule 11).
   sound through FMOD, a Minecraft hit on a creature, Subnautica damage on Minecraft's player,
   Seamoth board/eject, lifepod steady). 12/12 on 2026-10-02; Phase 0a `fake_host.py` 6/6.
 
-**Phase 4 result: done** (pending Sean's play-test): time, unified HUD, sound mix, character
+**Phase 4 result: done** (pending Sean's play-test)
+
+## 2026-10-02 — Session 10: mod compatibility (Sean: "complex entity rendering and full mod compat")
+
+Sean installed Create 6.0.10 and Immersive Vehicles 24.0.0 (+ MTS Official Pack). Details and
+results in compat/README.md. In short: Flywheel's backend is off while linked (Create draws
+through capturable renderers: kinetics turn in Subnautica); a generic vertex-buffer capture
+(`VboCapture`) replays draws that skip MultiBufferSource, through the bound shader's ModelViewMat
+(Immersive Vehicles' vehicles drawn); NeoForge render-stage events fire inside the capture;
+`LevelRendererMixin` priority 1500 lets other mods' renderLevel HEAD hooks run; failing renderers
+back off and log their root cause (Immersive Vehicles' per-frame crash reports had Minecraft at
+1-13 fps); `mc_dev.ps1 stop` saves the world first (`subcraft save`): the hard kill had been
+losing placed vehicles. New debug tools: `subcraft field`, `subcraft rawdebug`, harness `mouse`.: time, unified HUD, sound mix, character
 camera, combat both ways, mobs vs creatures.
 
 **Verified in game (Windows)**: `fake_host.py` six `[ok]`; both games linked (heartbeat 5–8 ms),

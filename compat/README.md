@@ -59,5 +59,13 @@ These Phase 3 items need the mods above and are not built or verified on the dev
 - **Known:** a held Immersive Vehicles item shows as a dark shape in first person; its translucent
   pass (`renderLevel` TAIL hook) never runs, so vehicle glass is missing; vehicles don't collide
   with Subnautica's creatures yet (moving colliders).
+- **RenderLevelStageEvent** (after entities, block entities, particles, translucent blocks) now
+  fires inside the capture with an identity model-view and the real frustum; mods drawing there go
+  through Minecraft's buffers -> vertex buffers -> VboCapture. AFTER_LEVEL (full-screen effects)
+  is left out.
+- Create's goggle tooltips and other GUI overlays show in the overlay as usual.
+- **Not verified:** a moving Create contraption (the harness's right-click didn't assemble the
+  bearing; contraptions draw through entity renderers with Flywheel off, so they should show).
+- Smoke test with both mods installed: 12/12; Minecraft ~60 fps near the quad.
 - Tools: `subcraft field <class> <path>` (read any mod's static state by reflection),
   `subcraft rawdebug <n> world|hand` (log raw draws), `subcraft save`; harness `mouse`.

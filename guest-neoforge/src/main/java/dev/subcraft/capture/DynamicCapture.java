@@ -152,6 +152,7 @@ public final class DynamicCapture {
 				}
 			}
 		}
+		StageEvents.fire(minecraft, camera, partial, minecraft.levelRenderer.getTicks());
 		VboCapture.end();
 		for (var e : entities.buffers.entrySet()) {
 			RenderClassifier.Info info = RenderClassifier.classify(e.getKey());
