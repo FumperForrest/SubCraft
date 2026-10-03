@@ -62,13 +62,19 @@ def mono_ns():
     return time.perf_counter_ns()  # Windows: QueryPerformanceCounter in ns
 
 
-def link_path():
-    override = os.environ.get("SUBCRAFT_LINK")
+def shared_dir():
+    """The same rule as Platform.cs / Platform.java: SUBCRAFT_DIR, else %LOCALAPPDATA%\\SubCraft
+    (the home folder if unset, like Java), else $TMPDIR/subcraft (/tmp if unset, like C#)."""
+    override = os.environ.get("SUBCRAFT_DIR")
     if override:
         return override
     if os.name == "nt":
-        return os.path.join(os.environ["LOCALAPPDATA"], "SubCraft", "link.bin")
-    return os.path.join(os.environ.get("TMPDIR", "/tmp"), "subcraft", "link.bin")
+        return os.path.join(os.environ.get("LOCALAPPDATA") or os.path.expanduser("~"), "SubCraft")
+    return os.path.join(os.environ.get("TMPDIR") or "/tmp", "subcraft")
+
+
+def link_path():
+    return os.environ.get("SUBCRAFT_LINK") or os.path.join(shared_dir(), "link.bin")
 
 
 class Link:
