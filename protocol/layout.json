@@ -1,8 +1,8 @@
 {
-  "version": 25,
+  "version": 26,
   "constants": {
     "kMagic": 1128420691,
-    "kVersion": 25,
+    "kVersion": 26,
     "kHeartbeatTimeoutNs": 2000000000,
     "kOffHeader": 0,
     "kOffHostState": 256,
@@ -25,6 +25,7 @@
     "kRenderRingBytes": 67108864,
     "kMappingBytes": 200327168,
     "kOverlayDirty": 4,
+    "kOverlayFrontShift": 4,
     "kCommandTextBytes": 1008,
     "kCommandReplyBytes": 1024,
     "kInputRingEntries": 4096,

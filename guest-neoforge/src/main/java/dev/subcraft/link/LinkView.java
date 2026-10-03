@@ -18,8 +18,9 @@ public final class LinkView {
 	private static final VarHandle LONG = MethodHandles.byteBufferViewVarHandle(long[].class, ByteOrder.LITTLE_ENDIAN);
 
 	private final ByteBuffer buf;
-	// Writer-private overlay slot. The host starts with front = 2 and the middle at 0.
+	// Writer-private overlay slot, valid once overlaySynced (see resetOverlayWriter).
 	private int overlayBack = 1;
+	private boolean overlaySynced;
 
 	public LinkView(ByteBuffer buffer) {
 		if (buffer.capacity() < MAPPING_BYTES) {
@@ -76,6 +77,11 @@ public final class LinkView {
 
 	public void setIntRelease(long off, int v) {
 		INT.setRelease(this.buf, (int) off, v);
+	}
+
+	/** Atomic compare-and-set (volatile semantics, a full fence). */
+	public boolean compareAndSetInt(long off, int expected, int v) {
+		return INT.compareAndSet(this.buf, (int) off, expected, v);
 	}
 
 	public long getLongAcquire(long off) {
@@ -563,8 +569,33 @@ public final class LinkView {
 
 	// ---- overlay (publish) ----
 
-	public void resetOverlayWriter() {
-		this.overlayBack = 1;
+	/**
+	 * Picks this writer's back slot when it (re)connects: the slot that is neither the middle nor
+	 * the host's front, both read from one read of the state word (v26: the host keeps its front
+	 * in bits 4-5 and every change to the word is a compare-and-swap, so a single read is a
+	 * consistent picture). False when the word doesn't describe three distinct slots (the mapping
+	 * isn't initialised): then {@link #overlayReady} keeps trying before every frame, and until it
+	 * succeeds the writer owns no slot and publishes nothing.
+	 */
+	public boolean resetOverlayWriter() {
+		int state = getIntAcquire(OFF_OVERLAY_CTL + OC_STATE);
+		int middle = state & 3;
+		int front = (state >>> OVERLAY_FRONT_SHIFT) & 3;
+		this.overlaySynced = middle < 3 && front < 3 && middle != front;
+		if (this.overlaySynced) {
+			this.overlayBack = 3 - middle - front;
+		}
+		return this.overlaySynced;
+	}
+
+	/** True when the writer owns a back slot (call before writing pixels into it); retries the resync if needed. */
+	public boolean overlayReady() {
+		return this.overlaySynced || resetOverlayWriter();
+	}
+
+	/** The writer's back slot (0-2). */
+	public int overlayBack() {
+		return this.overlayBack;
 	}
 
 	/** Absolute byte offset of the writer's back slot pixels. */
@@ -574,12 +605,19 @@ public final class LinkView {
 
 	/** Publishes the frame just written into the back slot and takes the old middle as the new back. */
 	public void publishOverlay(int width, int height, boolean bottomUp, long frameId) {
+		if (!this.overlaySynced) {
+			throw new IllegalStateException("publishOverlay before the writer owns a slot (overlayReady)");
+		}
 		long hdr = OFF_OVERLAY_SLOT_HDR + this.overlayBack * SLOT_HDR_BYTES;
 		putInt(hdr + SH_WIDTH, width);
 		putInt(hdr + SH_HEIGHT, height);
 		putInt(hdr + SH_FLAGS, bottomUp ? 1 : 0);
 		putLong(hdr + SH_FRAME_ID, frameId);
-		int old = (int) INT.getAndSet(this.buf, (int) (OFF_OVERLAY_CTL + OC_STATE), this.overlayBack | OVERLAY_DIRTY);
+		// Swap our slot in as the middle, keeping the host's front bits (v26).
+		int old;
+		do {
+			old = getIntAcquire(OFF_OVERLAY_CTL + OC_STATE);
+		} while (!compareAndSetInt(OFF_OVERLAY_CTL + OC_STATE, old, this.overlayBack | OVERLAY_DIRTY | (old & (3 << OVERLAY_FRONT_SHIFT))));
 		this.overlayBack = old & 3;
 		LONG.getAndAdd(this.buf, (int) (OFF_OVERLAY_CTL + OC_FRAMES_PUBLISHED), 1L);
 	}

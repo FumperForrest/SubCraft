@@ -21,7 +21,7 @@ import zlib
 
 # ---- protocol (protocol/subcraft_protocol.h); tools/tests/test_layout.py checks these against layout.json ----
 MAGIC = 0x43425553
-VERSION = 25
+VERSION = 26
 OFF_HOST = 0x100
 OFF_MC = 0x200
 OFF_OVL = 0x300
@@ -41,6 +41,7 @@ COL_DATA = COL_BYTES - 0x80
 RENDER_DATA = RENDER_BYTES - 0x80
 INPUT_ENTRIES = 4096
 EVENT_ENTRIES = 512
+OVERLAY_DIRTY, OVERLAY_FRONT_SHIFT = 4, 4
 
 HOST_IN_GAME = 1
 IN_KEY, IN_MOUSE_BUTTON, IN_RELEASE_ALL = 1, 2, 6
@@ -79,8 +80,9 @@ class Link:
         # Zero every control block; leave pixel/ring payloads alone.
         for off, n in ((0, 0x1000), (OFF_IN, 0x80), (OFF_CREATURES, 0x40), (OFF_EVENTS, 0x80), (OFF_COL, 0x80), (OFF_RENDER, 0x80)):
             self.m[off:off + n] = bytes(n)
-        struct.pack_into("<IIII", self.m, 0, MAGIC, VERSION, os.getpid(), 0)
         self.front = 2
+        struct.pack_into("<I", self.m, OFF_OVL, self.front << OVERLAY_FRONT_SHIFT)  # middle 0, clean (v26)
+        struct.pack_into("<IIII", self.m, 0, MAGIC, VERSION, os.getpid(), 0)
         self.host_seq = 0
         self.col_head = 0
         self.in_head = 0
@@ -169,13 +171,14 @@ class Link:
 
     def poll_overlay(self):
         state = struct.unpack_from("<I", self.m, OFF_OVL)[0]
-        if not state & 4:
+        if not state & OVERLAY_DIRTY:
             return
-        # xchg: Python can't do an atomic exchange on the mapping; the writer only ever swaps in
-        # its own back slot, so read-then-write is safe as long as it doesn't publish in between.
-        # Good enough for a test tool (the C# host uses Interlocked.Exchange).
-        struct.pack_into("<I", self.m, OFF_OVL, self.front)
-        self.front = state & 3
+        # The C# host does this as one compare-and-swap (v26: our front goes into bits 4-5). Python
+        # can't CAS on a mapping: if Minecraft publishes between this read and write, its frame is
+        # lost and the slots can alias until the next restart. Acceptable for a test tool only.
+        taken = state & 3
+        struct.pack_into("<I", self.m, OFF_OVL, self.front | (taken << OVERLAY_FRONT_SHIFT))
+        self.front = taken
         hdr = OFF_OVL_HDR + self.front * 0x40
         w, h, flags = struct.unpack_from("<III", self.m, hdr)
         frame_id = struct.unpack_from("<Q", self.m, hdr + 0x10)[0]

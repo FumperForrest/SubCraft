@@ -51,6 +51,8 @@ class FakeHostLayout(unittest.TestCase):
         self.assertEqual(h.RENDER_DATA, C["kRenRingDataBytes"])
         self.assertEqual(h.INPUT_ENTRIES, C["kInputRingEntries"])
         self.assertEqual(h.EVENT_ENTRIES, C["kEventRingEntries"])
+        self.assertEqual(h.OVERLAY_DIRTY, C["kOverlayDirty"])
+        self.assertEqual(h.OVERLAY_FRONT_SHIFT, C["kOverlayFrontShift"])
 
     def test_enums(self):
         h = fake_host

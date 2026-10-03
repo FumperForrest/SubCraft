@@ -52,6 +52,7 @@ int main()
 	C(kRenderRingBytes);
 	C(kMappingBytes);
 	C(kOverlayDirty);
+	C(kOverlayFrontShift);
 	C(kCommandTextBytes);
 	C(kCommandReplyBytes);
 	C(kInputRingEntries);

@@ -53,6 +53,7 @@ namespace SubCraft.Tests
 			Assert.Equal(Proto.RenderRingBytes, C("kRenderRingBytes"));
 			Assert.Equal(Proto.MappingBytes, C("kMappingBytes"));
 			Assert.Equal(Proto.OverlayDirty, C("kOverlayDirty"));
+			Assert.Equal(Proto.OverlayFrontShift, C("kOverlayFrontShift"));
 			Assert.Equal(Proto.InputRingEntries, C("kInputRingEntries"));
 			Assert.Equal(Proto.IrHead, C("kInputRingHeadOff"));
 			Assert.Equal(Proto.IrTail, C("kInputRingTailOff"));
@@ -497,15 +498,25 @@ namespace SubCraft.Tests
 		[Fact]
 		public void OverlayTakesWhatMinecraftPublished()
 		{
-			// Minecraft's writer: back starts at 1; publish = xchg(state, back | dirty), back = old & 3.
-			int back = 1;
+			// Minecraft's writer (v26): back = the slot that is neither the middle nor our front;
+			// publish = CAS(state, back | dirty | front bits kept), back = old middle.
+			ref int state = ref *(int*)(mem + Proto.OffOverlayCtl);
+			int s0 = Volatile.Read(ref state);
+			Assert.Equal(2 << Proto.OverlayFrontShift, s0); // InitAsHost: middle 0, clean, front 2
+			int back = 3 - (s0 & 3) - ((s0 >> Proto.OverlayFrontShift) & 3);
+			Assert.Equal(1, back);
 			void Publish(long id)
 			{
 				long hdr = Proto.OffOverlaySlotHdr + back * Proto.SlotHdrBytes;
 				view.Put(hdr + Proto.ShWidth, 4);
 				view.Put(hdr + Proto.ShHeight, 2);
 				view.Put(hdr + Proto.ShFrameId, id);
-				int old = Interlocked.Exchange(ref *(int*)(mem + Proto.OffOverlayCtl), back | Proto.OverlayDirty);
+				int old;
+				do
+				{
+					old = Volatile.Read(ref *(int*)(mem + Proto.OffOverlayCtl));
+				}
+				while (Interlocked.CompareExchange(ref *(int*)(mem + Proto.OffOverlayCtl), back | Proto.OverlayDirty | (old & (3 << Proto.OverlayFrontShift)), old) != old);
 				back = old & 3;
 			}
 			Assert.False(view.TryTakeOverlay(out _));
@@ -515,7 +526,11 @@ namespace SubCraft.Tests
 				if (id % 3 == 0) Publish(++id);
 				Assert.True(view.TryTakeOverlay(out var f));
 				Assert.Equal(id, f.FrameId);
-				Assert.NotEqual(back, (int)((f.PixelsOff - Proto.OffOverlayPixels) / Proto.OverlaySlotBytes));
+				int frontSlot = (int)((f.PixelsOff - Proto.OffOverlayPixels) / Proto.OverlaySlotBytes);
+				Assert.NotEqual(back, frontSlot);
+				int now = Volatile.Read(ref state);
+				Assert.Equal(frontSlot, (now >> Proto.OverlayFrontShift) & 3); // our front, published for a reconnecting writer
+				Assert.Equal(3, frontSlot + (now & 3) + back);
 				Assert.False(view.TryTakeOverlay(out _));
 			}
 		}

@@ -62,6 +62,7 @@ namespace SubCraft.Link
 			Zero(Proto.OffCollisionRing, Proto.CrData);
 			Zero(Proto.OffRenderRing, Proto.RrData);
 			overlayFront = 2;
+			Put(Proto.OffOverlayCtl + Proto.OcState, overlayFront << Proto.OverlayFrontShift); // middle 0, clean, our front (v26)
 			Put(Proto.OffHeader + Proto.HVersion, Proto.Version);
 			I32Release(Proto.OffHeader + Proto.HHostPid, pid);
 			// Magic last: Minecraft treats the mapping as valid only once it is there.
@@ -478,12 +479,23 @@ namespace SubCraft.Link
 		{
 			frame = default;
 			ref int state = ref *(int*)(b + Proto.OffOverlayCtl + Proto.OcState);
-			if ((Volatile.Read(ref state) & Proto.OverlayDirty) == 0)
+			// Swap our front in as the middle and take the old middle; our new front goes into
+			// bits 4-5 in the same compare-and-swap, so a Minecraft that (re)connects can tell
+			// which slot is free from one read (v26).
+			while (true)
 			{
-				return false;
+				int old = Volatile.Read(ref state);
+				if ((old & Proto.OverlayDirty) == 0)
+				{
+					return false;
+				}
+				int taken = old & 3;
+				if (Interlocked.CompareExchange(ref state, overlayFront | (taken << Proto.OverlayFrontShift), old) == old)
+				{
+					overlayFront = taken;
+					break;
+				}
 			}
-			int old = Interlocked.Exchange(ref state, overlayFront);
-			overlayFront = old & 3;
 			long hdr = Proto.OffOverlaySlotHdr + overlayFront * Proto.SlotHdrBytes;
 			frame.Width = I32(hdr + Proto.ShWidth);
 			frame.Height = I32(hdr + Proto.ShHeight);

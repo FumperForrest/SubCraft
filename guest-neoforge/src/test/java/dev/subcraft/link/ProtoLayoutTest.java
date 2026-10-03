@@ -129,6 +129,7 @@ class ProtoLayoutTest {
 	@Test
 	void overlay() {
 		fields("OverlayCtl", Map.of("state", Proto.OC_STATE, "framesPublished", Proto.OC_FRAMES_PUBLISHED));
+		assertEquals(Proto.OVERLAY_FRONT_SHIFT, constant("kOverlayFrontShift"));
 		assertEquals(Proto.SLOT_HDR_BYTES, size("OverlaySlotHdr"));
 		fields("OverlaySlotHdr", Map.of("width", Proto.SH_WIDTH, "height", Proto.SH_HEIGHT, "flags", Proto.SH_FLAGS, "frameId", Proto.SH_FRAME_ID));
 	}

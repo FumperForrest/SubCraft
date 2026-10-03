@@ -7,7 +7,7 @@ namespace SubCraft.Link
 	public static class Proto
 	{
 		public const uint Magic = 0x43425553; // "SUBC"
-		public const uint Version = 25;
+		public const uint Version = 26;
 		public const string LinkFileName = "link.bin";
 		public const ulong HeartbeatTimeoutNs = 2_000_000_000UL;
 
@@ -57,7 +57,7 @@ namespace SubCraft.Link
 
 		// ---- Overlay ----
 		public const long OcState = 0x00, OcFramesPublished = 0x08;
-		public const int OverlayDirty = 1 << 2;
+		public const int OverlayDirty = 1 << 2, OverlayFrontShift = 4;
 		public const long SlotHdrBytes = 0x40, ShWidth = 0x00, ShHeight = 0x04, ShFlags = 0x08, ShFrameId = 0x10;
 
 		// ---- Command box (relative to OffCommandBox, v12) ----

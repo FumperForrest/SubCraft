@@ -102,6 +102,7 @@ public final class SubLink {
 				problem(mismatch + " in " + file);
 				return;
 			}
+			opened.resetOverlayWriter();
 			opened.setMcPid(Platform.pid());
 			opened.mcHeartbeat(now);
 			hostPid = opened.hostPid();

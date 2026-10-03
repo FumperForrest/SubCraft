@@ -33,6 +33,9 @@ public final class OverlayExporter {
 			SubCraft.LOG.info("SubCraft: overlay capture {}x{} (window {}x{})", width, height,
 				minecraft.getWindow().getScreenWidth(), minecraft.getWindow().getScreenHeight());
 		}
+		if (!view.overlayReady()) {
+			return; // the host is mid-exchange: no free slot known yet, skip this frame
+		}
 		ByteBuffer dst = view.buffer().slice((int) view.overlayBackSlotOffset(), width * height * 4);
 		// Read the colour texture itself: unambiguous about which framebuffer is bound.
 		GlStateManager._bindTexture(target.getColorTextureId());
