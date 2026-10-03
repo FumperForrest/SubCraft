@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using SubCraft.Core.Wire;
 using SubCraft.Link;
 using UnityEngine;
 
@@ -240,23 +241,52 @@ namespace SubCraft.Render
 			}
 		}
 
+		/// <summary>Messages dropped because their counts didn't fit their payload (RenderWire), per type.</summary>
+		public readonly Dictionary<uint, int> Malformed = new Dictionary<uint, int>();
+
+		private void Reject(uint type, int bytes)
+		{
+			Malformed.TryGetValue(type, out int n);
+			Malformed[type] = n + 1;
+			if (n == 0)
+			{
+				Plugin.Log.LogError($"SubCraft: malformed render message type {type} ({bytes} bytes) dropped; further ones of this type are only counted");
+			}
+		}
+
 		private void Handle(LinkView view, uint type, long off, int bytes)
 		{
 			byte* p = view.Base + off;
 			switch (type)
 			{
 				case Proto.RenSubLevel:
+					if (!RenderWire.TrySubLevel(p, bytes))
+					{
+						Reject(type, bytes);
+						break;
+					}
 					SubLevel(p);
 					break;
 				case Proto.RenSound:
-					Audio.SoundBridge.Load(*(uint*)p, p + Proto.RenSoundBytes, *(int*)(p + 4));
+				{
+					if (!RenderWire.TrySound(p, bytes, out uint soundId, out int soundBytes))
+					{
+						Reject(type, bytes);
+						break;
+					}
+					Audio.SoundBridge.Load(soundId, p + Proto.RenSoundBytes, soundBytes);
 					break;
+				}
 				case Proto.RenClearAll:
 					ClearAll("Minecraft asked");
 					break;
 				case Proto.RenAtlas:
 				{
-					int w = *(int*)p, h = *(int*)(p + 4);
+					if (!RenderWire.TryAtlas(p, bytes, out int w, out int h))
+					{
+						Reject(type, bytes);
+						break;
+					}
 					SetTexture(0, w, h, p + 8);
 					RebakeAll();
 					Plugin.Log.LogInfo($"SubCraft: Minecraft block atlas {w}x{h}");
@@ -265,7 +295,11 @@ namespace SubCraft.Render
 				case Proto.RenAtlasRegion:
 				{
 					// An animated sprite's new frame: patch the atlas, redo the cells that use it.
-					int x = *(int*)p, y = *(int*)(p + 4), w = *(int*)(p + 8), h = *(int*)(p + 12);
+					if (!RenderWire.TryAtlasRegion(p, bytes, out int x, out int y, out int w, out int h))
+					{
+						Reject(type, bytes);
+						break;
+					}
 					if (!textures.TryGetValue(0, out var atlas) || x < 0 || y < 0 || x + w > atlas.W || y + h > atlas.H)
 					{
 						break;
@@ -280,7 +314,11 @@ namespace SubCraft.Render
 				}
 				case Proto.RenTexture:
 				{
-					int id = *(int*)p, w = *(int*)(p + 4), h = *(int*)(p + 8);
+					if (!RenderWire.TryTexture(p, bytes, out int id, out int w, out int h))
+					{
+						Reject(type, bytes);
+						break;
+					}
 					SetTexture(id, w, h, p + 16);
 					Plugin.Log.LogInfo($"SubCraft: Minecraft texture {id} {w}x{h}");
 					break;
@@ -289,6 +327,11 @@ namespace SubCraft.Render
 				case Proto.RenHand:
 				{
 					// Only the newest frame is drawn: copy it now (the ring space is released after this).
+					if (!RenderWire.TryScene(p, bytes, out _, out _))
+					{
+						Reject(type, bytes);
+						break;
+					}
 					bool isHand = type == Proto.RenHand;
 					ref byte[] buf = ref isHand ? ref pendingHand : ref pendingScene;
 					if (buf == null || buf.Length < bytes)
@@ -301,7 +344,12 @@ namespace SubCraft.Render
 				}
 				case Proto.RenSection:
 				{
-					int sx = *(int*)p, sy = *(int*)(p + 4), sz = *(int*)(p + 8), count = *(int*)(p + 12);
+					if (!RenderWire.TrySection(p, bytes, out int count))
+					{
+						Reject(type, bytes);
+						break;
+					}
+					int sx = *(int*)p, sy = *(int*)(p + 4), sz = *(int*)(p + 8);
 					var verts = new List<DumpReader.Vertex>(count);
 					byte* v = p + 16;
 					for (int i = 0; i < count; i++, v += Proto.RenVertexBytes)
@@ -317,7 +365,12 @@ namespace SubCraft.Render
 				}
 				case Proto.RenLights:
 				{
-					int sx = *(int*)p, sy = *(int*)(p + 4), sz = *(int*)(p + 8), count = *(int*)(p + 12);
+					if (!RenderWire.TryLights(p, bytes, out int count))
+					{
+						Reject(type, bytes);
+						break;
+					}
+					int sx = *(int*)p, sy = *(int*)(p + 4), sz = *(int*)(p + 8);
 					var s = Get(sx, sy, sz, count > 0);
 					if (s == null)
 					{
@@ -341,7 +394,12 @@ namespace SubCraft.Render
 				}
 				case Proto.RenColliders:
 				{
-					int sx = *(int*)p, sy = *(int*)(p + 4), sz = *(int*)(p + 8), count = *(int*)(p + 12);
+					if (!RenderWire.TryColliders(p, bytes, out int count))
+					{
+						Reject(type, bytes);
+						break;
+					}
+					int sx = *(int*)p, sy = *(int*)(p + 4), sz = *(int*)(p + 8);
 					var s = Get(sx, sy, sz, count > 0);
 					if (s == null)
 					{

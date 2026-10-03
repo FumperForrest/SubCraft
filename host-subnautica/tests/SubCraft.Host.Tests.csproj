@@ -1,5 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <!-- No-game tests for the Unity-free part of the plugin (src/Link), run on .NET (no Mono needed). -->
+  <!-- No-game tests for the Unity-free part of the plugin (src/Core, src/Link, and a few Render files), run on
+       .NET (no Mono needed). Anything under src/Core must build here, i.e. without Unity or the game. -->
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -9,6 +10,7 @@
   <ItemGroup>
     <Compile Include="../src/Link/*.cs" Exclude="../src/Link/HostLink.cs" />
     <Compile Include="../src/Link/HostLink.cs" />
+    <Compile Include="../src/Core/**/*.cs" />
     <Compile Include="../src/Render/DumpReader.cs" />
     <Compile Include="../src/Render/AlbedoBake.cs" />
     <Compile Include="../src/Render/BakeCache.cs" />
