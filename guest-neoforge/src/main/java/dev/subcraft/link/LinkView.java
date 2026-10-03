@@ -88,8 +88,23 @@ public final class LinkView {
 
 	// ---- header ----
 
+	/** Acquire: the host writes the magic last (release), so a matching magic means the rest is there. */
 	public int magic() {
-		return getInt(OFF_HEADER + H_MAGIC);
+		return getIntAcquire(OFF_HEADER + H_MAGIC);
+	}
+
+	/**
+	 * Null when the mapping holds this protocol (right magic and version), else why not. Checked
+	 * when the file is first mapped and again whenever a new host instance appears: a host built
+	 * with another protocol may have rewritten the same file while Minecraft kept running.
+	 */
+	public String protocolProblem() {
+		int magic = magic();
+		int version = version();
+		if (magic != MAGIC || version != VERSION) {
+			return String.format("protocol mismatch: magic %08x version %d, expected %08x version %d", magic, version, MAGIC, VERSION);
+		}
+		return null;
 	}
 
 	public int version() {

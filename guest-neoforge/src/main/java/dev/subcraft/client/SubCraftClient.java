@@ -31,6 +31,7 @@ public final class SubCraftClient {
 		// Creature proxies are hitboxes only: Subnautica draws the creature.
 		modBus.addListener((net.neoforged.neoforge.client.event.EntityRenderersEvent.RegisterRenderers e) ->
 			e.registerEntityRenderer(dev.subcraft.combat.SubEntities.CREATURE_PROXY.get(), net.minecraft.client.renderer.entity.NoopRenderer::new));
+		dev.subcraft.link.SubLink.log = SubCraft.LOG::info;
 		if (!Platform.announceRunning()) {
 			SubCraft.LOG.warn("SubCraft: another SubCraft Minecraft already holds the running lock");
 		}
