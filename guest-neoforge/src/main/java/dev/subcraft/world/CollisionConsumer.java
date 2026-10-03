@@ -3,6 +3,7 @@ package dev.subcraft.world;
 import static dev.subcraft.link.Proto.*;
 
 import dev.subcraft.SubCraft;
+import dev.subcraft.core.wire.CollisionWire;
 import dev.subcraft.link.LinkView;
 import dev.subcraft.link.SubLink;
 import dev.subcraft.world.ghost.DryVolumes;
@@ -73,18 +74,12 @@ public final class CollisionConsumer {
 			return;
 		}
 		if (type == COL_DRY) {
-			int count = v.getInt(off + 4);
-			if (count < 0 || COL_DRY_HEADER_BYTES + (long) count * DRY_BOX_BYTES > bytes) {
+			CollisionWire.Dry dry = CollisionWire.dry(v.buffer(), (int) off, bytes);
+			if (dry == null) {
 				SubCraft.LOG.warn("SubCraft: malformed dry volumes");
 				return;
 			}
-			float[] boxes = new float[count * 6];
-			for (int i = 0; i < count; i++) {
-				for (int k = 0; k < 6; k++) {
-					boxes[i * 6 + k] = v.getFloat(off + COL_DRY_HEADER_BYTES + (long) i * DRY_BOX_BYTES + k * 4L);
-				}
-			}
-			DryVolumes.set(boxes);
+			DryVolumes.set(dry.boxes());
 			return;
 		}
 		if (type == COL_CLEAR) {
@@ -129,54 +124,32 @@ public final class CollisionConsumer {
 
 	/** kColTris: a section's exact triangles, for the player collider and the ghost-terrain blocks. */
 	private static void readTris(LinkView v, long off, int bytes) {
-		int minX = v.getInt(off), minY = v.getInt(off + 4), minZ = v.getInt(off + 8);
-		int count = v.getInt(off + 28);
-		if (count < 0 || COL_REGION_BYTES + (long) count * COL_TRI_BYTES > bytes) {
+		CollisionWire.Tris t = CollisionWire.tris(v.buffer(), (int) off, bytes);
+		if (t == null) {
 			SubCraft.LOG.warn("SubCraft: malformed triangle region");
 			return;
 		}
-		float[] verts = new float[count * 9];
-		int[] flags = new int[count];
-		for (int i = 0; i < count; i++) {
-			long t = off + COL_REGION_BYTES + (long) i * COL_TRI_BYTES;
-			for (int k = 0; k < 9; k++) {
-				verts[i * 9 + k] = v.getFloat(t + k * 4L);
-			}
-			flags[i] = v.getInt(t + 36);
-		}
-		TriStore.put(minX >> 4, minY >> 4, minZ >> 4, verts, flags);
-		GhostTerrain.sectionChanged(minX >> 4, minY >> 4, minZ >> 4);
+		TriStore.put(t.sx(), t.sy(), t.sz(), t.verts(), t.flags());
+		GhostTerrain.sectionChanged(t.sx(), t.sy(), t.sz());
 		triRegions++;
-		triTotal += count;
+		triTotal += t.count();
 		if (triRegions <= 5 || triRegions % 200 == 0) {
-			SubCraft.LOG.info("SubCraft: triangles for section ({}, {}, {}): {} (regions so far {}, triangles {})", minX >> 4, minY >> 4, minZ >> 4, count,
+			SubCraft.LOG.info("SubCraft: triangles for section ({}, {}, {}): {} (regions so far {}, triangles {})", t.sx(), t.sy(), t.sz(), t.count(),
 				triRegions, triTotal);
 		}
 	}
 
 	/** kColBiomes: 64 cells of host biome names -> SubCraft biomes. */
 	private static void readBiomes(LinkView v, long off, int bytes) {
-		if (bytes < COL_BIOMES_BYTES + BIOME_CELLS) {
+		CollisionWire.Biomes b = CollisionWire.biomes(v.buffer(), (int) off, bytes);
+		if (b == null) {
 			return;
-		}
-		int sx = v.getInt(off), sy = v.getInt(off + 4), sz = v.getInt(off + 8);
-		int nameCount = v.getByte(off + 12);
-		String[] names = new String[nameCount];
-		long p = off + COL_BIOMES_BYTES + BIOME_CELLS, end = off + bytes;
-		for (int i = 0; i < nameCount && p < end; i++) {
-			var sb = new java.io.ByteArrayOutputStream();
-			int b;
-			while (p < end && (b = v.getByte(p++)) != 0) {
-				sb.write(b);
-			}
-			names[i] = dev.subcraft.world.ghost.BiomePatcher.map(sb.toString(java.nio.charset.StandardCharsets.UTF_8));
 		}
 		String[] cells = new String[BIOME_CELLS];
 		for (int i = 0; i < BIOME_CELLS; i++) {
-			int idx = v.getByte(off + COL_BIOMES_BYTES + i);
-			cells[i] = idx < nameCount ? names[idx] : null;
+			cells[i] = b.cells()[i] != null ? dev.subcraft.world.ghost.BiomePatcher.map(b.cells()[i]) : null;
 		}
-		dev.subcraft.world.ghost.BiomePatcher.put(sx, sy, sz, cells);
+		dev.subcraft.world.ghost.BiomePatcher.put(b.sx(), b.sy(), b.sz(), cells);
 	}
 
 	private static int triRegions;

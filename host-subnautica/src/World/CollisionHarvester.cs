@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using SubCraft.Core.Collision;
+using SubCraft.Core.Wire;
 using SubCraft.Link;
 using UnityEngine;
 
@@ -180,14 +181,7 @@ namespace SubCraft.World
 				{
 					continue;
 				}
-				var payload = new byte[Proto.ColRegionBytes];
-				using (var w = new BinaryWriter(new MemoryStream(payload)))
-				{
-					w.Write(sx * 16); w.Write(sy * 16); w.Write(sz * 16);
-					w.Write(sx * 16 + 15); w.Write(sy * 16 + 15); w.Write(sz * 16 + 15);
-					w.Write(epoch);
-					w.Write(0);
-				}
+				var payload = CollisionWire.Tris(sx, sy, sz, epoch, Array.Empty<float>(), Array.Empty<uint>()); // known empty
 				if (!view.TryWriteCollision(Proto.ColTris, payload, payload.Length))
 				{
 					return;
@@ -356,23 +350,8 @@ namespace SubCraft.World
 				}
 			}
 			int count = triFlags.Count;
-			int bytes = Proto.ColRegionBytes + count * Proto.ColTriBytes;
-			var payload = new byte[bytes];
-			using (var w = new BinaryWriter(new MemoryStream(payload)))
-			{
-				w.Write(sx * 16); w.Write(sy * 16); w.Write(sz * 16);
-				w.Write(sx * 16 + 15); w.Write(sy * 16 + 15); w.Write(sz * 16 + 15);
-				w.Write(epoch);
-				w.Write(count);
-				for (int t = 0; t < count; t++)
-				{
-					for (int k = 0; k < 9; k++)
-					{
-						w.Write(tris[t * 9 + k]);
-					}
-					w.Write(triFlags[t]);
-				}
-			}
+			var payload = CollisionWire.Tris(sx, sy, sz, epoch, tris, triFlags);
+			int bytes = payload.Length;
 			if (!view.TryWriteCollision(Proto.ColTris, payload, bytes))
 			{
 				return false;
@@ -420,19 +399,7 @@ namespace SubCraft.World
 				}
 				biomeCells[i] = (byte)Math.Min(idx, 254);
 			}
-			var ms = new MemoryStream();
-			using (var w = new BinaryWriter(ms))
-			{
-				w.Write(sx); w.Write(sy); w.Write(sz);
-				w.Write((byte)Math.Min(biomeNames.Count, 254)); w.Write((byte)0); w.Write((byte)0); w.Write((byte)0);
-				w.Write(biomeCells);
-				for (int i = 0; i < biomeNames.Count && i < 254; i++)
-				{
-					w.Write(System.Text.Encoding.UTF8.GetBytes(biomeNames[i]));
-					w.Write((byte)0);
-				}
-			}
-			var payload = ms.ToArray();
+			var payload = CollisionWire.Biomes(sx, sy, sz, biomeCells, biomeNames);
 			view.TryWriteCollision(Proto.ColBiomes, payload, payload.Length);
 		}
 
