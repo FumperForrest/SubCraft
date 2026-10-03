@@ -29,7 +29,10 @@ namespace SubCraft.World
 		private readonly List<uint> triFlags = new List<uint>(512);
 		private readonly HashSet<string> unreadableWarned = new HashSet<string>();
 		private int cursor;
-		private uint epoch = 1;
+		// Unique per host instance (milliseconds of the monotonic clock at start-up, never 0), so the
+		// first kColClear of a restarted host always differs from what Minecraft last saw: Minecraft
+		// drops the old host's collision when it reads it, in ring order (protocol v26).
+		private uint epoch = (uint)(Platform.MonoNanos() / 1_000_000) | 1u;
 		private int playerLayerMask;
 
 		public long SectionsSent { get; private set; }

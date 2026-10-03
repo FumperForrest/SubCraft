@@ -279,8 +279,10 @@ def main():
     # The floor: a 32x32 slab at y 63 with a one-block step at z 6..8 (walk into it, then jump it).
     floor = [(x, FLOOR_Y - 1, z) for x in range(-16, 16) for z in range(-16, 16)]
     step = [(x, FLOOR_Y, z) for x in range(-16, 16) for z in range(6, 9)]
-    link.send_collision(COL_CLEAR, struct.pack("<I", 1))
-    link.send_region((-16, FLOOR_Y - 2, -16, 15, FLOOR_Y + 3, 15), floor + step)
+    # A new epoch per host instance (v26), so a Minecraft that outlived the previous host drops its collision.
+    epoch = (mono_ns() // 1_000_000 | 1) & 0xFFFFFFFF
+    link.send_collision(COL_CLEAR, struct.pack("<I", epoch))
+    link.send_region((-16, FLOOR_Y - 2, -16, 15, FLOOR_Y + 3, 15), floor + step, epoch)
     print(f"  sent collision: {len(floor)} floor + {len(step)} step blocks")
 
     teleport_seq = 1

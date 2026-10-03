@@ -35,7 +35,6 @@ public final class CollisionConsumer {
 	private static Region current;
 	private static long cursor;
 	private static int lastEpoch = -1;
-	private static int seenGeneration;
 	private static int regionsApplied;
 
 	private CollisionConsumer() {
@@ -46,17 +45,10 @@ public final class CollisionConsumer {
 		if (view == null || !SubWorld.is(level)) {
 			return;
 		}
-		if (SubLink.generation() != seenGeneration) {
-			// A new host instance: its epochs start over and its old regions are stale.
-			seenGeneration = SubLink.generation();
-			lastEpoch = -1;
-			pending.clear();
-			current = null;
-			TriStore.clear();
-			GhostTerrain.clear();
-			DryVolumes.clear();
-			dev.subcraft.world.ghost.BiomePatcher.clear();
-		}
+		// A new host instance announces itself with a kColClear of a new epoch (unique per instance,
+		// v26), read here in ring order before any of its data. (Before, this thread also reset on
+		// SubLink.generation, which the render thread bumps: if the server drained the new host's
+		// first messages before seeing the bump, it wiped them, and the host never re-sends.)
 		long faults = view.sinkFaults, corrupt = view.corruptMessages;
 		view.drainCollision((type, off, bytes) -> read(view, type, off, bytes), 256);
 		if (view.sinkFaults != faults) {
@@ -104,6 +96,7 @@ public final class CollisionConsumer {
 				TriStore.clear();
 				GhostTerrain.clear();
 				DryVolumes.clear();
+				dev.subcraft.world.ghost.BiomePatcher.clear();
 				SubCraft.LOG.info("SubCraft: collision epoch {}", epoch);
 			}
 			return;

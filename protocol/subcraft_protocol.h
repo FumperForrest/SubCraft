@@ -390,7 +390,9 @@ namespace subcraft::proto
 	enum ColType : std::uint32_t
 	{
 		kColPad = 0,
-		kColClear = 1,   // payload: u32 epoch
+		kColClear = 1,   // payload: u32 epoch. Minecraft drops all host collision when the epoch differs from the
+		                 // last one it saw. Epochs are unique per host instance (v26), so a restarted host's
+		                 // first clear always lands, in ring order with the data that follows it.
 		kColRegion = 2,  // payload: ColRegion + ColBlock[count]
 		kColTris = 3,    // payload: ColRegion (count = triangles) + ColTri[count] (v13): the host's exact
 		                 // collision surface in the box. Replaces every triangle sent for the same box
