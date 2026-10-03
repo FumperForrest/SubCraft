@@ -9,11 +9,32 @@ API facts, layout decisions and findings. Code wins over this file when they dis
   191 MiB, sparse. The host creates and sizes it, zeroes the control blocks and writes
   magic/version/pid; Minecraft maps it when it appears. A host restart is detected by its pid
   changing in the header (Minecraft then re-teleports and drops collision state).
-- Layout: `protocol/subcraft_protocol.h` (v11). Rings carry total-bytes head/tail counters;
+- Layout: `protocol/subcraft_protocol.h` (v26 as of 2026-10-03). Rings carry total-bytes head/tail counters;
   messages are 8-byte aligned and never wrap (a pad message skips to the ring start).
 - Clock: monotonic ns. macOS: HotSpot `System.nanoTime()` = `mach_absolute_time` in ns =
   `CLOCK_UPTIME_RAW` (measured against Python, 0.1 ms median difference).
 - Java side (Java 21, no FFM): `MappedByteBuffer` + `byteBufferViewVarHandle` acquire/release.
+- **Nothing the peer writes is trusted (2026-10-03).** Byte-ring drains check every message length
+  against the head and the ring end (a bad one drops what's pending), consume a message before
+  its handler runs, and count handler exceptions instead of re-reading the message forever. The
+  host checks every count inside a render payload (`src/Core/Wire/RenderWire.cs`) and the guest
+  every count inside a collision payload (`core/wire/CollisionWire.java`) before reading.
+- **Host restarts:** Minecraft re-checks magic and version on every new host pid (a rebuilt
+  plugin with another protocol is unmapped, not misread). Each host instance has its own
+  collision epoch (milliseconds of the monotonic clock), so its first `kColClear` resets
+  Minecraft's collision in ring order (v26; before, a render-thread generation counter raced the
+  server thread).
+- **Overlay triple buffer (v26):** the state word also holds the host's front slot (bits 4-5); both
+  sides change it only by compare-and-swap, so a (re)connecting Minecraft finds the free slot from
+  one read. Checked exhaustively in `tools/tests/test_tools.py`.
+- **Layout:** `tools/gen_layout_dump.py` generates `protocol/layout_dump.cpp` from the header, so
+  `layout.json` lists every constant, enum member and field; Java, C# and Python are checked
+  against it. `protocol/fixtures/*.bin` are payloads written by the C# tests and parsed by the Java
+  tests (cross-language).
+- **Game-free code:** host `src/Core/` (compiled into the net10.0 tests: no Unity possible) and
+  guest `dev.subcraft.core` + `link` + the tri collider and voxelizer (`GameFreeCodeTest` forbids
+  game imports). The host plugin also compiles without the game against NuGet's
+  `Subnautica.GameLibs` 82304 (`host-subnautica/compile-check`).
 
 ## Guest frame order (Minecraft 1.21.1)
 

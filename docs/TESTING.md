@@ -3,6 +3,36 @@
 Things only you can judge (feel, taste) or decide. Everything here was already run by Claude
 unless marked **unverified**.
 
+## Branch `arch-review-2026-10-03` (cloud session, 2026-10-03): test this first
+
+Made overnight without the games (details: `docs/ARCH-REVIEW.md` section 6). **Protocol v26:**
+rebuild and deploy both sides together (`mc_dev.ps1 stop`, `sn_restart.ps1` rebuilds the plugin,
+`mc_dev.ps1 start` rebuilds the mod). **Unverified in game**; everything below passed the no-game
+checks (`tools/check_cloud.sh`, CI).
+
+1. **Smoke:** `python tools\smoke.py` -> 12/12, and `docs/look` shots still look the same (the
+   host now validates every render message before reading it; a well-formed one draws as before).
+2. **Minecraft restart with Subnautica running (overlay fix):** `mc_dev.ps1 stop`, `mc_dev.ps1
+   start`, twice. Expected: the hotbar and screens draw cleanly after each restart (before: every
+   third frame could tear until Subnautica restarted).
+3. **Subnautica restart with Minecraft running (collision epoch + version check):** restart
+   Subnautica only. Expected: Minecraft's log shows `host instance changed`, then `collision epoch
+   <big number>`; you can walk and swim on terrain right away; no invisible walls or falling
+   through where you were before.
+4. **Box-collider props (winding fix):** stand next to a crate or locker (lifepod, wrecks) and run
+   `python tools/mc_cmd.py "subcraft whysolid <x> <y> <z>"` on a block inside it: now solid ghost
+   terrain. A zombie should no longer walk through such props. The player should walk on them as
+   before.
+5. **Memory (native leak fix):** play linked for 30 minutes; Minecraft's process memory (Task
+   Manager) should level off instead of climbing ~150 MB an hour.
+6. **Logs to send back:** any line with `malformed render message`, `render ring framing broken`,
+   `collision ring framing broken`, `render message failed` or `collision message failed`. None
+   are expected in normal play; each one is a real bug that used to crash or stall instead.
+7. **Which Subnautica build?** The plugin only compiles against the 82304 game libraries, but
+   `versions.md` says changeSet 71288. Tell me the build number on Subnautica's main menu.
+
+Proposed host fixes waiting for an in-game test (not on this branch): `ARCH-REVIEW.md` 6.2.
+
 ## Play it (Windows)
 
 From PowerShell in the repo root:
