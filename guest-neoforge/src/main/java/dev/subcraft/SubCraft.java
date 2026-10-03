@@ -69,14 +69,10 @@ public final class SubCraft {
 		if (!timeState.inGame()) {
 			return;
 		}
-		long want = Math.floorMod(Math.round((timeState.dayFraction - 0.25) * 24000.0), 24000L);
 		long now = level.getDayTime();
-		long diff = Math.floorMod(want - Math.floorMod(now, 24000L), 24000L);
-		if (diff > 12000) {
-			diff -= 24000; // a small step back (host time jitter) rather than a whole day forward
-		}
-		if (diff != 0) {
-			level.setDayTime(now + diff);
+		long next = dev.subcraft.core.TimeSync.follow(now, timeState.dayFraction);
+		if (next != now) {
+			level.setDayTime(next);
 		}
 	}
 
