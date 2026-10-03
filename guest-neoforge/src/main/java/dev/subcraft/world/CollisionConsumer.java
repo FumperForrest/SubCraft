@@ -57,7 +57,14 @@ public final class CollisionConsumer {
 			DryVolumes.clear();
 			dev.subcraft.world.ghost.BiomePatcher.clear();
 		}
+		long faults = view.sinkFaults, corrupt = view.corruptMessages;
 		view.drainCollision((type, off, bytes) -> read(view, type, off, bytes), 256);
+		if (view.sinkFaults != faults) {
+			SubCraft.LOG.error("SubCraft: collision message failed ({} so far)", view.sinkFaults, view.lastSinkFault);
+		}
+		if (view.corruptMessages != corrupt) {
+			SubCraft.LOG.error("SubCraft: collision ring framing broken, pending messages dropped ({} so far)", view.corruptMessages);
+		}
 		apply(level);
 		GhostTerrain.tick(level);
 		DryVolumes.tick(level);
@@ -107,7 +114,7 @@ public final class CollisionConsumer {
 		int minX = v.getInt(off), minY = v.getInt(off + 4), minZ = v.getInt(off + 8);
 		int maxX = v.getInt(off + 12), maxY = v.getInt(off + 16), maxZ = v.getInt(off + 20);
 		int count = v.getInt(off + 28);
-		if (maxX < minX || maxY < minY || maxZ < minZ || COL_REGION_BYTES + (long) count * COL_BLOCK_BYTES > bytes) {
+		if (maxX < minX || maxY < minY || maxZ < minZ || count < 0 || COL_REGION_BYTES + (long) count * COL_BLOCK_BYTES > bytes) {
 			SubCraft.LOG.warn("SubCraft: malformed collision region");
 			return;
 		}

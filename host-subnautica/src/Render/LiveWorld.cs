@@ -205,6 +205,7 @@ namespace SubCraft.Render
 			}
 			var view = driver.Link.View;
 			var sw = System.Diagnostics.Stopwatch.StartNew();
+			long faults = view.SinkFaults, corrupt = view.CorruptMessages;
 			drainedAll = false;
 			while (sw.Elapsed.TotalMilliseconds < FrameBudgetMs)
 			{
@@ -214,6 +215,14 @@ namespace SubCraft.Render
 					break;
 				}
 				Messages++;
+			}
+			if (view.SinkFaults != faults)
+			{
+				Plugin.Log.LogError($"SubCraft: render message failed ({view.SinkFaults} so far): {view.LastSinkFault}");
+			}
+			if (view.CorruptMessages != corrupt)
+			{
+				Plugin.Log.LogError($"SubCraft: render ring framing broken, pending messages dropped ({view.CorruptMessages} so far)");
 			}
 			if (pendingScene != null)
 			{

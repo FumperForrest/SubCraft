@@ -94,6 +94,66 @@ class LinkViewTest {
 		assertEquals(this.colHead, this.view.getLong(OFF_COLLISION_RING + CR_TAIL));
 	}
 
+	/** Writes a raw message header at the current head without any checks (a buggy or drifted host). */
+	private void writeRawCol(int type, int payloadBytes, long advance) {
+		int at = (int) (OFF_COLLISION_RING + CR_DATA + this.colHead % CR_DATA_BYTES);
+		this.mem.putInt(at, type);
+		this.mem.putInt(at + 4, payloadBytes);
+		this.colHead += advance;
+		this.view.setLongRelease(OFF_COLLISION_RING + CR_HEAD, this.colHead);
+	}
+
+	@Test
+	void collisionDrainSurvivesANegativeLength() {
+		writeCol(COL_CLEAR, new byte[4]);
+		writeRawCol(COL_REGION, -8, 8); // align8(8 - 8) = 0: used to be delivered forever
+		List<Integer> types = new ArrayList<>();
+		int n = this.view.drainCollision((type, off, bytes) -> types.add(type), 100);
+		assertEquals(1, n);
+		assertEquals(List.of(COL_CLEAR), types);
+		assertEquals(1, this.view.corruptMessages);
+		assertEquals(this.colHead, this.view.getLong(OFF_COLLISION_RING + CR_TAIL), "dropped up to the head");
+		// The ring keeps working afterwards.
+		writeCol(COL_DRY, new byte[8]);
+		types.clear();
+		assertEquals(1, this.view.drainCollision((type, off, bytes) -> types.add(type), 100));
+		assertEquals(List.of(COL_DRY), types);
+	}
+
+	@Test
+	void collisionDrainRefusesLengthsPastTheHeadOrTheRingEnd() {
+		writeRawCol(COL_TRIS, 1 << 20, 64); // claims 1 MiB, head says 64 bytes
+		assertEquals(0, this.view.drainCollision((type, off, bytes) -> fail("delivered"), 100));
+		assertEquals(1, this.view.corruptMessages);
+		writeRawCol(COL_TRIS, (int) CR_DATA_BYTES, CR_DATA_BYTES / 2); // longer than the ring
+		assertEquals(0, this.view.drainCollision((type, off, bytes) -> fail("delivered"), 100));
+		assertEquals(2, this.view.corruptMessages);
+		// A head more than a ring ahead of the tail (e.g. a stale tail after a host restart).
+		this.colHead += 2 * CR_DATA_BYTES;
+		this.view.setLongRelease(OFF_COLLISION_RING + CR_HEAD, this.colHead);
+		assertEquals(0, this.view.drainCollision((type, off, bytes) -> fail("delivered"), 100));
+		assertEquals(3, this.view.corruptMessages);
+		assertEquals(this.colHead, this.view.getLong(OFF_COLLISION_RING + CR_TAIL));
+	}
+
+	@Test
+	void collisionSinkThatThrowsLosesOnlyItsMessage() {
+		writeCol(COL_TRIS, new byte[40]);
+		writeCol(COL_DRY, new byte[8]);
+		List<Integer> types = new ArrayList<>();
+		int n = this.view.drainCollision((type, off, bytes) -> {
+			if (type == COL_TRIS) {
+				throw new IllegalStateException("handler bug");
+			}
+			types.add(type);
+		}, 100);
+		assertEquals(2, n);
+		assertEquals(List.of(COL_DRY), types);
+		assertEquals(1, this.view.sinkFaults);
+		assertEquals("handler bug", this.view.lastSinkFault.getMessage());
+		assertEquals(this.colHead, this.view.getLong(OFF_COLLISION_RING + CR_TAIL));
+	}
+
 	@Test
 	void renderRingRefusesWhenFullAndWraps() {
 		ByteBuffer header = ByteBuffer.allocate(16);

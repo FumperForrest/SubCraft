@@ -446,26 +446,60 @@ public final class LinkView {
 	/**
 	 * Delivers every complete message in the collision ring, then frees the space. A message never
 	 * wraps: the producer pads to the ring start instead. Returns the number delivered.
+	 *
+	 * <p>The producer is another process, so nothing it wrote is trusted: a message whose length
+	 * doesn't fit between the tail and the head or the ring end, or a head more than a ring ahead,
+	 * drops everything pending ({@link #corruptMessages} counts it). Each message is consumed
+	 * before the sink sees it, and a sink that throws only loses that message
+	 * ({@link #sinkFaults}, {@link #lastSinkFault}).
 	 */
 	public int drainCollision(ColSink sink, int maxMessages) {
-		long base = OFF_COLLISION_RING;
-		long head = getLongAcquire(base + CR_HEAD);
-		long tail = getLong(base + CR_TAIL);
+		return drainBytes(OFF_COLLISION_RING, CR_HEAD, CR_TAIL, CR_DATA, CR_DATA_BYTES, COL_PAD, sink, maxMessages);
+	}
+
+	/** Collision messages dropped because their framing was impossible (see {@link #drainCollision}). */
+	public long corruptMessages;
+	/** Messages whose sink threw. */
+	public long sinkFaults;
+	public RuntimeException lastSinkFault;
+
+	int drainBytes(long base, long headOff, long tailOff, long dataOff, long dataBytes, int padType, ColSink sink, int maxMessages) {
+		long head = getLongAcquire(base + headOff);
+		long tail = getLong(base + tailOff);
 		int n = 0;
+		if (head - tail > dataBytes || head < tail) {
+			this.corruptMessages++;
+			tail = head;
+		}
 		while (tail < head && n < maxMessages) {
-			long pos = tail % CR_DATA_BYTES;
-			long at = base + CR_DATA + pos;
+			long pos = tail % dataBytes;
+			long at = base + dataOff + pos;
 			int type = getInt(at);
 			int payload = getInt(at + 4);
-			if (type == COL_PAD) {
-				tail += CR_DATA_BYTES - pos;
+			if (type == padType) {
+				tail += dataBytes - pos;
+				if (tail > head) {
+					this.corruptMessages++;
+					tail = head;
+				}
 				continue;
 			}
-			sink.accept(type, at + 8, payload);
-			tail += align8(8L + payload);
+			long msg = align8(8L + payload);
+			if (payload < 0 || pos + msg > dataBytes || tail + msg > head) {
+				this.corruptMessages++;
+				tail = head;
+				break;
+			}
+			tail += msg;
 			n++;
+			try {
+				sink.accept(type, at + 8, payload);
+			} catch (RuntimeException e) {
+				this.sinkFaults++;
+				this.lastSinkFault = e;
+			}
 		}
-		setLongRelease(base + CR_TAIL, tail);
+		setLongRelease(base + tailOff, tail);
 		return n;
 	}
 

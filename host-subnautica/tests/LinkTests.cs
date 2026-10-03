@@ -334,6 +334,129 @@ namespace SubCraft.Tests
 			}
 		}
 
+		// ---- render ring (Minecraft writes, we drain) ----
+
+		private long renHead;
+
+		/// <summary>Minecraft's tryWriteRender, without the safety checks when <paramref name="advance"/> is given.</summary>
+		private void WriteRen(uint type, int payloadBytes, long advance = -1)
+		{
+			long msg = advance >= 0 ? advance : LinkView.Align8(8 + payloadBytes);
+			long pos = renHead % Proto.RrDataBytes;
+			if (advance < 0 && pos + msg > Proto.RrDataBytes)
+			{
+				view.Put(Proto.OffRenderRing + Proto.RrData + pos, Proto.RenPad);
+				renHead += Proto.RrDataBytes - pos;
+				pos = 0;
+			}
+			long at = Proto.OffRenderRing + Proto.RrData + pos;
+			view.Put(at, type);
+			view.Put(at + 4, payloadBytes);
+			renHead += msg;
+			view.I64Release(Proto.OffRenderRing + Proto.RrHead, renHead);
+		}
+
+		private long RenTail => view.I64(Proto.OffRenderRing + Proto.RrTail);
+
+		[Fact]
+		public void RenderDrainFollowsPadsAcrossTheRingEnd()
+		{
+			int size = (int)(Proto.RrDataBytes / 3) - 13;
+			var got = new List<uint>();
+			for (uint round = 0; round < 7; round++)
+			{
+				WriteRen(Proto.RenSection + round % 2, size);
+				Assert.Equal(1, view.DrainRender((t, off, b) => { Assert.Equal(size, b); got.Add(t); }, 10));
+			}
+			Assert.Equal(7, got.Count);
+			Assert.Equal(renHead, RenTail);
+			Assert.Equal(0, view.CorruptMessages);
+		}
+
+		[Fact]
+		public void RenderDrainSurvivesANegativeLength()
+		{
+			WriteRen(Proto.RenClearAll, 0);
+			WriteRen(Proto.RenSection, -8, advance: 8); // align8(8 - 8) = 0: used to be handed over forever
+			var got = new List<uint>();
+			Assert.Equal(1, view.DrainRender((t, off, b) => got.Add(t), 100));
+			Assert.Equal(new List<uint> { Proto.RenClearAll }, got);
+			Assert.Equal(1, view.CorruptMessages);
+			Assert.Equal(renHead, RenTail);
+			WriteRen(Proto.RenLights, 16);
+			Assert.Equal(1, view.DrainRender((t, off, b) => got.Add(t), 100));
+			Assert.Equal(Proto.RenLights, got[1]);
+		}
+
+		[Fact]
+		public void RenderDrainRefusesLengthsPastTheHeadOrTheRingEnd()
+		{
+			WriteRen(Proto.RenSection, 1 << 20, advance: 64); // claims 1 MiB, the head says 64 bytes
+			Assert.Equal(0, view.DrainRender((t, off, b) => throw new Exception("delivered"), 100));
+			WriteRen(Proto.RenSection, (int)Proto.RrDataBytes, advance: Proto.RrDataBytes / 2); // longer than the ring
+			Assert.Equal(0, view.DrainRender((t, off, b) => throw new Exception("delivered"), 100));
+			renHead += 2 * Proto.RrDataBytes; // more than a ring ahead
+			view.I64Release(Proto.OffRenderRing + Proto.RrHead, renHead);
+			Assert.Equal(0, view.DrainRender((t, off, b) => throw new Exception("delivered"), 100));
+			Assert.Equal(3, view.CorruptMessages);
+			Assert.Equal(0, view.SinkFaults);
+			Assert.Equal(renHead, RenTail);
+		}
+
+		[Fact]
+		public void RenderSinkThatThrowsLosesOnlyItsMessage()
+		{
+			WriteRen(Proto.RenSection, 16);
+			WriteRen(Proto.RenLights, 16);
+			var got = new List<uint>();
+			int n = view.DrainRender((t, off, b) =>
+			{
+				if (t == Proto.RenSection) throw new InvalidOperationException("handler bug");
+				got.Add(t);
+			}, 100);
+			Assert.Equal(2, n);
+			Assert.Equal(new List<uint> { Proto.RenLights }, got);
+			Assert.Equal(1, view.SinkFaults);
+			Assert.Equal("handler bug", view.LastSinkFault.Message);
+			// Not handed over again on the next drain.
+			Assert.Equal(0, view.DrainRender((t, off, b) => got.Add(t), 100));
+		}
+
+		// ---- event ring (Minecraft writes, we drain) ----
+
+		private void PushEvent(long head, uint type, uint id)
+		{
+			long e = Proto.OffEventRing + Proto.ErData + (head & (Proto.EventRingEntries - 1)) * Proto.EventBytes;
+			view.Put(e, type);
+			view.Put(e + 4, id);
+		}
+
+		[Fact]
+		public void EventsDrainInOrderAcrossTheWrap()
+		{
+			var got = new List<LinkView.McEvent>();
+			long head = 0;
+			for (int batch = 0; batch < 5; batch++)
+			{
+				for (int i = 0; i < 300; i++, head++) PushEvent(head, Proto.EvSoundPlay, (uint)head);
+				view.I64Release(Proto.OffEventRing + Proto.ErHead, head);
+				view.DrainEvents(got);
+			}
+			Assert.Equal(1500, got.Count);
+			for (int i = 0; i < got.Count; i++) Assert.Equal((uint)i, got[i].Id);
+			Assert.Equal(head, view.I64(Proto.OffEventRing + Proto.ErTail));
+		}
+
+		[Fact]
+		public void EventsWithAnImpossibleHeadAreDropped()
+		{
+			var got = new List<LinkView.McEvent>();
+			view.I64Release(Proto.OffEventRing + Proto.ErHead, 10 * Proto.EventRingEntries); // garbage or a restart
+			Assert.Equal(0, view.DrainEvents(got));
+			Assert.Empty(got);
+			Assert.Equal(10L * Proto.EventRingEntries, view.I64(Proto.OffEventRing + Proto.ErTail));
+		}
+
 		[Fact]
 		public void McStateSeqlockNeverTears()
 		{
