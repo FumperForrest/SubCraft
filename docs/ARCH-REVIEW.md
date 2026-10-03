@@ -402,7 +402,7 @@ drift again (3.5).
 Each step ships on its own, keeps both games working, and is marked **Cloud** (verifiable with
 the cloud checks: Gradle tests, dotnet tests, layout check, host compile check, Python) or
 **Game** (needs an in-game test; the test plan is given). Order is by value per risk.
-Steps marked ✅ were done tonight (section 6).
+Steps marked ✅ were done tonight (section 6 lists the commits).
 
 | # | Step | Kind |
 |---|---|---|
@@ -413,14 +413,14 @@ Steps marked ✅ were done tonight (section 6).
 | M5 | Minecraft re-validates the header on every host pid change | Cloud ✅ |
 | M6 | Overlay slot resync on (re)connect (protocol v26) | Cloud ✅ + Game: restart Minecraft twice with Subnautica running, watch the HUD for tearing |
 | M7 | Bake cell overflow clamp | Cloud ✅ |
-| M8 | Collision tessellator extracted, box winding fixed | Cloud ✅ + Game: `subcraft whysolid` on a block inside a box-collider prop (crates, lockers in the Aurora / lifepod) is now solid; player still walks on them |
-| M9 | Guest collision-message parser extracted (negative counts) | Cloud ✅ |
+| M8 | Collision tessellator extracted, box winding fixed (and x/z capsules, found by the new test) | Cloud ✅ + Game: `subcraft whysolid` on a block inside a box-collider prop (crates, lockers in the Aurora / lifepod) is now solid; player still walks on them |
+| M9 | Guest collision-message parser extracted (negative counts), host writer extracted, shared fixtures | Cloud ✅ |
 | M10 | Guest `DynamicCapture` shared byte buffer (native leak) | Cloud ✅ (compile) + Game: Minecraft RSS flat over 30 min linked |
 | M11 | Tools: one link-path rule, `mc_cmd` refuses while a command is pending and checks the header, Python tests | Cloud ✅ |
 | M12 | Core/edge split, guest: move pure classes into `dev.subcraft.core` with the import guard test | Cloud (started tonight ✅ with the guard) |
-| M13 | Core/edge split, host: `src/Core` folder compiled into the tests; move Coords/KeyMap/Link/DumpReader/Bake there | Cloud |
+| M13 | Core/edge split, host: `src/Core` folder compiled into the tests; move Coords/KeyMap/Link/DumpReader/Bake there | Cloud (started tonight ✅: `src/Core` exists with RenderWire, CollisionWire, Shapes; the moves of existing files are left) |
 | M14 | `protogen.py`: generate `Proto.java`, `Proto.cs`, `subcraft_proto.py` and `layout_dump.cpp` from the header; layout fingerprint in the header | Cloud |
-| M15 | Golden fixtures + Java↔C# link integration job in CI | Cloud |
+| M15 | Golden fixtures + Java↔C# link integration job in CI | Cloud (started tonight ✅: collision fixtures; the integration job is left) |
 | M16 | `Session` objects on both sides (one owner per cache, dispose on link down / world unload / save load / resource reload) | Cloud (logic) + Game: link down/up, leave to menu and load another save, F3+T; no stale sections, sounds or terrain |
 | M17 | Puppet state machine in host core (fixes L1 frozen food, kinematic) | Game: ride the Seamoth, get out, kill Minecraft; food/water drain again in Subnautica, the diver moves |
 | M18 | Small host fixes: quickslot restore on unlink (L2), attacker id (L8), Esc release (L7), `McScreenInput` reset, `load` slot guard (L11), `ColClear` result, biomes resend, unreadable terrain = not ready (R9) | Game: per item, listed in TESTING.md |
@@ -430,10 +430,68 @@ Steps marked ✅ were done tonight (section 6).
 | M22 | Gate every guest hook on SubCraft world + linked (VBO upload, setSectionDirty, capture while unlinked, input mixins) | Game: play a normal Minecraft world with the mod installed: no captures, normal input |
 | M23 | Big textures in strips (atlas > 32 MB) | Cloud (guest) + Game (a 4096² modpack atlas draws) |
 | M24 | Memory: pooled CaptureBuffers, atlas readback reuse, ThreadLocal voxelizer scratch, TriStore eviction, host buffer reuse and `SetVertexBufferData` | Game: RSS and frame time over a 10-minute swim, both processes |
-| M25 | Ring generations (restart races), world id from the save | Cloud (logic) + Game (restart while streaming) |
+| M25 | Ring generations (restart races), world id from the save | Cloud (logic) + Game (restart while streaming). The collision half of L5 was fixed tonight ✅ with per-instance epochs |
 | M26 | DEVLOG/TESTING per-session files | Docs |
 
 ## 6. What changed tonight, what is only proposed
 
-Filled in as the commits land; the ✅ marks in section 5 are planned for tonight and are
-confirmed (or removed) here at the end of the session.
+### 6.1 Done (all on `arch-review-2026-10-03`, every commit green on the cloud checks and in CI)
+
+| Commit | What | Fixes | Verified by |
+|---|---|---|---|
+| `a0ca0a8` | `host-subnautica/compile-check`: the whole plugin compiles against `Subnautica.GameLibs` 82304 + `UnityEngine.Modules` 2019.4.36 from NuGet | cloud sessions couldn't type-check the host at all | builds; 71288 fails on `GameInputLegacy` etc. |
+| `e23c692` | `tools/gen_layout_dump.py` generates `layout_dump.cpp` from the header; layout.json gains every enum (87 members) and every field; Java, C# and Python check them | P4 | tests; mutation checks (changing `EV_GRAB` fails both suites) |
+| `5787d09` | `tools/check_cloud.sh` + GitHub Actions (`.github/workflows/checks.yml`) | no CI | runs green on GitHub (3 jobs) |
+| `ef7659a` | Byte-ring drains validate peer lengths, consume before dispatch, count sink faults; C# event drain ignores impossible heads | P1, R1 | 3 Java + 6 C# tests (negative length, past head, past ring end, throwing sink) |
+| `4e1755c` | Minecraft re-validates magic/version on every new host pid, waits while the host is initialising; the link package no longer loads Minecraft; `GameFreeCodeTest` guards game-free packages | P2 (logic), P9 | `SubLinkTest` over a real sparse file |
+| `dbbe32e` | Bake cells clamped to their allocation | R2 | test fails on the old code |
+| `63574eb` | **Protocol v26**: overlay state word carries the host's front; CAS on both sides; reconnecting writer derives a free slot | P3 | every leftover state; 30k concurrent reconnects with a tearing detector (fails on the old rule); exhaustive interleaving model (`tools/tests/test_tools.py`) |
+| `afb9c02` | `src/Core/Wire/RenderWire.cs`: every render-message count checked before raw reads; `LiveWorld` drops and logs malformed messages | P1 (host half) | 6 C# tests; compile check |
+| `32b3daa` | `src/Core/Collision/Shapes.cs`: box face table outward; **x/z capsules were inside out too** (coordinate swap = mirror), now rotations | R3 | winding tests for box, sphere and capsules on each axis |
+| `a6224e2` | One shared, never-written `ByteBufferBuilder` for capture sources | L3 | compile; reasoning (every method using it is overridden) |
+| `c8019ca` | Python: `SUBCRAFT_DIR` honoured, `mc_cmd` refuses while a command is pending and checks the header, `capture_dump` robustness, tool tests | P8, 3.5 path parity | 13 Python tests; fakes 6/6 |
+| `1ac4c5c` | Host epochs unique per instance; Minecraft resets collision on a new epoch only (in ring order), not on the render thread's generation | L5 | reasoning + fakes 6/6; needs the restart test below |
+| `a5f78fe` | `dev.subcraft.core.TimeSync` (first guest core class) | seam | 3 tests |
+| `ea39984` | Collision payload writer (C#) and parser (Java) in each core, `protocol/fixtures/*.bin` shared | first cross-language contract | C# writes and checks the fixtures, Java parses them |
+
+Tests: Java 41 -> 58, C# 42 -> 66, Python 0 -> 13 (plus the layout check, the compile check and
+CI). Protocol: v25 -> **v26** (overlay word; epoch semantics). Both games must be rebuilt
+together; the Python fakes speak v26.
+
+### 6.2 Proposed, not implemented (they touch Unity/Subnautica behaviour, rendering, sound or feel)
+
+Each with the in-game test that would prove it. They are also listed in `docs/TESTING.md`.
+
+| # | Change (exact place) | In-game test |
+|---|---|---|
+| L1 | `PlayerPuppet`: capture `savedFreezeStats`/`savedKinematic` once per link session, not per activation (`PlayerPuppet.cs:82-85`); best as a Unity-free puppet state machine in `src/Core` with tests | Survival: board the Seamoth, exit, kill Minecraft (`tools\mc_dev.ps1 stop`): food and water drain again; the diver moves (not kinematic) |
+| L2 | `OverlayView.Update`: call `HideQuickSlots(false)` before the early return when unlinked (`OverlayView.cs:50-53`) | Kill Minecraft: Subnautica's quickslot bar comes back |
+| L8 | `CreatureLink.PlayerHurt` / `MobStandIns.Hurt`: send `creature.gameObject.GetInstanceID()` (`CreatureLink.cs:185`, `MobStandIns.cs:126`); first check the guest log for "mob by creature_proxy" vs "generic" on a bite | Get bitten by a biter: Minecraft log says `mob by creature_proxy`, knockback away from the biter |
+| L7 | `InputCapture`: deliver the release of any key in `HeldKeys`, even when `McScreenInput` is no longer active (`InputCapture.cs:48`); reset `McScreenInput.pushed` when `Player.main` changes | Open the inventory (E), close it with Esc, open again, Esc again: closes every time |
+| L11 | `DevHarness`: guard `load` like `save` (refuse slot0000/0001); `try/finally` around `busy` | Harness `load slot0000` is refused |
+| R4 | McGeometry BoxColliders on their own layer excluded from the harvester's mask; detect `hits == overlap.Length` | Next to a 10x10x10 build, `colprobe` still lists terrain; no fall-through |
+| R5 | `LiveWorld`: keep the pending scene/hand buffers (use flags, don't null them); skip `RecalculateTangents`; `SetVertexBufferData` | Frame time and GC in the profiler / `fps` diag with many entities |
+| R6 | A host `Session` that owns textures, bake pages, materials, sounds, meshes, `TerrainMeshCapture` entries; dispose on link down, scene change and save load | Load save A, then save B, then the menu; memory (Task Manager) returns near the baseline; no Minecraft blocks left in the menu scene |
+| R7 | Per-submesh material fallback instead of hiding the section; budgeted rebuild queue | Glass/translucent blocks with a missing WBOIT template: the opaque part still draws |
+| R8 | `BlockLights.Add(..., s.Go.transform.TransformPoint(at))` for sub-levels; kinematic Rigidbody on sub-level nodes | Aeronautics ship with a torch, rotated: the light sits on the torch |
+| R9 | Unreadable terrain counts as "not ready"; check `TryWriteCollision` results for `ColClear` and biomes | Fill the collision ring (fast flight) and check biomes still arrive |
+| L9 | Per-feature try/catch in `LinkDriver.Update`; Harmony patching per class with a log line per failure | A deliberately throwing feature (harness) leaves the puppet working |
+| L10 | Publish HostState from the camera postfix (or pin execution order) | Turn fast in third person: no one-frame look lag in Minecraft's hit target |
+| P6 | Atlas larger than 32 MB sent as header + strips (`kRenAtlasRegion`) | A 4096² modpack atlas: blocks draw, no exception spam |
+| — | Negative-scale transforms in the harvester (swap b/c when `m.determinant < 0`) | A mirrored prop (if any exist) voxelizes solid |
+| — | Guest hooks gated on SubCraft world + linked (`VertexBufferMixin.upload`, `setSectionDirty`, capture while unlinked, input mixins) | Play a normal Minecraft world with the mod installed: normal input, no captures, heap flat |
+
+### 6.3 Fixed decisions I would revisit (not changed tonight)
+
+1. **"The header is the single source of truth" (rule 2).** Keep one source, but make it a small
+   declarative schema that generates the header, `Proto.java`, `Proto.cs` and the Python module
+   (4.4). Tonight's generator parses the header instead, which gets most of the benefit; the
+   remaining cost is hand-written Java/C# mirrors (now fully checked, but still typed twice).
+2. **`kVersion` bumped by hand.** Replace with a layout fingerprint computed by the generator
+   (keep `kVersion` as a label): parallel branches stop colliding on "the next version".
+3. **Dev machine = 8 GB Mac.** Sean develops on Windows since 2026-10-02; the memory rules are
+   still right for the Mac, but CLAUDE.md should say which machine is primary, and the Mac-only
+   tools (`sn_dev.sh`, `sn_restart.sh`) have drifted from their PowerShell twins (3.5).
+4. **`versions.md` says Subnautica changeSet 71288.** The code needs 82304's API: either the
+   installed game is 82304 (update the file) or the code has moved past Sean's game. Check
+   the build number on Subnautica's main menu.
