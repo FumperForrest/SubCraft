@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using SubCraft.Core.Collision;
 using SubCraft.Link;
 using UnityEngine;
 
@@ -702,53 +703,37 @@ namespace SubCraft.World
 			triFlags.Add(flags);
 		}
 
-		private static readonly int[] BoxFaces =
-		{
-			0, 2, 1, 0, 3, 2, 4, 5, 6, 4, 6, 7, 0, 1, 5, 0, 5, 4, 3, 7, 6, 3, 6, 2, 0, 4, 7, 0, 7, 3, 1, 2, 6, 1, 6, 5,
-		};
-
+		/// <summary>A box collider (or a mesh's bounds) as 12 outward triangles (Core.Collision.Shapes).</summary>
 		private void Box(Matrix4x4 m, Vector3 center, Vector3 size, uint flags, Vector3 lo, Vector3 hi)
 		{
 			var h = size / 2;
 			var p = new Vector3[8];
 			for (int i = 0; i < 8; i++)
 			{
-				var local = center + new Vector3((i & 1) != 0 ^ (i & 2) != 0 ? h.x : -h.x, (i & 4) != 0 ? h.y : -h.y, (i & 2) != 0 ? h.z : -h.z);
-				p[i] = m.MultiplyPoint3x4(local);
+				Shapes.BoxCorner(i, center.x, center.y, center.z, h.x, h.y, h.z, out float x, out float y, out float z);
+				p[i] = m.MultiplyPoint3x4(new Vector3(x, y, z));
 			}
-			for (int i = 0; i < BoxFaces.Length; i += 3)
+			var faces = Shapes.BoxFaces;
+			for (int i = 0; i < faces.Length; i += 3)
 			{
-				Tri(p[BoxFaces[i]], p[BoxFaces[i + 1]], p[BoxFaces[i + 2]], flags, lo, hi);
+				Tri(p[faces[i]], p[faces[i + 1]], p[faces[i + 2]], flags, lo, hi);
 			}
 		}
 
-		/// <summary>Sphere (axis -1) or capsule (cylinder half-length along axis 0/1/2), as a lat-long mesh.</summary>
+		private static readonly int[] EllipsoidTris = Shapes.EllipsoidTriangles();
+
+		/// <summary>Sphere (axis -1) or capsule (cylinder half-length along axis 0/1/2), as a lat-long mesh (Core.Collision.Shapes).</summary>
 		private void Ellipsoid(Matrix4x4 m, Vector3 center, Vector3 radius, float halfLength, int axis, uint flags, Vector3 lo, Vector3 hi)
 		{
-			const int Lon = 10, Lat = 8;
-			var pts = new Vector3[(Lat + 1) * Lon];
-			for (int la = 0; la <= Lat; la++)
+			float[] local = Shapes.EllipsoidPoints(radius.x, radius.y, radius.z, halfLength, axis);
+			var pts = new Vector3[local.Length / 3];
+			for (int i = 0; i < pts.Length; i++)
 			{
-				float theta = Mathf.PI * la / Lat; // 0 = top
-				float y = Mathf.Cos(theta), r = Mathf.Sin(theta);
-				float shift = halfLength * (la <= Lat / 2 ? 1 : -1);
-				for (int lo2 = 0; lo2 < Lon; lo2++)
-				{
-					float phi = 2 * Mathf.PI * lo2 / Lon;
-					var v = new Vector3(r * Mathf.Cos(phi) * radius.x, y * radius.y + shift, r * Mathf.Sin(phi) * radius.z);
-					if (axis == 0) v = new Vector3(v.y, v.x, v.z);
-					else if (axis == 2) v = new Vector3(v.x, v.z, v.y);
-					pts[la * Lon + lo2] = m.MultiplyPoint3x4(center + v);
-				}
+				pts[i] = m.MultiplyPoint3x4(center + new Vector3(local[i * 3], local[i * 3 + 1], local[i * 3 + 2]));
 			}
-			for (int la = 0; la < Lat; la++)
+			for (int i = 0; i < EllipsoidTris.Length; i += 3)
 			{
-				for (int lo2 = 0; lo2 < Lon; lo2++)
-				{
-					int a = la * Lon + lo2, b = la * Lon + (lo2 + 1) % Lon, c = (la + 1) * Lon + lo2, d = (la + 1) * Lon + (lo2 + 1) % Lon;
-					Tri(pts[a], pts[b], pts[d], flags, lo, hi);
-					Tri(pts[a], pts[d], pts[c], flags, lo, hi);
-				}
+				Tri(pts[EllipsoidTris[i]], pts[EllipsoidTris[i + 1]], pts[EllipsoidTris[i + 2]], flags, lo, hi);
 			}
 		}
 	}
