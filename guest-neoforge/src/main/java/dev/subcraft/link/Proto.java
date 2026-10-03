@@ -9,7 +9,7 @@ public final class Proto {
 	}
 
 	public static final int MAGIC = 0x43425553; // "SUBC"
-	public static final int VERSION = 25;
+	public static final int VERSION = 26;
 	public static final String LINK_FILE_NAME = "link.bin";
 	public static final long HEARTBEAT_TIMEOUT_NS = 2_000_000_000L;
 
@@ -132,6 +132,7 @@ public final class Proto {
 	public static final long OC_STATE = 0x00;
 	public static final long OC_FRAMES_PUBLISHED = 0x08;
 	public static final int OVERLAY_DIRTY = 1 << 2;
+	public static final int OVERLAY_FRONT_SHIFT = 4;
 	public static final long SLOT_HDR_BYTES = 0x40;
 	public static final long SH_WIDTH = 0x00;
 	public static final long SH_HEIGHT = 0x04;

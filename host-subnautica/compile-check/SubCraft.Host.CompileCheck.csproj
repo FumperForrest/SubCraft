@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Compile-only check of the whole plugin (../src) without Subnautica installed: the game's
+       assemblies come from the Subnautica.GameLibs NuGet package (stripped, publicized here) and
+       Unity's from UnityEngine.Modules. Never deployed, never loaded by the game. Used by CI and
+       cloud sessions; on a machine with the game, build SubCraft.Host.csproj as usual.
+       GameLibs 82304 is the build the code matches (GameInputLegacy/System/Steam exist there,
+       not in 71288). -->
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
+    <AssemblyName>SubCraft.CompileCheck</AssemblyName>
+    <RootNamespace>SubCraft</RootNamespace>
+    <LangVersion>latest</LangVersion>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Nullable>disable</Nullable>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <NoWarn>$(NoWarn);NU1903</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../src/**/*.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+    <PackageReference Include="BepInEx.AssemblyPublicizer.MSBuild" Version="0.4.2" PrivateAssets="all" />
+    <PackageReference Include="BepInEx.Core" Version="5.4.21" IncludeAssets="compile" PrivateAssets="all" />
+    <PackageReference Include="UnityEngine.Modules" Version="2019.4.36" IncludeAssets="compile" PrivateAssets="all" />
+    <PackageReference Include="Subnautica.GameLibs" Version="82304.0.0-r.0" IncludeAssets="compile" PrivateAssets="all" Publicize="true" />
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" IncludeAssets="compile" PrivateAssets="all" />
+  </ItemGroup>
+</Project>

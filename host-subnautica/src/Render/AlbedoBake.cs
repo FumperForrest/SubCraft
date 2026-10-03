@@ -134,9 +134,13 @@ namespace SubCraft.Render
 			// space (works for any rotation or mirroring of the sprite on the face).
 			double ax = q3.U - q0.U, ay = q3.V - q0.V, bx = q1.U - q0.U, by = q1.V - q0.V;
 			double det = ax * by - ay * bx;
-			for (int y = k.Y0; y < k.Y1; y++)
+			// A cell is never bigger than what was allocated for it on the page (BakeCache clamps
+			// huge areas, e.g. tiled UVs, to the page size): never write past it into other cells.
+			int yEnd = Math.Min(k.Y1, k.Y0 + page.Length / (pageW * 4) - o.y);
+			int xEnd = Math.Min(k.X1, k.X0 + pageW - o.x);
+			for (int y = k.Y0; y < yEnd; y++)
 			{
-				for (int x = k.X0; x < k.X1; x++)
+				for (int x = k.X0; x < xEnd; x++)
 				{
 					double du = (x + 0.5) / atlasW - q0.U, dv = (y + 0.5) / atlasH - q0.V;
 					double s = 0, t = 0;

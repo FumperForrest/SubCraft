@@ -32,7 +32,8 @@ class Texture:
 
 class Dump:
     def __init__(self, path):
-        data = open(path, "rb").read()
+        with open(path, "rb") as f:
+            data = f.read()
         magic, version, count = struct.unpack_from("<IIQ", data, 0)
         if magic != DUMP_MAGIC:
             raise SystemExit(f"not a capture dump: magic {magic:08x}")
@@ -80,7 +81,8 @@ class Dump:
     def summary(self):
         by = {}
         for tex, mat, _, _ in self.tris:
-            by[(tex, MAT_NAMES[mat])] = by.get((tex, MAT_NAMES[mat]), 0) + 1
+            name = MAT_NAMES[mat] if mat < len(MAT_NAMES) else f"material {mat}"
+            by[(tex, name)] = by.get((tex, name), 0) + 1
         print(f"capture dump v{self.version}: {self.sections} sections, {len(self.tris)} triangles, {len(self.lights)} lights")
         for tid, t in sorted(self.textures.items()):
             print(f"  texture {tid}: {t.w}x{t.h}")
@@ -164,7 +166,7 @@ def render(dump, path, eye, target, w=480, h=360, fov=70.0):
                 pts.append((w / 2 + cx / cz * scale, h / 2 - cy / cz * scale, cz, uu, vv, rgba, light))
             if len(pts) < 3:
                 continue
-            n = DIRS[nrm - 1] if nrm else (0, 1, 0)
+            n = DIRS[nrm - 1] if 0 < nrm <= len(DIRS) else (0, 1, 0)
             lit = 0.45 + 0.55 * max(0.0, n[0] * sun[0] + n[1] * sun[1] + n[2] * sun[2])
             (x0, y0, *_), (x1, y1, *_), (x2, y2, *_) = pts
             area = (x1 - x0) * (y2 - y0) - (x2 - x0) * (y1 - y0)
@@ -207,11 +209,13 @@ def render(dump, path, eye, target, w=480, h=360, fov=70.0):
 
 def main():
     args = sys.argv[1:]
-    if not args:
+    if not args or args[0] in ("-h", "--help"):
         print(__doc__)
-        sys.exit(2)
+        sys.exit(0 if args else 2)
     dump = Dump(args[0])
     dump.summary()
+    if "--preview" in args and not dump.tris:
+        sys.exit("nothing to preview: the dump has no triangles")
     if "--obj" in args:
         write_obj(dump, args[args.index("--obj") + 1])
     if "--preview" in args:

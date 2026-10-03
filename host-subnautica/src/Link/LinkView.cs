@@ -62,6 +62,7 @@ namespace SubCraft.Link
 			Zero(Proto.OffCollisionRing, Proto.CrData);
 			Zero(Proto.OffRenderRing, Proto.RrData);
 			overlayFront = 2;
+			Put(Proto.OffOverlayCtl + Proto.OcState, overlayFront << Proto.OverlayFrontShift); // middle 0, clean, our front (v26)
 			Put(Proto.OffHeader + Proto.HVersion, Proto.Version);
 			I32Release(Proto.OffHeader + Proto.HHostPid, pid);
 			// Magic last: Minecraft treats the mapping as valid only once it is there.
@@ -328,6 +329,11 @@ namespace SubCraft.Link
 			long head = I64Acquire(o + Proto.ErHead);
 			long tail = I64(o + Proto.ErTail);
 			int n = 0;
+			// The producer never runs more than a ring ahead; anything else is a restart or garbage.
+			if (head - tail > Proto.EventRingEntries || head < tail)
+			{
+				tail = head;
+			}
 			while (tail < head)
 			{
 				long e = o + Proto.ErData + (tail & (Proto.EventRingEntries - 1)) * Proto.EventBytes;
@@ -394,12 +400,31 @@ namespace SubCraft.Link
 
 		public delegate void RenderSink(uint type, long payloadOff, int payloadBytes);
 
+		/// <summary>Render messages dropped because their framing was impossible (see <see cref="DrainRender"/>).</summary>
+		public long CorruptMessages;
+		/// <summary>Render messages whose sink threw; <see cref="LastSinkFault"/> is the newest exception.</summary>
+		public long SinkFaults;
+		public Exception LastSinkFault;
+
+		/// <summary>
+		/// Delivers up to <paramref name="maxMessages"/> render messages, then frees their space.
+		/// Minecraft is another process, so nothing it wrote is trusted: a message whose length
+		/// doesn't fit between the tail and the head or the ring end, or a head more than a ring
+		/// ahead, drops everything pending (<see cref="CorruptMessages"/>). Each message is consumed
+		/// before the sink sees it, and a sink that throws loses only that message
+		/// (<see cref="SinkFaults"/>) instead of being handed it again every frame.
+		/// </summary>
 		public int DrainRender(RenderSink sink, int maxMessages)
 		{
 			long o = Proto.OffRenderRing;
 			long head = I64Acquire(o + Proto.RrHead);
 			long tail = I64(o + Proto.RrTail);
 			int n = 0;
+			if (head - tail > Proto.RrDataBytes || head < tail)
+			{
+				CorruptMessages++;
+				tail = head;
+			}
 			while (tail < head && n < maxMessages)
 			{
 				long pos = tail % Proto.RrDataBytes;
@@ -409,11 +434,31 @@ namespace SubCraft.Link
 				if (type == Proto.RenPad)
 				{
 					tail += Proto.RrDataBytes - pos;
+					if (tail > head)
+					{
+						CorruptMessages++;
+						tail = head;
+					}
 					continue;
 				}
-				sink(type, at + 8, payload);
-				tail += Align8(8 + payload);
+				long msg = Align8(8 + (long)payload);
+				if (payload < 0 || pos + msg > Proto.RrDataBytes || tail + msg > head)
+				{
+					CorruptMessages++;
+					tail = head;
+					break;
+				}
+				tail += msg;
 				n++;
+				try
+				{
+					sink(type, at + 8, payload);
+				}
+				catch (Exception e)
+				{
+					SinkFaults++;
+					LastSinkFault = e;
+				}
 			}
 			I64Release(o + Proto.RrTail, tail);
 			return n;
@@ -434,12 +479,23 @@ namespace SubCraft.Link
 		{
 			frame = default;
 			ref int state = ref *(int*)(b + Proto.OffOverlayCtl + Proto.OcState);
-			if ((Volatile.Read(ref state) & Proto.OverlayDirty) == 0)
+			// Swap our front in as the middle and take the old middle; our new front goes into
+			// bits 4-5 in the same compare-and-swap, so a Minecraft that (re)connects can tell
+			// which slot is free from one read (v26).
+			while (true)
 			{
-				return false;
+				int old = Volatile.Read(ref state);
+				if ((old & Proto.OverlayDirty) == 0)
+				{
+					return false;
+				}
+				int taken = old & 3;
+				if (Interlocked.CompareExchange(ref state, overlayFront | (taken << Proto.OverlayFrontShift), old) == old)
+				{
+					overlayFront = taken;
+					break;
+				}
 			}
-			int old = Interlocked.Exchange(ref state, overlayFront);
-			overlayFront = old & 3;
 			long hdr = Proto.OffOverlaySlotHdr + overlayFront * Proto.SlotHdrBytes;
 			frame.Width = I32(hdr + Proto.ShWidth);
 			frame.Height = I32(hdr + Proto.ShHeight);

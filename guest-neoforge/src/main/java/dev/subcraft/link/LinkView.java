@@ -18,8 +18,9 @@ public final class LinkView {
 	private static final VarHandle LONG = MethodHandles.byteBufferViewVarHandle(long[].class, ByteOrder.LITTLE_ENDIAN);
 
 	private final ByteBuffer buf;
-	// Writer-private overlay slot. The host starts with front = 2 and the middle at 0.
+	// Writer-private overlay slot, valid once overlaySynced (see resetOverlayWriter).
 	private int overlayBack = 1;
+	private boolean overlaySynced;
 
 	public LinkView(ByteBuffer buffer) {
 		if (buffer.capacity() < MAPPING_BYTES) {
@@ -78,6 +79,11 @@ public final class LinkView {
 		INT.setRelease(this.buf, (int) off, v);
 	}
 
+	/** Atomic compare-and-set (volatile semantics, a full fence). */
+	public boolean compareAndSetInt(long off, int expected, int v) {
+		return INT.compareAndSet(this.buf, (int) off, expected, v);
+	}
+
 	public long getLongAcquire(long off) {
 		return (long) LONG.getAcquire(this.buf, (int) off);
 	}
@@ -88,8 +94,23 @@ public final class LinkView {
 
 	// ---- header ----
 
+	/** Acquire: the host writes the magic last (release), so a matching magic means the rest is there. */
 	public int magic() {
-		return getInt(OFF_HEADER + H_MAGIC);
+		return getIntAcquire(OFF_HEADER + H_MAGIC);
+	}
+
+	/**
+	 * Null when the mapping holds this protocol (right magic and version), else why not. Checked
+	 * when the file is first mapped and again whenever a new host instance appears: a host built
+	 * with another protocol may have rewritten the same file while Minecraft kept running.
+	 */
+	public String protocolProblem() {
+		int magic = magic();
+		int version = version();
+		if (magic != MAGIC || version != VERSION) {
+			return String.format("protocol mismatch: magic %08x version %d, expected %08x version %d", magic, version, MAGIC, VERSION);
+		}
+		return null;
 	}
 
 	public int version() {
@@ -446,26 +467,60 @@ public final class LinkView {
 	/**
 	 * Delivers every complete message in the collision ring, then frees the space. A message never
 	 * wraps: the producer pads to the ring start instead. Returns the number delivered.
+	 *
+	 * <p>The producer is another process, so nothing it wrote is trusted: a message whose length
+	 * doesn't fit between the tail and the head or the ring end, or a head more than a ring ahead,
+	 * drops everything pending ({@link #corruptMessages} counts it). Each message is consumed
+	 * before the sink sees it, and a sink that throws only loses that message
+	 * ({@link #sinkFaults}, {@link #lastSinkFault}).
 	 */
 	public int drainCollision(ColSink sink, int maxMessages) {
-		long base = OFF_COLLISION_RING;
-		long head = getLongAcquire(base + CR_HEAD);
-		long tail = getLong(base + CR_TAIL);
+		return drainBytes(OFF_COLLISION_RING, CR_HEAD, CR_TAIL, CR_DATA, CR_DATA_BYTES, COL_PAD, sink, maxMessages);
+	}
+
+	/** Collision messages dropped because their framing was impossible (see {@link #drainCollision}). */
+	public long corruptMessages;
+	/** Messages whose sink threw. */
+	public long sinkFaults;
+	public RuntimeException lastSinkFault;
+
+	int drainBytes(long base, long headOff, long tailOff, long dataOff, long dataBytes, int padType, ColSink sink, int maxMessages) {
+		long head = getLongAcquire(base + headOff);
+		long tail = getLong(base + tailOff);
 		int n = 0;
+		if (head - tail > dataBytes || head < tail) {
+			this.corruptMessages++;
+			tail = head;
+		}
 		while (tail < head && n < maxMessages) {
-			long pos = tail % CR_DATA_BYTES;
-			long at = base + CR_DATA + pos;
+			long pos = tail % dataBytes;
+			long at = base + dataOff + pos;
 			int type = getInt(at);
 			int payload = getInt(at + 4);
-			if (type == COL_PAD) {
-				tail += CR_DATA_BYTES - pos;
+			if (type == padType) {
+				tail += dataBytes - pos;
+				if (tail > head) {
+					this.corruptMessages++;
+					tail = head;
+				}
 				continue;
 			}
-			sink.accept(type, at + 8, payload);
-			tail += align8(8L + payload);
+			long msg = align8(8L + payload);
+			if (payload < 0 || pos + msg > dataBytes || tail + msg > head) {
+				this.corruptMessages++;
+				tail = head;
+				break;
+			}
+			tail += msg;
 			n++;
+			try {
+				sink.accept(type, at + 8, payload);
+			} catch (RuntimeException e) {
+				this.sinkFaults++;
+				this.lastSinkFault = e;
+			}
 		}
-		setLongRelease(base + CR_TAIL, tail);
+		setLongRelease(base + tailOff, tail);
 		return n;
 	}
 
@@ -514,8 +569,33 @@ public final class LinkView {
 
 	// ---- overlay (publish) ----
 
-	public void resetOverlayWriter() {
-		this.overlayBack = 1;
+	/**
+	 * Picks this writer's back slot when it (re)connects: the slot that is neither the middle nor
+	 * the host's front, both read from one read of the state word (v26: the host keeps its front
+	 * in bits 4-5 and every change to the word is a compare-and-swap, so a single read is a
+	 * consistent picture). False when the word doesn't describe three distinct slots (the mapping
+	 * isn't initialised): then {@link #overlayReady} keeps trying before every frame, and until it
+	 * succeeds the writer owns no slot and publishes nothing.
+	 */
+	public boolean resetOverlayWriter() {
+		int state = getIntAcquire(OFF_OVERLAY_CTL + OC_STATE);
+		int middle = state & 3;
+		int front = (state >>> OVERLAY_FRONT_SHIFT) & 3;
+		this.overlaySynced = middle < 3 && front < 3 && middle != front;
+		if (this.overlaySynced) {
+			this.overlayBack = 3 - middle - front;
+		}
+		return this.overlaySynced;
+	}
+
+	/** True when the writer owns a back slot (call before writing pixels into it); retries the resync if needed. */
+	public boolean overlayReady() {
+		return this.overlaySynced || resetOverlayWriter();
+	}
+
+	/** The writer's back slot (0-2). */
+	public int overlayBack() {
+		return this.overlayBack;
 	}
 
 	/** Absolute byte offset of the writer's back slot pixels. */
@@ -525,12 +605,19 @@ public final class LinkView {
 
 	/** Publishes the frame just written into the back slot and takes the old middle as the new back. */
 	public void publishOverlay(int width, int height, boolean bottomUp, long frameId) {
+		if (!this.overlaySynced) {
+			throw new IllegalStateException("publishOverlay before the writer owns a slot (overlayReady)");
+		}
 		long hdr = OFF_OVERLAY_SLOT_HDR + this.overlayBack * SLOT_HDR_BYTES;
 		putInt(hdr + SH_WIDTH, width);
 		putInt(hdr + SH_HEIGHT, height);
 		putInt(hdr + SH_FLAGS, bottomUp ? 1 : 0);
 		putLong(hdr + SH_FRAME_ID, frameId);
-		int old = (int) INT.getAndSet(this.buf, (int) (OFF_OVERLAY_CTL + OC_STATE), this.overlayBack | OVERLAY_DIRTY);
+		// Swap our slot in as the middle, keeping the host's front bits (v26).
+		int old;
+		do {
+			old = getIntAcquire(OFF_OVERLAY_CTL + OC_STATE);
+		} while (!compareAndSetInt(OFF_OVERLAY_CTL + OC_STATE, old, this.overlayBack | OVERLAY_DIRTY | (old & (3 << OVERLAY_FRONT_SHIFT))));
 		this.overlayBack = old & 3;
 		LONG.getAndAdd(this.buf, (int) (OFF_OVERLAY_CTL + OC_FRAMES_PUBLISHED), 1L);
 	}

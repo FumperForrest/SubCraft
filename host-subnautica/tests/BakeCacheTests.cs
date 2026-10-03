@@ -110,5 +110,32 @@ namespace SubCraft.Tests
 			Assert.Equal(255, cache.Pages[0].Rgba[at + 2]);
 			Assert.Equal(0, cache.Pages[0].Rgba[at]);
 		}
+
+		[Fact]
+		public void QuadLargerThanAPageStaysInsideItsCell()
+		{
+			// Tiled UVs (a beam, a modded quad repeating its sprite) span far more texels than a page.
+			var cache = new BakeCache();
+			var first = new List<DumpReader.Vertex>();
+			Quad(first, 0, 0, 0.5f, 1, 0xFF808080);
+			Run(cache, first);
+			var before = (byte[])cache.Pages[0].Rgba.Clone();
+			var huge = new List<DumpReader.Vertex>();
+			Quad(huge, 0, 0, 40f, 70f, 0xFF404040); // 1280 x 1120 texels of a 32x16 atlas
+			for (int frame = 0; frame < 3; frame++)
+			{
+				Run(cache, huge); // used to throw IndexOutOfRange after scribbling over other cells
+			}
+			Assert.Equal(2, cache.Cells);
+			Assert.Equal(2, cache.Pages.Count); // the first cell's page, and one for the huge cell
+			// The first cell (16x16 at the page origin) is untouched.
+			for (int y = 0; y < 16; y++)
+			{
+				for (int x = 0; x < 16 * 4; x++)
+				{
+					Assert.Equal(before[y * BakeCache.PageSize * 4 + x], cache.Pages[0].Rgba[y * BakeCache.PageSize * 4 + x]);
+				}
+			}
+		}
 	}
 }

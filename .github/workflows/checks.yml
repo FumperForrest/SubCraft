@@ -1,0 +1,32 @@
+# The no-game checks (tools/check_cloud.sh), on every push and pull request.
+name: checks
+on:
+  push:
+  pull_request:
+jobs:
+  protocol-and-tools:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+      - run: tools/check_cloud.sh layout python
+  guest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+      - run: tools/check_cloud.sh guest
+  host:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - run: tools/check_cloud.sh host compile

@@ -26,7 +26,7 @@
 namespace subcraft::proto
 {
 	inline constexpr std::uint32_t kMagic = 0x43425553;  // "SUBC"
-	inline constexpr std::uint32_t kVersion = 25;
+	inline constexpr std::uint32_t kVersion = 26;
 
 	// Default file locations: macOS $TMPDIR/subcraft/link.bin, Windows %LOCALAPPDATA%\SubCraft\link.bin.
 	// Both sides accept an override (Java -Dsubcraft.link=<path>, host config, env SUBCRAFT_LINK).
@@ -163,12 +163,18 @@ namespace subcraft::proto
 	static_assert(sizeof(McState) <= 0x100);
 
 	// ---- overlay triple buffer @0x300 --------------------------------------------------------
-	// state: bits 0-1 = index of the "middle" slot, bit 2 = middle holds an unread frame.
-	// Writer (MC) renders into its private back slot, then xchg(state, back | kDirty) and keeps
-	// the returned index as its new back slot. Reader (host) does xchg(state, front) only when
-	// the dirty bit is set and keeps the returned index as its new front slot.
-	// Initial: state = 0 (middle 0), MC back = 1, host front = 2.
+	// state: bits 0-1 = index of the "middle" slot, bit 2 = middle holds an unread frame,
+	// bits 4-5 = the reader's (host's) front slot (v26). Every change is a compare-and-swap of the
+	// whole word, so one read of it always shows three distinct slots.
+	// Writer (MC) renders into its private back slot, then CAS(state: middle = back, dirty, front
+	// kept) and keeps the old middle as its new back slot. Reader (host), only when the dirty bit
+	// is set, CAS(state: middle = its front, clean, front = the old middle) and reads the old middle.
+	// A writer that (re)connects to a running host takes the slot that is neither the middle nor
+	// the front of one read of state. (Before v26 it assumed slot 1 and could write into the slot
+	// the host was reading, forever.)
+	// Initial: state = 2 << 4 (middle 0, clean, host front 2), MC back = 1.
 	inline constexpr std::uint32_t kOverlayDirty = 1u << 2;
+	inline constexpr std::uint32_t kOverlayFrontShift = 4;
 
 	struct OverlayCtl
 	{
@@ -384,7 +390,9 @@ namespace subcraft::proto
 	enum ColType : std::uint32_t
 	{
 		kColPad = 0,
-		kColClear = 1,   // payload: u32 epoch
+		kColClear = 1,   // payload: u32 epoch. Minecraft drops all host collision when the epoch differs from the
+		                 // last one it saw. Epochs are unique per host instance (v26), so a restarted host's
+		                 // first clear always lands, in ring order with the data that follows it.
 		kColRegion = 2,  // payload: ColRegion + ColBlock[count]
 		kColTris = 3,    // payload: ColRegion (count = triangles) + ColTri[count] (v13): the host's exact
 		                 // collision surface in the box. Replaces every triangle sent for the same box

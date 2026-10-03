@@ -53,6 +53,7 @@ namespace SubCraft.Tests
 			Assert.Equal(Proto.RenderRingBytes, C("kRenderRingBytes"));
 			Assert.Equal(Proto.MappingBytes, C("kMappingBytes"));
 			Assert.Equal(Proto.OverlayDirty, C("kOverlayDirty"));
+			Assert.Equal(Proto.OverlayFrontShift, C("kOverlayFrontShift"));
 			Assert.Equal(Proto.InputRingEntries, C("kInputRingEntries"));
 			Assert.Equal(Proto.IrHead, C("kInputRingHeadOff"));
 			Assert.Equal(Proto.IrTail, C("kInputRingTailOff"));
@@ -131,6 +132,35 @@ namespace SubCraft.Tests
 			Assert.Equal(Proto.ColBlockBits, F("ColBlock", "bits"));
 			Assert.Equal(Proto.RenVertexBytes, Size("RenVertex"));
 			Assert.Equal(Proto.RenBatchBytes, Size("RenBatch"));
+		}
+
+		/// <summary>
+		/// Every enum member of the header has a constant in Proto with the same value: kRenSubLevel ->
+		/// RenSubLevel (RenMaterial members get a Ren prefix: kMatOpaque -> RenMatOpaque, because
+		/// ColMaterial already owns Mat*).
+		/// </summary>
+		[Fact]
+		public void Enums()
+		{
+			var missing = new List<string>();
+			foreach (var e in Layout.GetProperty("enums").EnumerateObject())
+			{
+				string prefix = e.Name == "RenMaterial" ? "Ren" : "";
+				foreach (var m in e.Value.EnumerateObject())
+				{
+					string name = prefix + m.Name.Substring(1);
+					var f = typeof(Proto).GetField(name);
+					if (f == null)
+					{
+						missing.Add($"{e.Name}.{m.Name} (Proto.{name})");
+						continue;
+					}
+					Assert.True(m.Value.GetInt64() == Convert.ToInt64(f.GetValue(null)), $"{e.Name}.{m.Name}");
+				}
+			}
+			Assert.Equal(new List<string>(), missing);
+			Assert.Equal(Proto.RenDoubleSided, (uint)C("kRenDoubleSided"));
+			Assert.Equal(Proto.BiomeUnknown, (byte)C("kBiomeUnknown"));
 		}
 	}
 
@@ -305,6 +335,129 @@ namespace SubCraft.Tests
 			}
 		}
 
+		// ---- render ring (Minecraft writes, we drain) ----
+
+		private long renHead;
+
+		/// <summary>Minecraft's tryWriteRender, without the safety checks when <paramref name="advance"/> is given.</summary>
+		private void WriteRen(uint type, int payloadBytes, long advance = -1)
+		{
+			long msg = advance >= 0 ? advance : LinkView.Align8(8 + payloadBytes);
+			long pos = renHead % Proto.RrDataBytes;
+			if (advance < 0 && pos + msg > Proto.RrDataBytes)
+			{
+				view.Put(Proto.OffRenderRing + Proto.RrData + pos, Proto.RenPad);
+				renHead += Proto.RrDataBytes - pos;
+				pos = 0;
+			}
+			long at = Proto.OffRenderRing + Proto.RrData + pos;
+			view.Put(at, type);
+			view.Put(at + 4, payloadBytes);
+			renHead += msg;
+			view.I64Release(Proto.OffRenderRing + Proto.RrHead, renHead);
+		}
+
+		private long RenTail => view.I64(Proto.OffRenderRing + Proto.RrTail);
+
+		[Fact]
+		public void RenderDrainFollowsPadsAcrossTheRingEnd()
+		{
+			int size = (int)(Proto.RrDataBytes / 3) - 13;
+			var got = new List<uint>();
+			for (uint round = 0; round < 7; round++)
+			{
+				WriteRen(Proto.RenSection + round % 2, size);
+				Assert.Equal(1, view.DrainRender((t, off, b) => { Assert.Equal(size, b); got.Add(t); }, 10));
+			}
+			Assert.Equal(7, got.Count);
+			Assert.Equal(renHead, RenTail);
+			Assert.Equal(0, view.CorruptMessages);
+		}
+
+		[Fact]
+		public void RenderDrainSurvivesANegativeLength()
+		{
+			WriteRen(Proto.RenClearAll, 0);
+			WriteRen(Proto.RenSection, -8, advance: 8); // align8(8 - 8) = 0: used to be handed over forever
+			var got = new List<uint>();
+			Assert.Equal(1, view.DrainRender((t, off, b) => got.Add(t), 100));
+			Assert.Equal(new List<uint> { Proto.RenClearAll }, got);
+			Assert.Equal(1, view.CorruptMessages);
+			Assert.Equal(renHead, RenTail);
+			WriteRen(Proto.RenLights, 16);
+			Assert.Equal(1, view.DrainRender((t, off, b) => got.Add(t), 100));
+			Assert.Equal(Proto.RenLights, got[1]);
+		}
+
+		[Fact]
+		public void RenderDrainRefusesLengthsPastTheHeadOrTheRingEnd()
+		{
+			WriteRen(Proto.RenSection, 1 << 20, advance: 64); // claims 1 MiB, the head says 64 bytes
+			Assert.Equal(0, view.DrainRender((t, off, b) => throw new Exception("delivered"), 100));
+			WriteRen(Proto.RenSection, (int)Proto.RrDataBytes, advance: Proto.RrDataBytes / 2); // longer than the ring
+			Assert.Equal(0, view.DrainRender((t, off, b) => throw new Exception("delivered"), 100));
+			renHead += 2 * Proto.RrDataBytes; // more than a ring ahead
+			view.I64Release(Proto.OffRenderRing + Proto.RrHead, renHead);
+			Assert.Equal(0, view.DrainRender((t, off, b) => throw new Exception("delivered"), 100));
+			Assert.Equal(3, view.CorruptMessages);
+			Assert.Equal(0, view.SinkFaults);
+			Assert.Equal(renHead, RenTail);
+		}
+
+		[Fact]
+		public void RenderSinkThatThrowsLosesOnlyItsMessage()
+		{
+			WriteRen(Proto.RenSection, 16);
+			WriteRen(Proto.RenLights, 16);
+			var got = new List<uint>();
+			int n = view.DrainRender((t, off, b) =>
+			{
+				if (t == Proto.RenSection) throw new InvalidOperationException("handler bug");
+				got.Add(t);
+			}, 100);
+			Assert.Equal(2, n);
+			Assert.Equal(new List<uint> { Proto.RenLights }, got);
+			Assert.Equal(1, view.SinkFaults);
+			Assert.Equal("handler bug", view.LastSinkFault.Message);
+			// Not handed over again on the next drain.
+			Assert.Equal(0, view.DrainRender((t, off, b) => got.Add(t), 100));
+		}
+
+		// ---- event ring (Minecraft writes, we drain) ----
+
+		private void PushEvent(long head, uint type, uint id)
+		{
+			long e = Proto.OffEventRing + Proto.ErData + (head & (Proto.EventRingEntries - 1)) * Proto.EventBytes;
+			view.Put(e, type);
+			view.Put(e + 4, id);
+		}
+
+		[Fact]
+		public void EventsDrainInOrderAcrossTheWrap()
+		{
+			var got = new List<LinkView.McEvent>();
+			long head = 0;
+			for (int batch = 0; batch < 5; batch++)
+			{
+				for (int i = 0; i < 300; i++, head++) PushEvent(head, Proto.EvSoundPlay, (uint)head);
+				view.I64Release(Proto.OffEventRing + Proto.ErHead, head);
+				view.DrainEvents(got);
+			}
+			Assert.Equal(1500, got.Count);
+			for (int i = 0; i < got.Count; i++) Assert.Equal((uint)i, got[i].Id);
+			Assert.Equal(head, view.I64(Proto.OffEventRing + Proto.ErTail));
+		}
+
+		[Fact]
+		public void EventsWithAnImpossibleHeadAreDropped()
+		{
+			var got = new List<LinkView.McEvent>();
+			view.I64Release(Proto.OffEventRing + Proto.ErHead, 10 * Proto.EventRingEntries); // garbage or a restart
+			Assert.Equal(0, view.DrainEvents(got));
+			Assert.Empty(got);
+			Assert.Equal(10L * Proto.EventRingEntries, view.I64(Proto.OffEventRing + Proto.ErTail));
+		}
+
 		[Fact]
 		public void McStateSeqlockNeverTears()
 		{
@@ -345,15 +498,25 @@ namespace SubCraft.Tests
 		[Fact]
 		public void OverlayTakesWhatMinecraftPublished()
 		{
-			// Minecraft's writer: back starts at 1; publish = xchg(state, back | dirty), back = old & 3.
-			int back = 1;
+			// Minecraft's writer (v26): back = the slot that is neither the middle nor our front;
+			// publish = CAS(state, back | dirty | front bits kept), back = old middle.
+			ref int state = ref *(int*)(mem + Proto.OffOverlayCtl);
+			int s0 = Volatile.Read(ref state);
+			Assert.Equal(2 << Proto.OverlayFrontShift, s0); // InitAsHost: middle 0, clean, front 2
+			int back = 3 - (s0 & 3) - ((s0 >> Proto.OverlayFrontShift) & 3);
+			Assert.Equal(1, back);
 			void Publish(long id)
 			{
 				long hdr = Proto.OffOverlaySlotHdr + back * Proto.SlotHdrBytes;
 				view.Put(hdr + Proto.ShWidth, 4);
 				view.Put(hdr + Proto.ShHeight, 2);
 				view.Put(hdr + Proto.ShFrameId, id);
-				int old = Interlocked.Exchange(ref *(int*)(mem + Proto.OffOverlayCtl), back | Proto.OverlayDirty);
+				int old;
+				do
+				{
+					old = Volatile.Read(ref *(int*)(mem + Proto.OffOverlayCtl));
+				}
+				while (Interlocked.CompareExchange(ref *(int*)(mem + Proto.OffOverlayCtl), back | Proto.OverlayDirty | (old & (3 << Proto.OverlayFrontShift)), old) != old);
 				back = old & 3;
 			}
 			Assert.False(view.TryTakeOverlay(out _));
@@ -363,7 +526,11 @@ namespace SubCraft.Tests
 				if (id % 3 == 0) Publish(++id);
 				Assert.True(view.TryTakeOverlay(out var f));
 				Assert.Equal(id, f.FrameId);
-				Assert.NotEqual(back, (int)((f.PixelsOff - Proto.OffOverlayPixels) / Proto.OverlaySlotBytes));
+				int frontSlot = (int)((f.PixelsOff - Proto.OffOverlayPixels) / Proto.OverlaySlotBytes);
+				Assert.NotEqual(back, frontSlot);
+				int now = Volatile.Read(ref state);
+				Assert.Equal(frontSlot, (now >> Proto.OverlayFrontShift) & 3); // our front, published for a reconnecting writer
+				Assert.Equal(3, frontSlot + (now & 3) + back);
 				Assert.False(view.TryTakeOverlay(out _));
 			}
 		}

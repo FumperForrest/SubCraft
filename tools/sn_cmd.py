@@ -13,12 +13,10 @@ import os
 import sys
 import time
 
-if os.environ.get("SUBCRAFT_DIR"):
-    DIR = os.environ["SUBCRAFT_DIR"]
-elif os.name == "nt":
-    DIR = os.path.join(os.environ["LOCALAPPDATA"], "SubCraft")
-else:
-    DIR = os.path.join(os.environ.get("TMPDIR", "/tmp"), "subcraft")
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from fake_host import shared_dir  # noqa: E402  one path rule for every tool
+
+DIR = shared_dir()
 CMD = os.path.join(DIR, "cmd.jsonl")
 RESULTS = os.path.join(DIR, "out", "results.jsonl")
 

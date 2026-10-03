@@ -16,7 +16,7 @@ import sys
 import time
 
 from fake_host import (OFF_MC, OFF_HOST, OFF_IN, OFF_OVL, OFF_OVL_HDR, OFF_PIX, OFF_EVENTS, SLOT, SIZE, MAGIC, VERSION,
-                       INPUT_ENTRIES, mono_ns, link_path)
+                       INPUT_ENTRIES, OVERLAY_DIRTY, OVERLAY_FRONT_SHIFT, mono_ns, link_path)
 
 GLFW_W, GLFW_SPACE = 87, 32
 
@@ -59,7 +59,9 @@ def main():
     frame = 0
     in_tail = struct.unpack_from("<Q", m, OFF_IN + 0x40)[0]
     held = set()
-    back = 1
+    # v26: the free slot is neither the middle nor the host's front (bits 4-5 of the state word).
+    ovl = struct.unpack_from("<I", m, OFF_OVL)[0]
+    back = 3 - (ovl & 3) - ((ovl >> OVERLAY_FRONT_SHIFT) & 3)
     ovl_w = ovl_h = 0
     pattern = b""
     start = last = time.time()
@@ -118,8 +120,8 @@ def main():
                 m[OFF_PIX + back * SLOT:OFF_PIX + back * SLOT + len(pattern)] = pattern
                 hdr = OFF_OVL_HDR + back * 0x40
                 struct.pack_into("<IIIIQ", m, hdr, ovl_w, ovl_h, 1, 0, frame)
-                old = struct.unpack_from("<I", m, OFF_OVL)[0]
-                struct.pack_into("<I", m, OFF_OVL, back | 4)
+                old = struct.unpack_from("<I", m, OFF_OVL)[0]  # not atomic: see fake_host.poll_overlay
+                struct.pack_into("<I", m, OFF_OVL, back | OVERLAY_DIRTY | (old & (3 << OVERLAY_FRONT_SHIFT)))
                 back = old & 3
             if now - last_print > 2:
                 last_print = now

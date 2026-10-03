@@ -2,6 +2,47 @@
 
 Newest first. One entry per session (MISSION.md rule 11).
 
+## 2026-10-03 — Session 11 (cloud, overnight, no games): architecture review and first steps
+
+Sean asked for a from-scratch look at the architecture and for moves toward it that can be proven
+without the games. Branch `arch-review-2026-10-03`; the review is `docs/ARCH-REVIEW.md`.
+
+**Done**
+- Review: how the system works (threads, rings, ownership), divergences from MISSION/DESIGN,
+  ranked problems with file:line evidence, a target architecture (generated protocol, game-free
+  core + thin game edge on both sides, per-feature folders, sessions owning caches, CI) and a
+  26-step migration path, each step marked cloud-verifiable or needing an in-game test. Five
+  sub-agents read the code in parallel; every finding used was re-checked by hand.
+- **Cloud checks:** `tools/check_cloud.sh` and GitHub Actions; the host plugin now compiles in
+  the cloud against NuGet's `Subnautica.GameLibs` (`host-subnautica/compile-check`).
+- **Protocol coverage:** `layout_dump.cpp` is generated from the header; every enum member and
+  field is checked in Java, C# and Python; first cross-language fixtures (`protocol/fixtures`).
+- **Bugs fixed (all with tests unless noted):** peer lengths trusted by both byte-ring drains (a
+  negative length looped, a bad host render handler wedged the render ring forever); no protocol
+  re-check after a host restart; overlay slots aliasing after a Minecraft reconnect (**protocol
+  v26**: front slot in the CAS'd state word, checked by an exhaustive interleaving model; a first
+  design with a separate word failed that model); bake cells bigger than a page overwriting their
+  neighbours; box colliders and x/z capsules tessellated inside out (voxelized as open); a native
+  `ByteBufferBuilder` leaked per capture source per frame (compile + reasoning only); a restarted
+  host's collision reset racing the server thread (per-instance epochs); Python tools ignoring
+  `SUBCRAFT_DIR`; `mc_cmd` returning a previous command's reply.
+- First game-free classes: host `src/Core` (RenderWire, CollisionWire, Shapes), guest
+  `dev.subcraft.core` (TimeSync, wire.CollisionWire), with `GameFreeCodeTest` guarding them.
+- Tests: Java 41 -> 58, C# 42 -> 66, Python 0 -> 13. Fakes 6/6 on v26.
+
+**Found, not fixed (needs the game; ARCH-REVIEW 6.2):** Subnautica's food/water can stay frozen
+after unlinking (puppet re-captures `freezeStats` on every activation), the quickslot bar stays
+hidden after Minecraft dies, bite attacker ids are the component's not the GameObject's (contradicts
+session 9's "mob by creature_proxy": check), Esc release lost, Minecraft's own colliders crowd the
+harvester's overlap buffer, per-frame garbage and never-freed resources on the host, `VboCapture`
+copying every VBO in any world, the atlas message throwing above 32 MB.
+
+**Unverified:** everything that runs inside either game. TESTING.md has the in-game checks at the
+top. `versions.md`: the code needs Subnautica.GameLibs 82304, not 71288 as recorded.
+
+**Notes:** session 10's entry below sits under session 9 and its first paragraph was spliced into
+it; left as is. CLAUDE.md gained a "Cloud sessions" section.
+
 ## 2026-10-02 — Session 9: Windows bring-up, Seamoth fix
 
 **Done**
