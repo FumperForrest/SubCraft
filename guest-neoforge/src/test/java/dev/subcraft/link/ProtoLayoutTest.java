@@ -178,4 +178,37 @@ class ProtoLayoutTest {
 		assertEquals(32, size("RenScene"));
 		assertEquals(8, size("RenLight"));
 	}
+
+	/**
+	 * Every enum member of the header has a constant in Proto with the same value: kRenSubLevel ->
+	 * REN_SUB_LEVEL (RenMaterial members get a REN_ prefix: kMatOpaque -> REN_MAT_OPAQUE, because
+	 * ColMaterial already owns MAT_*).
+	 */
+	@Test
+	void enums() throws Exception {
+		var missing = new java.util.ArrayList<String>();
+		for (var e : layout.getAsJsonObject("enums").entrySet()) {
+			String prefix = e.getKey().equals("RenMaterial") ? "REN_" : "";
+			for (var m : e.getValue().getAsJsonObject().entrySet()) {
+				String name = prefix + javaName(m.getKey());
+				java.lang.reflect.Field f;
+				try {
+					f = Proto.class.getField(name);
+				} catch (NoSuchFieldException ex) {
+					missing.add(e.getKey() + "." + m.getKey() + " (Proto." + name + ")");
+					continue;
+				}
+				assertEquals(m.getValue().getAsLong(), ((Number) f.get(null)).longValue() & 0xFFFFFFFFL, e.getKey() + "." + m.getKey());
+			}
+		}
+		assertEquals(java.util.List.of(), missing, "enum members without a Proto constant");
+		assertEquals(Proto.REN_DOUBLE_SIDED, constant("kRenDoubleSided"));
+		assertEquals(Proto.BIOME_UNKNOWN, constant("kBiomeUnknown"));
+		assertEquals(Proto.OVERLAY_DIRTY, constant("kOverlayDirty"));
+	}
+
+	/** kRenSubLevel -> REN_SUB_LEVEL. */
+	static String javaName(String headerName) {
+		return headerName.substring(1).replaceAll("([a-z0-9])([A-Z])", "$1_$2").toUpperCase(java.util.Locale.ROOT);
+	}
 }

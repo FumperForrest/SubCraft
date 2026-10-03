@@ -1,11 +1,14 @@
-# Windows twin of check_layout.sh: regenerates protocol/layout.json from the C++ header and fails
-# if it differs from the committed file. Pass -Write after a deliberate protocol change.
+# Windows twin of check_layout.sh: regenerates protocol/layout_dump.cpp (tools/gen_layout_dump.py)
+# and protocol/layout.json from the C++ header and fails if either differs from the committed file.
+# Pass -Write after a deliberate protocol change.
 # Needs g++ (`winget install BrechtSanders.WinLibs.POSIX.UCRT`), clang++ with an STL, or MSVC cl from a VS prompt.
 param([switch]$Write)
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
 $exe = Join-Path $env:TEMP "subcraft_layout_dump.exe"
 $src = "$root\protocol\layout_dump.cpp"
+if ($Write) { python "$root\tools\gen_layout_dump.py" } else { python "$root\tools\gen_layout_dump.py" --check }
+if ($LASTEXITCODE -ne 0) { exit 1 }
 # winget's WinLibs (g++) is not put on PATH until the next login; look for it.
 if (-not (Get-Command g++ -ErrorAction SilentlyContinue)) {
 	$g = Get-ChildItem "$env:LOCALAPPDATA\Microsoft\WinGet\Packages" -Recurse -Filter g++.exe -ErrorAction SilentlyContinue | Select-Object -First 1

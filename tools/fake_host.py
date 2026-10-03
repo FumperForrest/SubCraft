@@ -19,7 +19,7 @@ import sys
 import time
 import zlib
 
-# ---- protocol (protocol/subcraft_protocol.h; tools/check_layout.sh keeps that header honest) ----
+# ---- protocol (protocol/subcraft_protocol.h); tools/tests/test_layout.py checks these against layout.json ----
 MAGIC = 0x43425553
 VERSION = 25
 OFF_HOST = 0x100
@@ -46,7 +46,8 @@ HOST_IN_GAME = 1
 IN_KEY, IN_MOUSE_BUTTON, IN_RELEASE_ALL = 1, 2, 6
 GLFW_KEY_W, GLFW_KEY_SPACE = 87, 32
 COL_CLEAR, COL_REGION = 1, 2
-MC_FLAG_NAMES = ["inWorld", "screen", "onGround", "sneak", "sprint", "dead", "swim", "fly", "inWater", "eyeInWater"]
+MC_FLAG_NAMES = ["inWorld", "screen", "onGround", "sneak", "sprint", "dead", "swim", "fly", "inWater", "eyeInWater",
+                 "lookCaptured"]
 
 W, H = 960, 540
 FLOOR_Y = 64   # the player stands on y = 64 (floor blocks at y = 63), above the sea (y 0)

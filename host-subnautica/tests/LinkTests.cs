@@ -132,6 +132,35 @@ namespace SubCraft.Tests
 			Assert.Equal(Proto.RenVertexBytes, Size("RenVertex"));
 			Assert.Equal(Proto.RenBatchBytes, Size("RenBatch"));
 		}
+
+		/// <summary>
+		/// Every enum member of the header has a constant in Proto with the same value: kRenSubLevel ->
+		/// RenSubLevel (RenMaterial members get a Ren prefix: kMatOpaque -> RenMatOpaque, because
+		/// ColMaterial already owns Mat*).
+		/// </summary>
+		[Fact]
+		public void Enums()
+		{
+			var missing = new List<string>();
+			foreach (var e in Layout.GetProperty("enums").EnumerateObject())
+			{
+				string prefix = e.Name == "RenMaterial" ? "Ren" : "";
+				foreach (var m in e.Value.EnumerateObject())
+				{
+					string name = prefix + m.Name.Substring(1);
+					var f = typeof(Proto).GetField(name);
+					if (f == null)
+					{
+						missing.Add($"{e.Name}.{m.Name} (Proto.{name})");
+						continue;
+					}
+					Assert.True(m.Value.GetInt64() == Convert.ToInt64(f.GetValue(null)), $"{e.Name}.{m.Name}");
+				}
+			}
+			Assert.Equal(new List<string>(), missing);
+			Assert.Equal(Proto.RenDoubleSided, (uint)C("kRenDoubleSided"));
+			Assert.Equal(Proto.BiomeUnknown, (byte)C("kBiomeUnknown"));
+		}
 	}
 
 	public class CoordsTests
