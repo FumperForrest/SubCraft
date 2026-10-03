@@ -59,8 +59,22 @@ public final class DynamicCapture {
 	private static final class Source extends MultiBufferSource.BufferSource {
 		final Map<RenderType, CaptureBuffer> buffers = new LinkedHashMap<>();
 
+		/**
+		 * BufferSource wants a shared byte buffer, but every method that would use it is overridden
+		 * below, so all sources share one that is never written. (Each ByteBufferBuilder mallocs
+		 * native memory freed only by close(); a new one per source leaked two or three a frame.)
+		 */
+		private static ByteBufferBuilder unused;
+
 		Source() {
-			super(new ByteBufferBuilder(256), new java.util.LinkedHashMap<>());
+			super(unusedBuffer(), new java.util.LinkedHashMap<>());
+		}
+
+		private static ByteBufferBuilder unusedBuffer() {
+			if (unused == null) {
+				unused = new ByteBufferBuilder(256);
+			}
+			return unused;
 		}
 
 		@Override
